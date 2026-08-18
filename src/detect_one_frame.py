@@ -1,13 +1,13 @@
 import cv2
 from ultralytics import YOLO
 
-video_path = "data/input/test_people.mp4"
+video_path = "data/input/lighting_test_cfr.mp4"
 output_path = "data/output/first_detection.jpg"
 
-model = YOLO("yolo11n.pt")
+model = YOLO("yolo11m.pt")
 
 cap = cv2.VideoCapture(video_path)
-cap.set(cv2.CAP_PROP_POS_FRAMES, 2000)
+cap.set(cv2.CAP_PROP_POS_FRAMES, 270)
 success, frame = cap.read()
 cap.release()
 
@@ -15,7 +15,7 @@ if not success:
     print("ERROR: could not read frame 2000")
     exit()
 
-results = model(frame, imgsz=960, conf=0.25, classes=[0])
+results = model(frame, imgsz=640, conf=0.25, classes=[0])
 
 boxes = results[0].boxes
 print("People found:", len(boxes))
