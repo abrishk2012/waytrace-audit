@@ -19,6 +19,9 @@ At the end of every working day:
 
 Rule: if a quiz score is below 3/5, we re-teach before moving forward. Understanding is not optional — you have to defend this project.
 
+**Commit rule: commit after every working chunk, not once at the end of the day.**
+Many small commits per day. Each one is a save point you can go back to.
+
 ---
 
 ## The one-sentence version (memorise this)
@@ -93,6 +96,19 @@ Rule: if a quiz score is below 3/5, we re-teach before moving forward. Understan
 - [ ] Automatic sign detection
 - [ ] Before/after signage experiment
 - [ ] OpenVINO edge optimisation
+
+---
+
+## Camera configurations
+
+| Name | What it is | Status |
+|---|---|---|
+| camA | Original wall mount, before tilting | superseded |
+| camB | Tilted on mount to fix the arch ID switch | superseded |
+| camC | Remounted after coming off the wall for lens calibration | **current** |
+
+**File naming:** `date_location_cameraSetup_take`. Calibration videos omit the
+camera letter, because lens calibration doesn't care where the camera is.
 
 ---
 
@@ -228,8 +244,7 @@ Rule: if a quiz score is below 3/5, we re-teach before moving forward. Understan
 
 **Quiz score: n/a — day finished early, quiz folded into Day 2**
 
-## Day 4 — Sun 16 Aug — FOOTAGE DECISION DAY ⚠️
-This is the day that decides how strong the final project is.
+## Day 4 — Sun 16 Aug — FOOTAGE DECISION DAY
 - [x] Decide the final judge-facing footage (staged recording vs public dataset)
 - [x] If staging: plan the corridor, the sign, the walkers
 - [x] If dataset: confirm the licence in writing — n/a, staging
@@ -339,7 +354,7 @@ the output.
 - Second tell: identical timings to three decimal places (317.7 ms twice) meant the
   code never re-ran at all. Real re-runs vary by milliseconds.
 
-### FIXED: ID switch at the arch
+### FIXED: ID switch at the arch → camB
 - Symptom: box flickers off, then a **new track ID** appears — while still fully
   visible. So it was a **detection** failure, not a tracker failure: no box → nothing
   for ByteTrack to match → track declared dead → reappears as a stranger.
@@ -364,13 +379,13 @@ the output.
   with homography on Day 5, not as a separate task.
 - Rejected a StackOverflow MATLAB snippet: wrong language, **guesses** the distortion
   (`k = 1.5`) instead of measuring it, and has a bug (reuses `k` as a loop counter).
-  Correct approach: `cv2.calibrateCamera` on the tile grid, then `cv2.undistort`.
+  Correct approach: `cv2.calibrateCamera` on a chessboard, then `cv2.undistort`.
 - **Shoot decision: keep the walking path near frame centre**, where distortion is
   mildest. Free accuracy.
 
 ### Still to do before the real shoot
-- [ ] Record 30 s of the **empty room** — the homography calibration frame needs
-      clean, unobstructed tile corners. Forget this and Day 5 stops.
+- [ ] Record 30 s of the **empty room on camC** — the homography calibration frame
+      needs clean, unobstructed tile corners.
 - [ ] Clear the floor completely: shoes, slippers, rug, trolley, shoe rack. The rug
       especially — it covers the tiles.
 - [ ] Make the signs (see below).
@@ -420,9 +435,139 @@ The destinations are fake, which is the point: nobody knows which real door is
 - Process note: asked for must-know points to be flagged explicitly rather than
   buried in prose. Adopted going forward.
 
-## Day 5 — Mon 17 Aug — Undistortion + homography (pixels → metres)
-- [ ] **Camera calibration first** — `cv2.calibrateCamera` on the tile grid, then
-      `cv2.undistort`. Homography on a distorted frame maps a bent world.
+## Day 5/6 — Mon 17 – Tue 18 Aug — Lens calibration (undistortion)
+
+- [x] Print/display a chessboard pattern and measure the square size
+- [x] Record a calibration video through the actual camera at 1024x576
+- [x] `cv2.calibrateCamera` → camera matrix `K` and distortion coefficients `dist`
+- [x] Verify undistortion **visually**, not just by RMS
+- [x] Remount the camera → **camC**
+- [ ] Homography (moved to next session)
+
+**Status:** PARTIAL — undistortion DONE, homography still to do
+
+**Notes:**
+
+### The board
+- No printer, so the chessboard was displayed **on an iPad screen**. A screen is
+  perfectly flat, which is better than a taped-down printout that curls.
+- Pattern: **10 x 7 squares = 9 x 6 INNER corners.** `CHESSBOARD = (9, 6)`.
+  `findChessboardCorners` counts corners, not squares. Get this wrong and every
+  frame silently fails with no error.
+- Square size measured on the glass: **5 squares = 9.7 cm → 19.4 mm**. Cross-checked
+  against a single-square measurement of 1.9 cm. Two independent measurements
+  agreeing is what makes a number trustworthy.
+- Never calculate square size from screen resolution — Photos scales the image, so
+  file pixels tell you nothing about millimetres on the glass. Measure the glass.
+- iPad setup that matters: Auto-Lock **Never**, Auto-Brightness **OFF**, brightness
+  ~50% not max (max blooms into the black squares), no pinch-zoom, wipe the screen.
+- Room lights ON — if the EZVIZ switches to infrared, an iPad screen becomes a
+  featureless grey rectangle.
+
+### The recording
+- **`findChessboardCorners` is all-or-nothing.** It needs every one of the 54 inner
+  corners visible in a single frame. One square clipped by the frame edge and it
+  returns False — no partial credit, no error message, just a silent skip.
+- First attempt failed on exactly this: the board was hanging off the frame edge in
+  8 of 9 shots. Right positions, board not fully inside.
+- Coverage needed: all 9 positions (centre, 4 edges, 4 corners), each with the whole
+  board inside, mixed flat and tilted 30–45° in assorted directions.
+- **Why tilt matters:** flat-on, a big board far away and a small board close up look
+  identical, so focal length and distortion trade off against each other and the fit
+  drifts. A tilt makes the near edge measurably bigger than the far edge, and that
+  difference is what pins the numbers down.
+- Final video: `2026-08-18_flat_calib.mp4`, 1024x576, ~9 minutes, 8340 frames.
+- **No `ffmpeg -r 15` needed on a calibration video.** It reads independent still
+  frames and never measures time, so VFR is harmless here. CFR conversion is only
+  for footage where frame numbers act as the clock.
+
+### Screenshots are NOT camera files
+- 36 WhatsApp photos were rejected: 1170 px wide with varying heights (647, 643, 649).
+- `K` holds the principal point — where the lens axis hits the sensor. Crop the image
+  and that point moves. Crop each image differently and it's trying to fit one lens
+  to 36 slightly different cameras. Wouldn't crash. Would produce confident numbers
+  describing a camera that doesn't exist.
+- **Rule: calibration input must come off the camera at the exact resolution the
+  footage will use.** Same principle as measuring the tiles instead of eyeballing them.
+
+### Tuning the view selection — three runs, one variable at a time
+
+| views | how they were chosen | RMS |
+|---|---|---|
+| 1338 | everything that passed | 2.23 px |
+| 40 | first 40 that passed (all from minute 1) | 1.32 px |
+| 40 | spread evenly across all 9 minutes | **2.17 px** |
+
+- Blurry frames were passing corner detection. Added a sharpness gate using
+  `cv2.Laplacian(gray, cv2.CV_64F).var()`. Threshold was **measured, not guessed**:
+  printed the sharpness value into each check-image filename, looked at the 4 bad
+  ones, found the worst was 342, set `BLUR_MIN = 360`.
+- **`kept < MAX_VIEWS` was silently a "take the beginning" filter.** It stopped at
+  the first 40 qualifying frames — all from the opening minute, where the board
+  barely moved. Fixed by collecting every view first, then `np.linspace` to sample
+  40 evenly across the whole video.
+- **The 2.17 is the honest number.** Low error on easy, near-identical views is a
+  flattering lie — the same mistake as Day 2's frames 0–500. Real footage has people
+  everywhere in the frame, so the hard-test score is the one that matches reality.
+
+### Results — `calibration_ezviz.npz`
+- **k1 = -0.41.** Negative = barrel distortion, exactly as predicted on Day 4.
+  Stable at ≈ -0.41 across all four runs with different frame sets — that stability
+  is what makes it believable.
+- Principal point moved between runs (442 to 537), which says that part of the fit
+  is still loose. Recorded honestly rather than hidden.
+- **Verified visually, which is the test that actually counts:** `undistort_check.jpg`
+  and `fisheye_before_after.jpg` both show bent lines becoming straight.
+- **Undistortion crops the frame slightly.** Straightening a barrel-bent image pulls
+  edge pixels inward and leaves blank wedges, so `cv2.undistort` crops them off.
+  Expected, not a bug. May cost a few frames at the start of each approach walk.
+  Decide later: accept the crop, or `getOptimalNewCameraMatrix(alpha=1)` to keep the
+  full field with black wedges.
+
+### BUG: `check_video.py` had a hardcoded video path
+- Line 2 read `video_path = "data/output/tracked_preview.mp4"`. It ignored the
+  filename typed on the command line entirely.
+- **Reported "300 frames" for four different videos in a row.** Never crashed. The
+  number was plausible. Every verification that night was reporting on a Day 2 file.
+- Worse than a wrong answer: it sent the whole diagnosis down a false path. We built
+  a theory that the EZVIZ header was unreliable. That theory was wrong. **Wrong input
+  in, wrong conclusion out — even when the reasoning on top of it is sound.**
+- Fixed: reads `sys.argv[1]`, prints which file it's checking, and warns when the
+  header count disagrees with the real count.
+- After the fix, camC calib clip verified: **1024x576, 15.0 fps, 466 frames, 31.1 s**,
+  header and real count in agreement.
+- Same family as `START_FRAME` (Day 4) and the indentation bug (Day 3).
+
+### Camera remounted → camC
+- `K` and `dist` describe the **camera as an object** — focal length, and how the
+  glass bends light. Carry it anywhere, point it anywhere, same numbers. **They
+  survive remounting. Never redo them.**
+- Homography describes the **camera's relationship to one specific floor**. Nudge
+  the mount and every pixel maps to the wrong floor spot. **Scrap on any remount.**
+
+### Process notes
+- **Twice in one session an edit "didn't work" because the file was never saved.**
+  Tell: a number identical to 4 decimal places after an edit means the edit didn't
+  land. That's Rule 4 pointing at the editor, not the code.
+- **Stale output in a check folder.** `calib_check/` still held images from the
+  1338-view run while displaying 40 new ones. Inspecting yesterday's results and
+  drawing today's conclusions. Clear output folders before re-running.
+- Python goes in `.py` files; PowerShell goes in the terminal. Pasting one into the
+  other produces confusing parser errors.
+
+**Quiz score: 1/3 → retaught, re-tested 2/2, PASSED**
+- Q1 (the `check_video.py` hardcoded path) — **correct**, including the important
+  half: bad input sent the whole diagnosis to the wrong place.
+- Q2 (what `K` and `dist` are) — not known, taught directly.
+- Q3 (why the worse RMS is more trustworthy) — not known, taught directly.
+- Re-test 2/2: what survives a knock to the mount, and why 100% recall on obvious
+  U-turns doesn't belong in the README.
+- **Process failure on my side: RMS was used for hours before it was ever defined.**
+  Terms get explained the first time they appear, not retroactively.
+
+## Day 5 (carried) — Homography (pixels → metres)
+- [ ] Record 30 s of the empty room on **camC**, floor completely clear
+- [ ] Undistort the frame FIRST — homography on a distorted frame maps a bent world
 - [ ] Click 4 floor points, supply their real-world distances (tiles = 29.4 x 30.8 cm)
 - [ ] `cv2.findHomography` maps image coords to floor coords
 - [ ] Speeds now reported in m/s instead of pixels/frame
@@ -434,7 +579,7 @@ The destinations are fake, which is the point: nobody knows which real door is
 **Notes:**
 **Quiz score:      /5**
 
-## Day 6 — Tue 18 Aug — Smoothing + velocity
+## Day 6 (carried) — Smoothing + velocity
 - [ ] Smooth noisy trajectories
 - [ ] Compute speed over time per track
 - [ ] Compute heading (direction of travel) per track
@@ -567,6 +712,9 @@ The destinations are fake, which is the point: nobody knows which real door is
 
 ## Day 20 — Tue 1 Sep — Validation metrics
 - [ ] Compute precision, recall, F1 per behaviour
+- [ ] **Include hard cases, not just obvious ones.** 100% recall on huge obvious
+      U-turns says nothing about the subtle ones. Easy-test scores don't go in
+      the README.
 - [ ] Write an honest limitations section
 - [ ] Learn to explain these numbers out loud
 
@@ -650,9 +798,13 @@ Structure (2 min, landscape):
 | ID switch | The tracker loses someone and re-registers them as a stranger with a new number. Visible as a colour change mid-walk. Dangerous because WayTrace measures per person over time — if a U-turn is split across two IDs, neither ID contains the reversal and the event becomes invisible. |
 | Fragment track | A track only a few frames long — noise, a shadow, half a person. Has a position but no movement, so it reads as "never moved" and can become a fake hesitation event. Filter must be `int(fps * 1.0)`, not a hardcoded 25. |
 | Variable frame rate (VFR) | The camera doesn't space frames evenly — it drops or adds them depending on light and motion. Deadly here because trajectories store `frame_number` and never a timestamp, so **frame numbers are the clock**. Uneven spacing = every speed silently wrong, worst during fast movement. Fixed with `ffmpeg -r 15`. |
-| Barrel distortion / fisheye | Wide CCTV lenses bend straight lines outward, worst at the frame edges. Breaks the footpoint and will break homography, because homography assumes straight world lines stay straight in the image. Fixed by measuring the distortion with `cv2.calibrateCamera` on a known grid — never by guessing a constant. |
+| Barrel distortion / fisheye | Wide CCTV lenses bend straight lines outward, worst at the frame edges. Breaks the footpoint and will break homography, because homography assumes straight world lines stay straight in the image. Fixed by measuring the distortion with `cv2.calibrateCamera` on a known grid — never by guessing a constant. Mine: **k1 = -0.41**, negative = barrel. |
 | `imgsz` | The size YOLO resizes the frame to before looking at it. Not "bigger is better": trained near 640, so 1280 gave **zero** detections on my footage while 640 gave the best result. |
 | Systematic vs random error | Random error scatters both ways and partly cancels out under smoothing. Systematic error leans the same way every single time, so it survives smoothing and becomes a real offset in metres. The tilted-camera footpoint was systematic — that's why it mattered. |
+| Camera matrix `K` | Describes the camera **as an object**: focal length, and where the lens axis hits the sensor (the principal point). Nothing to do with where the camera is pointing. Survives remounting. |
+| Distortion coefficients `dist` | How the glass bends light. Five numbers; the first (k1) is the big one. Negative = barrel. Also a property of the camera as an object — survives remounting. |
+| RMS reprojection error | The mark on the calibration's homework. Take the fitted lens model, work backwards to predict where each chessboard corner *should* appear, compare to where it actually was, average all the gaps. Measured in pixels. Lower is better — but **a low score on easy, near-identical views is a flattering lie.** |
+| Inner corners | What `findChessboardCorners` counts — the points where 4 squares meet, not the squares. A 10x7-square board has 9x6 inner corners. It's all-or-nothing: one corner clipped by the frame edge and the whole frame is silently rejected. |
 
 Fill these in yourself as you learn them. If a box is empty on Day 20, that's a problem.
 
@@ -660,10 +812,10 @@ Fill these in yourself as you learn them. If a box is empty on Day 20, that's a 
 
 ## Things I am NOT allowed to say
 
-- ❌ "WayTrace detects confused passengers"
-- ❌ "This sign caused the confusion"
-- ❌ Any statistic I did not measure
-- ❌ "It's basically YOLO" (it isn't — YOLO is the input layer)
+- "WayTrace detects confused passengers"
+- "This sign caused the confusion"
+- Any statistic I did not measure
+- "It's basically YOLO" (it isn't — YOLO is the input layer)
 
 ---
 
@@ -675,10 +827,24 @@ Fill these in yourself as you learn them. If a box is empty on Day 20, that's a 
    bytes tells you whether something real got written (257 vs 3,738,272).
 3. **Change one thing, measure, then change the next.** Every model comparison in
    this file is trustworthy only because of this.
-4. **Identical numbers to three decimal places mean the code never re-ran.**
+4. **Identical numbers to three decimal places mean the code never re-ran** — or the
+   file was never saved. Check Ctrl+S before blaming the logic.
 5. **A setting correct for one video is silently wrong for the next.** Hardcoded
-   frame numbers, thresholds and filters all expire without telling you.
+   frame numbers, thresholds, filters and **file paths** all expire without telling you.
 6. **Fix the upstream problem.** The arch ID switch was a detection failure, not a
    tracker failure. Fixing detection fixed the tracker for free.
 7. **Retention drops when saturated.** Break before re-testing rather than pushing
    through — Day 2's 1/3 came at the end of a long second session.
+8. **A good score on easy data means nothing.** Frames 0–500 of the terrace were
+   empty. 40 calibration views from one minute were near-identical. Both gave clean
+   numbers about nothing. Always ask: *was this test hard enough to fail?*
+9. **Wrong input in, wrong conclusion out.** When `check_video.py` reported on the
+   wrong file, the reasoning built on top of it was sound and still wrong. Verify
+   the tool before trusting the theory.
+10. **Clear output folders before re-running.** Stale results sitting next to fresh
+    ones is how you inspect yesterday's work and draw today's conclusions.
+11. **Measure thresholds, don't guess them.** `BLUR_MIN` was set by printing the
+    sharpness of every kept frame, finding the worst bad one (342), and setting the
+    gate just above it. Same discipline as measuring 5 tiles instead of eyeballing one.
+12. **Commit after every working chunk.** Many small commits per day, not one at the
+    end. Six days of work once sat uncommitted on one laptop.
