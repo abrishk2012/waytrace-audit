@@ -2,7 +2,8 @@
 
 **Hackathon:** VoltHacks 2026 (Devpost)
 **Hard deadline:** Sat 5 Sep 2026, 17:00 EDT = **22:00 Lisbon time**
-**Target finish:** Day 22 (Thu 3 Sep). Days 23–24 are buffer only.
+**Target finish:** Day 22 (Fri 4 Sep) — SUBMIT. Day 23 (Sat 5 Sep) is buffer only.
+**Re-planned:** Wed 19 Aug, after lens calibration overran by two days.
 **Builder:** solo, 14, learning Python
 
 ---
@@ -85,17 +86,17 @@ Many small commits per day. Each one is a save point you can go back to.
 - [ ] Polished dashboard
 - [ ] Demo video
 
-## SHOULD HAVE
+## SHOULD HAVE — cuttable, in this order
 
-- [ ] Backtracking detection
-- [ ] Signage OCR + arrow direction
-- [ ] Live webcam "sensor mode"
+- [ ] Signage OCR + arrow direction (Day 18 — cut first)
+- [ ] Live webcam "sensor mode" + OpenVINO (Day 19 — cut second)
 
-## NICE TO HAVE
+## CUT on 19 Aug
 
-- [ ] Automatic sign detection
-- [ ] Before/after signage experiment
-- [ ] OpenVINO edge optimisation
+- ~~Backtracking detection~~ — flagged optional on Day 1. Two behaviours validated
+  properly beat three half-working.
+- ~~Automatic sign detection~~
+- ~~Before/after signage experiment~~
 
 ---
 
@@ -709,201 +710,313 @@ Two words for one place is how a file gets lost.
 
 **Quiz score:      /3**
 
-## Day 6 (carried) — Smoothing + velocity
-- [ ] **Decide the pipeline order:** undistort footpoints → homography → smoothing?
-      Or smooth in pixels first? Undistortion must come before homography for the
-      same reason it did on the floor frame.
+
+---
+
+# RE-PLAN — Wed 19 Aug
+
+Lens calibration took two days instead of one, so the original schedule is dead.
+16 working days remain (Thu 20 Aug – Fri 4 Sep) plus one buffer day.
+
+**Four things changed, and the reasons matter more than the dates.**
+
+### 1. THE SHOOT WAS NEVER ON THE SCHEDULE
+The protocol, the signs, the cast, the camera and the consent plan were all
+planned on Day 4 — and no day was ever allocated to **actually recording it**.
+Every remaining task downstream (tuning, ground truth, metrics, dashboard, demo)
+consumes that footage. It is now **Day 9, Sat 22 Aug**, and it is the single
+highest-risk item left.
+
+**Shoot earlier if the family can.** Two reasons:
+- **camC carries the homography.** Every day the camera sits on that wall is
+  another day it can be knocked. A knock before the shoot costs a full rebuild:
+  re-record, re-click, re-test.
+- **All footage recorded before camC is homography-orphaned.** The route test was
+  camB. Those pixels cannot be converted to centimetres by `homography_camC.npz`.
+  Until the shoot happens, every detector can only be developed in pixels.
+
+### 2. GROUND TRUTH LABELLING MOVED FROM DAY 19 TO DAY 11
+The old plan tuned the detectors on Days 8 and 10, then labelled ground truth on
+Day 19. **That is backwards, and the old Day 19 entry said so in its own words:**
+*"Do this BEFORE looking at what the system found."* It was scheduled after
+eleven days of looking at what the system found.
+
+Labels written after watching the system output are contaminated — you end up
+agreeing with the machine instead of judging it. Labels come first, blind.
+
+### 3. TUNING SET AND EVALUATION SET ARE NOW SPLIT
+Tuning thresholds on the same trips used to compute precision and recall would
+inflate both. That is Rule 8 wearing a lab coat.
+- **Trips 1–12 = tuning set.** Thresholds are chosen here.
+- **Trips 13–21 = held-out evaluation set.** Opened once, on Day 15, and never
+  tuned against. Whatever it says is what goes in the README.
+
+### 4. VALIDATION MOVED BEFORE THE DASHBOARD
+If recall comes back at 20%, that needs to be known while there is still time to
+fix detectors — not after two days of UI work built on top of it. Metrics are
+MUST HAVE; the dashboard is MUST HAVE; the dashboard displays the metrics.
+Measure first.
+
+### What got cut
+- **Backtracking — CUT.** Was already flagged optional on Day 1. Two behaviours
+  validated properly beat three half-working.
+- **Signage OCR — one day, not two.** Demoted to a cuttable day.
+- **Automatic sign detection, before/after experiment — CUT.** Nice-to-haves that
+  were never going to happen in 16 days.
+
+---
+
+## Day 7 — Thu 20 Aug — Smoothing + velocity  **+ shoot prep**
+- [ ] **Decide the pipeline order and write it down.** Undistort footpoints →
+      homography → smoothing? Or smooth in pixels first? Undistortion must come
+      before homography for exactly the reason it did on the floor frame.
 - [ ] Smooth noisy trajectories
 - [ ] Compute speed over time per track
 - [ ] Compute heading (direction of travel) per track
-- [ ] **Convert cm to m somewhere explicit and obvious**, before Day 9 thresholds
+- [ ] **Convert cm → m in ONE explicit, obvious place.** Homography outputs
+      centimetres. Day 10 thresholds are m/s. A hidden factor of 100 will look
+      almost plausible.
+- [ ] Check smoothing against the Day 3 crossing spikes — does it kill them?
+
+**Shoot prep (do not let this slip to Day 9):**
+- [ ] Make the wall sign (A4, thick marker, eye height)
+- [ ] Make the 5 destination cards
+- [ ] Ask mum to confirm the 2-hour slot **in writing**
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 7 — Wed 19 Aug — U-turn detector v1
+## Day 8 — Fri 21 Aug — U-turn detector v1  **+ final shoot prep**
 - [ ] Angle between "before" and "after" movement vectors
 - [ ] Flag reversals above threshold
-- [ ] Require minimum travel distance either side
+- [ ] Require a minimum travel distance either side, so jitter can't fake a reversal
+- [ ] Thresholds are placeholders today — real tuning is Day 12, after labels exist
+
+**Final shoot prep:**
+- [ ] Clear the floor: shoes, slippers, rug, trolley, shoe rack, **robot vacuum**
+- [ ] Confirm the wooden door is open, exactly as it was for the homography
+- [ ] `int(fps * 1.0)` fragment filter — at 15 fps a hardcoded 25 discards real tracks
+- [ ] Charge everything, check storage, test-record 30 s and play it back
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-# WEEK 2 — Make the computer understand behaviour
+## Day 9 — Sat 22 Aug — ★ THE SHOOT ★
+**Highest-risk day in the project. Everything downstream eats this footage.**
 
-## Day 8 — Thu 20 Aug — U-turn tuning
-- [ ] Hand-label real U-turns in the test clip
-- [ ] Tune thresholds against those labels
-- [ ] Kill false positives from tracker jitter
+- [ ] Consent on camera first — each person says their name and that they agree
+- [ ] One continuous recording for the whole session
+- [ ] 21 trips (~7 each), roughly two-thirds using the missing destinations
+      (`TOILETS`, `LOUNGE` — deliberately absent from the wall sign)
+- [ ] **5 full seconds between people. Never two in frame at once.**
+- [ ] Log each trip on paper as it happens: trip number, destination card, clean or wasted
+- [ ] **DO NOT TOUCH THE CAMERA**
+
+**Same day, before bed — verify it, don't assume it:**
+- [ ] `check_video.py` on the raw file — resolution, real frame count, duration
+- [ ] `ffmpeg -r 15 -an` CFR conversion, then `check_video.py` again
+- [ ] Undistort one frame and eyeball it
+- [ ] Run the existing tracker over 500 frames and watch the preview
+- [ ] **Back the raw file up to a second location before touching anything**
+
+If the footage is unusable, that is discovered tonight, not on Day 15.
+Sun 23 Aug is the reshoot slot if needed — hesitation work slides.
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 9 — Fri 21 Aug — Hesitation detector
+## Day 10 — Sun 23 Aug — Hesitation detector v1  *(or RESHOOT)*
 - [ ] **Absolute speed threshold** — speed below X m/s sustained for Y seconds.
-      NOT a per-person baseline: the corridor is 2.7 m, too short to establish one.
-      See Day 4. This limitation gets stated plainly in the README.
-- [ ] **CHECK THE UNITS.** Homography outputs centimetres. Thresholds are m/s.
-- [ ] Ignore people who are simply stationary the whole time
-- [ ] Sanity-check X and Y against a normal walking pace measured from the footage
+      NOT a per-person baseline: 2.7 m of approach is too short to establish one.
+      See Day 4. This limitation is stated plainly in the README.
+- [ ] **CHECK THE UNITS.** Homography is centimetres. Thresholds are m/s.
+- [ ] Ignore people who are simply stationary for their whole track
+- [ ] Sanity-check X against a normal walking pace measured from the real footage
+- [ ] Thresholds are placeholders — tuning is Day 12
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 10 — Sat 22 Aug — Hesitation tuning + event schema
-- [ ] Tune against hand labels
-- [ ] Define the event record: type, track ID, timestamp, x, y, confidence
+## Day 11 — Mon 24 Aug — ★ GROUND TRUTH LABELLING (BLIND) ★
+**Moved forward from Day 19. Do this before looking at any detector output.**
+
+- [ ] **Write the definitions FIRST, before watching anything.** What exactly counts
+      as a hesitation? A U-turn? How many seconds? How many degrees? Day 2 proved
+      that me and the filter were counting different things.
+- [ ] Watch the evaluation clip and log every real event by timestamp
+- [ ] **Split the log: trips 1–12 = tuning set, trips 13–21 = held out**
+- [ ] Do not open the detector output today. Not once.
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 11 — Sun 23 Aug — Event log
+## Day 12 — Tue 25 Aug — Tune both detectors **on the tuning set only**
+- [ ] Tune U-turn thresholds against trips 1–12
+- [ ] Tune hesitation thresholds against trips 1–12
+- [ ] Kill false positives from tracker jitter
+- [ ] **One variable at a time.** Every trustworthy number in this file came from that.
+- [ ] **Do not open trips 13–21.** Touching them turns the Day 15 metrics into fiction.
+
+**Status:**
+**Notes:**
+**Quiz score:      /3**
+
+## Day 13 — Wed 26 Aug — Event log
+- [ ] Event schema: type, track ID, timestamp, x, y (metres), confidence
 - [ ] Every detected event written to `results.json`
-- [ ] Events also drawn on the output video as they happen
+- [ ] Events drawn on the output video as they fire
+- [ ] Processing stays separated from display — the Day 1 decision that makes the
+      demo immune to a slow CPU
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 12 — Mon 24 Aug — Hotspot engine
+## Day 14 — Thu 27 Aug — Hotspot engine
 - [ ] Cluster event coordinates (DBSCAN or grid density)
 - [ ] Output hotspot centre, event count, type breakdown
 - [ ] Heatmap overlay on a still frame
+- [ ] Sanity check: does the biggest hotspot land at the fork? If it lands somewhere
+      nobody stopped, something upstream is wrong
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 13 — Tue 25 Aug — Backtracking (cut this if behind)
-- [ ] Simple revisit-with-opposite-heading detector
-- [ ] If it isn't working by end of day, mark SKIPPED and move on
+## Day 15 — Fri 28 Aug — ★ VALIDATION METRICS (held-out set) ★
+**Moved before the dashboard. If the numbers are bad, there is still time.**
 
-**Status:**
-**Notes:**
-**Quiz score:      /5**
+- [ ] Open trips 13–21 for the first time
+- [ ] Precision, recall, F1 per behaviour
+- [ ] **Include the hard cases.** 100% recall on huge obvious U-turns says nothing
+      about subtle ones, and easy-test scores do not go in the README (Rule 8)
+- [ ] Write the honest limitations section, including the homography paragraph
+- [ ] Practise explaining every number out loud
 
-## Day 14 — Wed 26 Aug — Signage MVP part 1
-- [ ] User draws a box around a sign
-- [ ] OCR reads the sign text
-- [ ] Store sign position + text
-
-**Status:**
-**Notes:**
-**Quiz score:      /5**
-
-# WEEK 3 — Make it a product
-
-## Day 15 — Thu 27 Aug — Signage MVP part 2
-- [ ] Arrow direction (basic)
-- [ ] Associate sign with nearest hotspot
-- [ ] Generate a conservatively worded audit finding
+**If recall is poor:** Days 18 and 19 are the sacrificial days. Cut signage or
+live mode and fix the detector. Metrics are MUST HAVE; those two are not.
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 16 — Fri 28 Aug — Dashboard part 1 (Streamlit)
+## Day 16 — Sat 29 Aug — Dashboard part 1 (Streamlit)
 - [ ] Upload / select video
 - [ ] Analyse button + progress indicator
-- [ ] Show processed video
+- [ ] Show the processed video
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 17 — Sat 29 Aug — Dashboard part 2
+## Day 17 — Sun 30 Aug — Dashboard part 2
 - [ ] Event counts, hotspot map, event timeline
-- [ ] Signage audit panel
-- [ ] Privacy-by-design statement visible in the UI
+- [ ] Precision/recall shown in the UI, not hidden in the README
+- [ ] Privacy-by-design statement visible on screen
+- [ ] **"Not SaaS" stated explicitly** — a dashboard makes people assume cloud.
+      On-premises, self-hosted, footage never leaves the building.
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 18 — Sun 30 Aug — Live sensor mode (hardware angle)
-- [ ] Same pipeline running on a live webcam feed
-- [ ] Record a short clip of a real U-turn being detected live
+## Day 18 — Mon 31 Aug — Signage MVP  *(CUTTABLE — SHOULD HAVE)*
+- [ ] User draws a box around a sign; OCR reads the text
+- [ ] Arrow direction, basic
+- [ ] Associate a sign with the nearest hotspot
+- [ ] Generate a conservatively worded audit finding —
+      *"possible signage issue associated with this hotspot"*, never *"this sign caused it"*
+
+**Cut this whole day if Day 15 metrics need rescuing.**
+
+**Status:**
+**Notes:**
+**Quiz score:      /3**
+
+## Day 19 — Tue 1 Sep — Live sensor mode  *(CUTTABLE — SHOULD HAVE)*
+- [ ] Same pipeline on a live webcam feed
+- [ ] Record a short clip of a real U-turn detected live
 - [ ] **OpenVINO conversion** — measure ms/frame before and after against the
-      622 ms yolo11m baseline. Real Intel technology, real measured number, and
-      it answers the "medium model is heavy" objection.
+      622 ms yolo11m baseline. Real Intel tech, real measured number, and it
+      answers the "medium model is heavy" objection directly.
+
+This is the hardware/IoT framing for VoltHacks, and the groundwork for Intel 2027.
+Valuable — but not worth a broken detector. Cut it before cutting metrics.
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 19 — Mon 31 Aug — Ground truth labelling
-- [ ] Watch the evaluation clip and log every real event by timestamp
-- [ ] Do this BEFORE looking at what the system found
-- [ ] **Define what counts as an event before counting anything** (Day 2 lesson)
-
-**Status:**
-**Notes:**
-**Quiz score:      /5**
-
-## Day 20 — Tue 1 Sep — Validation metrics
-- [ ] Compute precision, recall, F1 per behaviour
-- [ ] **Include hard cases, not just obvious ones.** 100% recall on huge obvious
-      U-turns says nothing about the subtle ones. Easy-test scores don't go in
-      the README.
-- [ ] Write an honest limitations section
-- [ ] Learn to explain these numbers out loud
-
-**Status:**
-**Notes:**
-**Quiz score:      /5**
-
-## Day 21 — Wed 2 Sep — Polish + GitHub + README
-- [ ] `.gitignore` (no `.venv`, no big videos, no model weights)
-- [ ] README with pitch, architecture, definitions, privacy, metrics, limitations
+## Day 20 — Wed 2 Sep — Polish + GitHub + README
+- [ ] `.gitignore` verified (no `.venv`, no videos, no `*.pt`) — `git status` first
+- [ ] README: pitch, architecture, definitions, privacy, metrics, limitations
 - [ ] **Homography limitation paragraph** (Day 5) + `floor_points.jpg` as evidence
 - [ ] Architecture diagram
-- [ ] **SDG 11 framing paragraph** (sustainable cities / accessible transport;
-      wayfinding difficulty falls hardest on elderly, disabled and non-native
-      speakers). Useful for VoltHacks, essential for Intel 2027.
-- [ ] **Responsible-AI section:** what's collected, what's discarded, who consented,
-      and where the system is biased (YOLO detection varies with body size, clothing,
-      lighting; a wheelchair user's silhouette is not what it was trained on).
+- [ ] **SDG 11 framing** — accessible transport; wayfinding difficulty falls hardest
+      on elderly, disabled and non-native speakers
+- [ ] **Responsible-AI section:** what is collected, what is discarded, who consented,
+      and where the system is biased (YOLO detection varies with body size, clothing
+      and lighting; a wheelchair user's silhouette is not what it was trained on)
+- [ ] The commit history is the evidence of original work. Do not squash it.
 
 **Status:**
 **Notes:**
-**Quiz score:      /5**
+**Quiz score:      /3**
 
-## Day 22 — Thu 3 Sep — Demo video
+## Day 21 — Thu 3 Sep — Demo video
 - [ ] Storyboard the first 10 seconds FIRST
-- [ ] Record real system output only — zero fake numbers
-- [ ] **Blur faces** in every frame shown — proves the privacy claim instead of
+- [ ] Real system output only — zero fake numbers
+- [ ] **Blur faces in every frame shown.** Proves the privacy claim instead of
       asserting it, and my sister is 10
-- [ ] Edit, export, upload
+- [ ] Edit, export, upload, **watch it back once end to end**
 
 Structure (2 min, landscape):
 1. 0–10 s — the problem, shown not told. No logo, no title card.
 2. 10–40 s — raw footage → same footage with boxes, IDs, trails.
 3. 40–70 s — an event firing live on screen.
-4. 70–100 s — the dashboard: hotspot map, signage finding in careful wording.
-5. 100–120 s — precision and recall, and one honest limitation. **Don't skip this.**
-
-**Status:**
-**Notes:**
-**Quiz score:      /5**
-
-## Day 23 — Fri 4 Sep — Devpost submission
-- [ ] Project description, screenshots, tech list, GitHub link, video link
-- [ ] Click every link yourself
-- [ ] SUBMIT (do not wait for Day 24)
+4. 70–100 s — dashboard: hotspot map, signage finding in careful wording.
+5. 100–120 s — precision and recall, and one honest limitation. **Do not skip this.**
 
 **Status:**
 **Notes:**
 
-## Day 24 — Sat 5 Sep — BUFFER ONLY
-- [ ] Fix anything broken. Deadline 22:00 Lisbon.
+## Day 22 — Fri 4 Sep — ★ SUBMIT ★
+- [ ] Description, screenshots, tech list, GitHub link, video link
+- [ ] **Click every link yourself, logged out**
+- [ ] SUBMIT TODAY. Do not wait for Day 23.
 
 **Status:**
 **Notes:**
+
+## Day 23 — Sat 5 Sep — BUFFER ONLY
+- [ ] Fix anything broken. **Deadline 22:00 Lisbon.**
+- [ ] If the submission is already in, this day is for sleeping.
+
+**Status:**
+**Notes:**
+
+---
+
+## Risk register — what actually kills this project
+
+| Risk | Day it bites | What it costs | Mitigation |
+|---|---|---|---|
+| **Camera knocked before the shoot** | any day before 9 | Re-record empty room, re-click, re-test homography — half a day | Shoot as early as the family allows. Don't touch the wall. |
+| **Shoot day cancelled** | 9 | Everything downstream stalls | Confirm the slot in writing on Day 7. Sun 23 is the fallback. |
+| **Footage unusable, found late** | 15 | Fatal — no time to reshoot | Full verification on the night of the shoot, not later |
+| **Poor precision/recall** | 15 | Weak README, weak demo | Metrics moved before dashboard; Days 18–19 are sacrificial |
+| **Unit error (cm vs m)** | 10 | Every speed 100x wrong, silently | One explicit conversion point, written down on Day 7 |
+| **Contaminated ground truth** | 15 | Metrics become fiction | Labels blind on Day 11; held-out set untouched until Day 15 |
+| **Overrun like Days 5–6** | any | Buffer already spent once | Days 18 and 19 are the release valve. Cut, don't extend. |
+
+**The buffer has already been used once.** Days 5–6 consumed it. What is left is
+Days 18 and 19 — and they are not spare time, they are two SHOULD-HAVE features
+that can be dropped. There is no third cut after that.
 
 ---
 
