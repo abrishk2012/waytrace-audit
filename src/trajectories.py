@@ -2,19 +2,18 @@ import cv2
 from collections import defaultdict
 from ultralytics import YOLO
 
-video_path = "data/input/test_people.mp4"
-output_path = "data/output/trajectories.mp4"
+video_path = "data/raw/2026-08-19_flat_camC_devwalk_undist.mp4"
+output_path = "data/output/devwalk_trajectories.mp4"
 
-START_FRAME = 1800
-MAX_FRAMES = 500
+MAX_FRAMES = 100000
 TRAIL_LENGTH = 60
 
 model = YOLO("yolo11m.pt")
 
 cap = cv2.VideoCapture(video_path)
-cap.set(cv2.CAP_PROP_POS_FRAMES, START_FRAME)
 
 fps = cap.get(cv2.CAP_PROP_FPS)
+MIN_TRACK_LENGTH = int(fps * 1.0)
 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
@@ -78,7 +77,7 @@ writer.release()
 
 print()
 print("Saved to", output_path)
-print("Tracks with 25+ points:")
+print(f"Tracks with {MIN_TRACK_LENGTH}+ points:")
 for track_id, points in sorted(trajectories.items()):
-    if len(points) >= 25:
+    if len(points) >= MIN_TRACK_LENGTH:
         print(f"  ID {track_id}: {len(points)} points")
