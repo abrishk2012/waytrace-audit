@@ -766,38 +766,132 @@ Measure first.
 
 ---
 
-## Day 7 — Thu 20 Aug — Smoothing + velocity  **+ shoot prep**
-- [ ] **Decide the pipeline order and write it down.** Undistort footpoints →
-      homography → smoothing? Or smooth in pixels first? Undistortion must come
-      before homography for exactly the reason it did on the floor frame.
-- [ ] Smooth noisy trajectories
-- [ ] Compute speed over time per track
-- [ ] Compute heading (direction of travel) per track
-- [ ] **Convert cm → m in ONE explicit, obvious place.** Homography outputs
-      centimetres. Day 10 thresholds are m/s. A hidden factor of 100 will look
-      almost plausible.
-- [ ] Check smoothing against the Day 3 crossing spikes — does it kill them?
+## Day 7 — Wed 19 Aug (eve) — Pipeline running on camC footage
+- [x] Record a dev walk clip on camC
+- [x] CFR convert + undistort the whole video
+- [x] Decide and lock the pipeline order
+- [x] Tracking working on real camC footage
+- [x] Resolve the fisheye `alpha` question
+- [ ] ~~Velocity~~ → moved to Day 8
+- [ ] ~~Shoot prep~~ → moved to Day 8
 
-**Shoot prep (do not let this slip to Day 9):**
-- [ ] Make the wall sign (A4, thick marker, eye height)
-- [ ] Make the 5 destination cards
-- [ ] Ask mum to confirm the 2-hour slot **in writing**
+**Status:** PARTIAL — the plumbing landed, the maths did not
 
-**Status:**
 **Notes:**
+
+### All pre-camC footage is homography-orphaned
+The route test was **camB**. `homography_camC.npz` cannot convert those pixels to
+centimetres — a homography belongs to one camera in one position. Recorded a 53 s
+dev walk on camC so the pipeline has something real to chew on before Saturday.
+
+### Pipeline order — DECIDED AND LOCKED
+**CFR convert → undistort the whole video → track → homography → smooth.**
+Undistorting the video first means every footpoint YOLO produces is already
+straight, so the homography applies directly with no per-point correction step.
+It also produces the video the judges will actually see.
+
+### Fisheye `alpha` question — raised, tested, dropped
+One room entrance falls outside the undistorted frame. Considered
+`getOptimalNewCameraMatrix(alpha=1)` to recover the full field of view.
+**Rejected after watching the dev walk: nobody walks there.** Two reasons:
+- Changing alpha **moves every pixel**, so the 4 clicked corners land somewhere
+  new and `homography_camC.npz` becomes wrong. Full rebuild: re-click, re-build,
+  re-test.
+- `alpha=1` hands back the extreme edge pixels — exactly where the distortion
+  model is weakest (principal point wandered 442 → 537 between calibration runs,
+  and across-axis error is already 2 cm). **Buying floor area with accuracy.**
+One line in limitations instead. **LOCKED — do not reopen after the shoot.**
+
+### `START_FRAME` killed a run for the SECOND time
+`START_FRAME = 1800` and `MAX_FRAMES = 500` were still sitting in
+`trajectories.py` from the terrace clip. This video has 793 frames. The seek
+landed past the end → first `cap.read()` returned False → loop broke instantly.
+- **257-byte output. Printed "Saved to". Exited clean. Zero tracks.**
+  Byte-for-byte the same failure as Day 4.
+- Two tells: finished in seconds when it should take 8 minutes, and
+  `Tracks with 25+ points:` printed with **nothing after it**.
+- **The fix was deletion, not adjustment.** Removed `START_FRAME` and the
+  `cap.set(CAP_PROP_POS_FRAMES, ...)` seek entirely. Read forward and count —
+  the only thing this camera is honest about.
+- **A hardcoded frame number has no correct value. Only "correct until the next
+  file."** Rule 5, third occurrence — and the second time this exact variable did it.
+
+### Fragment filter finally parameterised
+`25` → `MIN_TRACK_LENGTH = int(fps * 1.0)` = **15 at 15 fps**.
+The hardcoded 25 also appeared **twice more** in the summary block at the bottom,
+which is why the first edit looked like it hadn't worked. Confirmed by the output
+reading `Tracks with 15+ points:`.
+
+### Tracking result — `devwalk_undist.mp4`, 793 frames, 15.0 fps
+Three tracks survived the filter: **329, 151, 177 points** = 657 of 793 frames,
+**~83% detection coverage**. Watched the output end to end:
+- No mid-walk ID switches
+- Footpoint stayed under the feet, including at distance
+- No trail spikes
+
+**First clean end-to-end run on my own camera.**
+
+### ffmpeg duplicated one frame
+792 frames in, 793 out, log said `dup=1`. The camera ran fractionally slow and
+ffmpeg filled the gap to hit a true 15.0. **That is the VFR problem being
+corrected in front of me.** Harmless at 1 in 793 — but worth seeing.
+
+### New scripts
+`undistort_video.py`
+
+### Carried to Day 8
+Velocity, the cm→m conversion, the signs, and the ground-truth walk measurement.
+
 **Quiz score:      /3**
 
-## Day 8 — Fri 21 Aug — U-turn detector v1  **+ final shoot prep**
-- [ ] Angle between "before" and "after" movement vectors
-- [ ] Flag reversals above threshold
-- [ ] Require a minimum travel distance either side, so jitter can't fake a reversal
-- [ ] Thresholds are placeholders today — real tuning is Day 12, after labels exist
+## Day 8 — Thu 20 Aug — SHOOT PREP FIRST, then velocity
 
-**Final shoot prep:**
+> **ORDER IS NOT OPTIONAL TODAY. Shoot prep before velocity.**
+> Shoot prep has now slipped twice — planned on Day 4, scheduled for Day 7, done
+> on neither. It is the only work here that **cannot be caught up later**: the
+> shoot is Saturday, and the signs are what make the hesitation real rather than
+> acted. Velocity can be built any day between now and Day 12. The signs cannot.
+> Velocity is the more interesting problem. That is exactly why it keeps eating
+> the boring one. **Do not open a Python file until Part 1 is fully ticked.**
+
+---
+
+### PART 1 — SHOOT PREP (do this first, no exceptions)
+- [ ] Make the wall sign — A4, thick black marker, eye height:
+      `GATES A-C →` / `BAGGAGE CLAIM ←` / `EXIT ↑`
+- [ ] Make the 5 destination cards (A5): `GATES A-C`, `BAGGAGE CLAIM`,
+      `TOILETS`, `EXIT`, `LOUNGE`
+      *`TOILETS` and `LOUNGE` are deliberately NOT on the wall sign — that is the
+      missing-destination failure mode, and it is what defeats the learning effect.*
+- [ ] Confirm the 2-hour slot with mum **in writing**
 - [ ] Clear the floor: shoes, slippers, rug, trolley, shoe rack, **robot vacuum**
 - [ ] Confirm the wooden door is open, exactly as it was for the homography
-- [ ] `int(fps * 1.0)` fragment filter — at 15 fps a hardcoded 25 discards real tracks
 - [ ] Charge everything, check storage, test-record 30 s and play it back
+- [ ] **Do not touch the camera.** camC carries the homography.
+
+### PART 2 — THE ANSWER KEY (20 seconds, before any code)
+- [ ] Walk the corridor once at normal pace. **Count tiles crossed. Count seconds.**
+- [ ] Work it out by hand: `tiles × 30.8 cm ÷ 100 ÷ seconds` = m/s
+- [ ] Write that number down.
+
+*Why: the system is about to print a speed. `1.2`, `120` and `0.012` all look like
+numbers. Without my own measurement I cannot tell which is real, and the failure
+mode here is a silent factor of 100. Rule 18.*
+
+### PART 3 — VELOCITY
+- [ ] Apply `homography_camC.npz` to every stored footpoint → centimetres
+- [ ] **Convert cm → m in ONE explicit, obvious, commented place**
+- [ ] Compute speed over time per track
+- [ ] Compute heading (direction of travel) per track
+- [ ] Smooth the trajectories; check it kills the Day 3 crossing spikes
+- [ ] **Compare the output against the answer key before moving on**
+
+### PART 4 — U-TURN v1 (only if Parts 1–3 are done)
+- [ ] Angle between "before" and "after" movement vectors
+- [ ] Require a minimum travel distance either side, so jitter can't fake a reversal
+- [ ] Thresholds are placeholders — real tuning is Day 12, after labels exist
+
+**If the day runs out:** Part 4 slides to Day 10. Parts 1 and 2 do not slide.
 
 **Status:**
 **Notes:**
@@ -1034,6 +1128,7 @@ that can be dropped. There is no third cut after that.
 | Smoothing | |
 | Homography | The recipe that turns a pixel into a spot on the floor. Built by clicking 4 points whose real-world distances I already know. Belongs to **one camera in one position** — scrap it on any remount. Mine covers 154 x 58.8 cm and is accurate to **0.6 cm along the walking axis**. |
 | Extrapolation | Asking the model about ground **outside** the region it was taught. It answers just as confidently either way. My across-axis error tripled (0.6 → 2.0 cm) the moment I tested outside the 2-tile-wide strip. |
+| Undistortion crop (`alpha`) | `cv2.undistort` straightens the picture by pulling edge pixels inward, so the frame narrows. `getOptimalNewCameraMatrix(alpha=1)` zooms back out to keep everything. **Chose the default crop** — the recovered pixels are the extreme edges, where the distortion model is least trustworthy, and changing it would invalidate the homography. |
 | Hesitation event | |
 | U-turn event | |
 | Backtracking | |
@@ -1108,3 +1203,14 @@ Fill these in yourself as you learn them. If a box is empty on Day 20, that's a 
     straight past `*.mp4`. This is why `git status` runs before `git add .`, always.
 16. **Units are a silent failure mode.** The maths has no idea what a centimetre is.
     Whatever unit goes in comes out. Write the unit down next to the file that holds it.
+17. **A hardcoded frame number has no correct value — only "correct until the next
+    file."** `START_FRAME` silently killed a run on Day 4 and again on Day 7, both
+    times producing a 257-byte file that printed "Saved to". The fix was deleting
+    it, not adjusting it. Read forward and count.
+18. **Make the answer key before you take the test.** A speed of `1.2`, `120` and
+    `0.012` all look like numbers. Measuring the real thing by hand first is the
+    only way to catch a wrong answer that looks reasonable.
+19. **The interesting task will always eat the boring one.** Shoot prep slipped
+    twice because velocity was more fun to work on. When one task has a hard
+    external deadline and the other doesn't, the deadline one goes first —
+    written into the day's order, not left to willpower.
