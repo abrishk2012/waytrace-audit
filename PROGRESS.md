@@ -77,7 +77,7 @@ Many small commits per day. Each one is a save point you can go back to.
 - [ ] Person detection
 - [ ] Anonymous tracking IDs
 - [ ] Trajectories drawn on video
-- [ ] Real-world units via homography
+- [x] Real-world units via homography
 - [ ] U-turn detection
 - [ ] Hesitation detection
 - [ ] Hotspot clustering
@@ -109,6 +109,13 @@ Many small commits per day. Each one is a save point you can go back to.
 
 **File naming:** `date_location_cameraSetup_take`. Calibration videos omit the
 camera letter, because lens calibration doesn't care where the camera is.
+
+**Location word is `flat`, always.** `hall` was used once by mistake on Day 5.
+Two words for one place is how you lose a file.
+
+**camC is now load-bearing.** The homography is built for this exact mount.
+Knock it and the homography is scrap — recording, clicking and testing all
+have to be redone.
 
 ---
 
@@ -384,10 +391,10 @@ the output.
   mildest. Free accuracy.
 
 ### Still to do before the real shoot
-- [ ] Record 30 s of the **empty room on camC** — the homography calibration frame
-      needs clean, unobstructed tile corners.
+- [x] Record 30 s of the **empty room on camC** — done Day 5.
 - [ ] Clear the floor completely: shoes, slippers, rug, trolley, shoe rack. The rug
-      especially — it covers the tiles.
+      especially — it covers the tiles. **The robot vacuum too** — it's in the
+      bottom-left of the camC frame.
 - [ ] Make the signs (see below).
 - [ ] Fragment filter must become `int(fps * 1.0)`, not hardcoded 25. At 15 fps,
       25 frames = 1.7 s, and with a 2.7 m corridor that would silently discard
@@ -425,6 +432,9 @@ The destinations are fake, which is the point: nobody knows which real door is
    Stop at 21 or 2 hours, whichever first.
 8. A trip is not clean if two people overlapped, someone left the shot, or the
    camera was knocked. Note the wasted ones and redo them.
+9. **The wooden door stays open.** The homography was built with it open, because
+   that is how the room will look on shoot day.
+10. **Do not touch the camera.** camC carries the homography.
 
 **Quiz score: 2/3 — PASSED**
 - Q1 (why variable frame rate breaks things) — got it in my own words: uneven frames
@@ -442,9 +452,8 @@ The destinations are fake, which is the point: nobody knows which real door is
 - [x] `cv2.calibrateCamera` → camera matrix `K` and distortion coefficients `dist`
 - [x] Verify undistortion **visually**, not just by RMS
 - [x] Remount the camera → **camC**
-- [ ] Homography (moved to next session)
 
-**Status:** PARTIAL — undistortion DONE, homography still to do
+**Status:** DONE
 
 **Notes:**
 
@@ -565,24 +574,149 @@ The destinations are fake, which is the point: nobody knows which real door is
 - **Process failure on my side: RMS was used for hours before it was ever defined.**
   Terms get explained the first time they appear, not retroactively.
 
-## Day 5 (carried) — Homography (pixels → metres)
-- [ ] Record 30 s of the empty room on **camC**, floor completely clear
-- [ ] Undistort the frame FIRST — homography on a distorted frame maps a bent world
-- [ ] Click 4 floor points, supply their real-world distances (tiles = 29.4 x 30.8 cm)
-- [ ] `cv2.findHomography` maps image coords to floor coords
-- [ ] Speeds now reported in m/s instead of pixels/frame
-- [ ] **Accuracy check:** build the homography from centre tiles, then ask it to
-      measure a tile near the frame edge. If it says 29 cm, distortion is handled.
-      If it says 38 cm, it isn't. Measured, not assumed — goes in limitations either way.
+## Day 5 (carried) — Wed 19 Aug — Homography (pixels → cm)
+- [x] Record 30 s of the empty room on **camC**
+- [x] Undistort the frame FIRST — homography on a distorted frame maps a bent world
+- [x] Click 4 floor points, supply their real-world distances
+- [x] `cv2.findHomography` maps image coords to floor coords
+- [x] **Accuracy check on tiles OUTSIDE the calibrated region**
 
-**Status:**
+**Status:** DONE
+
 **Notes:**
-**Quiz score:      /5**
+
+### The empty-room clip
+- `2026-08-19_flat_camC_empty.mp4` — 1024x576, 503 frames, 33.6 s.
+- `check_video.py` reported header count and real count **in agreement** this time.
+  That does not retire the EZVIZ rule. Unreliable is not the same as always-wrong,
+  and unreliable is still unusable. Read-until-false stays everywhere.
+- **No `ffmpeg -r 15` needed.** One still frame is extracted and no time is ever
+  measured, so VFR is harmless. Same reasoning as the calibration video.
+- `grab_frame.py` pulls frame 200 by **reading forward and counting** — no
+  `cap.set()` seek anywhere. Seeking is what silently broke `START_FRAME` on Day 4.
+
+### Undistort BEFORE clicking — non-negotiable
+- `undistort_frame.py` applies `K` and `dist` from `calibration_ezviz.npz` to
+  `floor_raw.jpg` → `floor_undistorted.jpg`.
+- Verified by eye on the actual floor, not by a number: the door frames on both
+  edges of the raw frame **bow outward like a barrel**, and are straight afterwards.
+  Black wedges at the corners, exactly as expected from Day 6.
+- Homography assumes a straight line in the world stays straight in the picture.
+  Feed it a bent world and every centimetre it reports is wrong — silently.
+- **RMS 2.17 px was the homework. Bent door frames on the real floor are the exam.**
+
+### The calibration region is 5 x 2 tiles, not 4 x 4 — and why
+- Wanted a square-ish block. Couldn't have one. Two things ate the corners:
+  1. The wooden door is **open in shot and must stay open** — walkers use it.
+  2. The nearest row of tiles runs off the **bottom edge of the frame**, so its
+     corner does not exist in the image at all.
+- **A corner you cannot see is a corner you must not click.** A guessed click looks
+  identical to a measured one in the output — four numbers, no error message, and a
+  bent floor forever. Rule 1 in its purest form.
+- Settled on **5 tiles along x 2 tiles across = 154.0 x 58.8 cm**.
+- Considered shrinking further to 2 x 5 in the other orientation and rejected it:
+  two corners nearly touching gives the maths almost nothing in that direction.
+- **The calibration frame must show the room exactly as it will be during the shoot.**
+  Closing the door for a tidier block would have mapped a floor that won't exist on
+  shoot day. Same family as Rule 5 — correct for one situation, silently wrong for
+  the next.
+
+### The floor is laid DIAGONALLY
+- Tiles run at an angle to the frame, so a tile-aligned block looks like a **diamond**
+  on screen. Lost time thinking the corners were being marked wrongly. They weren't.
+- Homography does not need a screen-aligned rectangle. Same lesson as the
+  29.4 x 30.8 tiles on Day 4: **it doesn't need neat, it needs true.**
+
+### Pixel cross-check before trusting the clicks
+Clicked corners, in order: **left, bottom, right, top**
+`(399,431)  (473,536)  (755,374)  (668,306)`
+
+- Short edges ≈ **128** and **111** px. Long edges ≈ **325** and **295** px.
+- Long ÷ short ≈ **2.5**, and 5 ÷ 2 = **2.5**.
+- **Two independent numbers agreeing** — same check that validated the Day 2 track
+  counts and the chessboard square size. This is how a number earns trust.
+
+### Real-world coordinates handed to `findHomography`
+| click | corner | world (cm) |
+|---|---|---|
+| 1 | left | (0, 0) |
+| 2 | bottom | (58.8, 0) |
+| 3 | right | (58.8, 154.0) |
+| 4 | top | (0, 154.0) |
+
+x = across (2 tiles x 29.4 cm). y = **along the walking direction** (5 tiles x 30.8 cm).
+Order matters absolutely: `findHomography` pairs them **by position in the list**.
+Wrong order maps the floor to a bow-tie, without complaining.
+
+### THE ACCURACY TEST — measured, not assumed
+Round-tripping the 4 clicked corners returned them exactly (0.0, 58.8, 154.0…).
+**That test cannot fail** — it is homework with the answers attached. The real test
+is floor the system was never taught.
+
+| clicked point | true value | homography said | error |
+|---|---|---|---|
+| 1 tile *before* zero, along | -30.8 cm | **-30.2 cm** | **0.6 cm (~2%)** |
+| 4 tiles up, along | 123.2 cm | **123.8 cm** | **0.6 cm (~0.5%)** |
+| 1 tile left of zero, across | -29.4 cm | **-31.4 cm** | **2.0 cm (~7%)** |
+
+- **Along-axis strong, across-axis weak — exactly what a 5x2 strip predicts.**
+  The maths is worst precisely where it was given least. It **failed honestly**
+  rather than failing quietly, which is the behaviour you want from a measurement.
+- The along-axis is the walking direction — the one every speed is made of.
+- Error includes mouse-click precision, so the true error is smaller than shown.
+- Had distortion still been uncorrected, a tile outside the taught region would have
+  come back as ~38 cm or ~25 cm instead of 30.8. It came back within 6 mm.
+
+### LIMITATION (goes in the README verbatim)
+> Homography was built from a 5 x 2 tile region (154 x 58.8 cm), the largest area of
+> floor with four unobstructed tile corners visible. Measured error on tiles outside
+> that region: **0.6 cm along the walking axis and 2.0 cm across it.** The lateral
+> axis is less reliable because the calibration strip is narrow — the open floor
+> available was limited by a doorway that must remain open during recording.
+> Speeds are computed predominantly along the corridor axis, which is the
+> well-calibrated direction.
+
+### Units — `homography_camC.npz` is in CENTIMETRES
+Centimetres went in, so centimetres come out. The maths has no idea what a
+centimetre is; whatever unit goes in is the unit that comes out.
+**Day 9 thresholds are in m/s. Divide by 100, or every speed is 100x wrong —
+silently, and it will look almost plausible.**
+
+### `pick_points.py` drew dots it never saved
+Red dots existed only inside the popup window; the file on disk stayed clean, leaving
+no record of where the clicks landed. Added `draw_points.py` → `floor_points.jpg`,
+numbered dots plus a green outline of the strip.
+- Four numbers in a terminal look correct no matter where they landed. Drawing them
+  back onto the picture is the only way to **see** that they're right.
+- Doubles as the README evidence on Day 21.
+
+### Stray file `c` in `data/raw`
+A 3.9 MB file with no extension, created at 03:11, that `git status` offered to commit.
+- `.gitignore` blocks `*.mp4`. It does not block a file with no name-shape at all.
+  **`.gitignore` matches patterns, not intentions.** This is exactly why `git status`
+  runs before `git add .`, every single time.
+- **`check_video.py` identified it: 15.0 fps exactly.** The camera records 14.97;
+  only `ffmpeg -r 15` produces 15.000. **A number told us which tool made the file.**
+- It was the queued CFR conversion with a mangled output name. Renamed, not deleted.
+
+### New scripts this session
+`grab_frame.py`, `undistort_frame.py`, `pick_points.py`, `build_homography.py`,
+`test_homography.py`, `draw_points.py`, `test_one_point.py`
+
+### Naming inconsistency found and fixed
+`hall` and `flat` both used for the same location. Standardising on **`flat`**.
+Two words for one place is how a file gets lost.
+
+**Quiz score:      /3**
 
 ## Day 6 (carried) — Smoothing + velocity
+- [ ] **Decide the pipeline order:** undistort footpoints → homography → smoothing?
+      Or smooth in pixels first? Undistortion must come before homography for the
+      same reason it did on the floor frame.
 - [ ] Smooth noisy trajectories
 - [ ] Compute speed over time per track
 - [ ] Compute heading (direction of travel) per track
+- [ ] **Convert cm to m somewhere explicit and obvious**, before Day 9 thresholds
 
 **Status:**
 **Notes:**
@@ -612,6 +746,7 @@ The destinations are fake, which is the point: nobody knows which real door is
 - [ ] **Absolute speed threshold** — speed below X m/s sustained for Y seconds.
       NOT a per-person baseline: the corridor is 2.7 m, too short to establish one.
       See Day 4. This limitation gets stated plainly in the README.
+- [ ] **CHECK THE UNITS.** Homography outputs centimetres. Thresholds are m/s.
 - [ ] Ignore people who are simply stationary the whole time
 - [ ] Sanity-check X and Y against a normal walking pace measured from the footage
 
@@ -725,6 +860,7 @@ The destinations are fake, which is the point: nobody knows which real door is
 ## Day 21 — Wed 2 Sep — Polish + GitHub + README
 - [ ] `.gitignore` (no `.venv`, no big videos, no model weights)
 - [ ] README with pitch, architecture, definitions, privacy, metrics, limitations
+- [ ] **Homography limitation paragraph** (Day 5) + `floor_points.jpg` as evidence
 - [ ] Architecture diagram
 - [ ] **SDG 11 framing paragraph** (sustainable cities / accessible transport;
       wayfinding difficulty falls hardest on elderly, disabled and non-native
@@ -783,7 +919,8 @@ Structure (2 min, landscape):
 | Heading | |
 | Angle between vectors | |
 | Smoothing | |
-| Homography | |
+| Homography | The recipe that turns a pixel into a spot on the floor. Built by clicking 4 points whose real-world distances I already know. Belongs to **one camera in one position** — scrap it on any remount. Mine covers 154 x 58.8 cm and is accurate to **0.6 cm along the walking axis**. |
+| Extrapolation | Asking the model about ground **outside** the region it was taught. It answers just as confidently either way. My across-axis error tripled (0.6 → 2.0 cm) the moment I tested outside the 2-tile-wide strip. |
 | Hesitation event | |
 | U-turn event | |
 | Backtracking | |
@@ -848,3 +985,13 @@ Fill these in yourself as you learn them. If a box is empty on Day 20, that's a 
     gate just above it. Same discipline as measuring 5 tiles instead of eyeballing one.
 12. **Commit after every working chunk.** Many small commits per day, not one at the
     end. Six days of work once sat uncommitted on one laptop.
+13. **A test the system cannot fail proves nothing.** Round-tripping the 4 clicked
+    homography corners returned them perfectly — they *were* the input. The number
+    that meant something came from a corner outside the taught region.
+14. **A point you cannot see is a point you must not click.** A guessed coordinate is
+    indistinguishable from a measured one once it's in the array. Shrink the region
+    instead — a smaller honest measurement beats a bigger invented one.
+15. **`.gitignore` matches patterns, not intentions.** A 3.9 MB file called `c` walked
+    straight past `*.mp4`. This is why `git status` runs before `git add .`, always.
+16. **Units are a silent failure mode.** The maths has no idea what a centimetre is.
+    Whatever unit goes in comes out. Write the unit down next to the file that holds it.
