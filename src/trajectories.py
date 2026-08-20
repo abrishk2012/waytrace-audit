@@ -1,4 +1,5 @@
 import cv2
+import json
 from collections import defaultdict
 from ultralytics import YOLO
 
@@ -81,3 +82,11 @@ print(f"Tracks with {MIN_TRACK_LENGTH}+ points:")
 for track_id, points in sorted(trajectories.items()):
     if len(points) >= MIN_TRACK_LENGTH:
         print(f"  ID {track_id}: {len(points)} points")
+
+# ---- SAVE THE TRAJECTORIES ----
+# Units here are PIXELS in the undistorted frame. Not cm. Not metres.
+traj_path = "data/output/devwalk_trajectories.json"
+with open(traj_path, "w") as f:
+    json.dump({str(k): v for k, v in trajectories.items()}, f)
+print("Trajectories saved to", traj_path)
+print("Track count saved:", len(trajectories))
