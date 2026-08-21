@@ -206,3 +206,59 @@ for t in (0.0, 0.7, 1.0, 1.5, 2.0, 2.5, 3.0):
         vv = [v for _, v in speeds_for(ww)]
         row.append(f"{max(vv):.2f}" if vv else "  - ")
     print(f"  {t:.1f}   {row[0]}    {row[1]}    {row[2]}")
+
+print()
+print("Are the spikes on broken boxes?")
+for tid in ("1", "6", "8"):
+    raw = trajectories[tid]
+    box = {p[2]: (p[3], p[4]) for p in raw}          # frame -> (w, h)
+    aspects = sorted(h / wd for wd, h in box.values())
+    median = aspects[len(aspects) // 2]
+
+    ww = pixels_to_metres(raw)
+    top = sorted(speeds_for(ww), key=lambda r: -r[1])[:5]
+
+    print(f"  ID {tid}: median aspect (h/w) = {median:.2f}")
+    for f, v in top:
+        wd, h = box[f]
+        print(f"     t={f/FPS:5.1f}s  {v:.2f} m/s   box {wd}x{h}  aspect {h/wd:.2f}")
+
+        print()
+print("Do spikes sit on sudden box SIZE jumps?")
+for tid in ("1", "6", "8"):
+    raw = trajectories[tid]
+    area = {p[2]: p[3]*p[4] for p in raw}
+    frames = sorted(area)
+    jump = {}
+    for i in range(1, len(frames)):
+        a0, a1 = area[frames[i-1]], area[frames[i]]
+        jump[frames[i]] = a1 / a0
+    med_area = sorted(area.values())[len(area)//2]
+    ww = pixels_to_metres(raw)
+    top = sorted(speeds_for(ww), key=lambda r: -r[1])[:5]
+    print(f"  ID {tid}: median box area = {med_area}")
+    for f, v in top:
+        print(f"     t={f/FPS:5.1f}s  {v:.2f} m/s  area={area[f]:6d}  "
+              f"= {area[f]/med_area:.2f}x median   jump={jump.get(f, 1):.2f}x")
+
+        print()
+print("Are spike frames adjacent or gapped?")
+for tid in ("1", "6", "8"):
+    raw = trajectories[tid]
+    frames = sorted(p[2] for p in raw)
+    ww = pixels_to_metres(raw)
+    top = sorted(speeds_for(ww), key=lambda r: -r[1])[:3]
+    for f, v in top:
+        i = frames.index(f)
+        gap = f - frames[i-1] if i > 0 else 0
+        print(f"  ID {tid}  t={f/FPS:5.1f}s  {v:.2f} m/s   gap to previous = {gap} frames")
+
+        print()
+print("Do spikes cluster by POSITION?")
+for tid in ("1", "6", "8"):
+    ww = pixels_to_metres(trajectories[tid])
+    pos = {f: (x, y) for x, y, f in ww}
+    top = sorted(speeds_for(ww), key=lambda r: -r[1])[:3]
+    for f, v in top:
+        x, y = pos[f]
+        print(f"  ID {tid}  {v:.2f} m/s  at  x={x:+.2f}  y={y:+.2f}")
