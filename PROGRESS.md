@@ -846,56 +846,129 @@ Velocity, the cm→m conversion, the signs, and the ground-truth walk measuremen
 
 ## Day 8 — Thu 20 Aug — SHOOT PREP FIRST, then velocity
 
-> **ORDER IS NOT OPTIONAL TODAY. Shoot prep before velocity.**
-> Shoot prep has now slipped twice — planned on Day 4, scheduled for Day 7, done
-> on neither. It is the only work here that **cannot be caught up later**: the
-> shoot is Saturday, and the signs are what make the hesitation real rather than
-> acted. Velocity can be built any day between now and Day 12. The signs cannot.
-> Velocity is the more interesting problem. That is exactly why it keeps eating
-> the boring one. **Do not open a Python file until Part 1 is fully ticked.**
+### PART 1 — SHOOT PREP
+- [x] Wall sign made — A4, thick marker, eye height at the fork
+- [x] 5 destination cards made (A5)
+- [x] 2-hour slot confirmed with mum **in writing**
+- [x] Floor cleared: shoes, slippers, rug, trolley, shoe rack, robot vacuum
+- [x] Wooden door confirmed open, as per homography
+- [x] Storage checked, 30 s test recorded and played back
+- [x] Camera not touched
 
----
-
-### PART 1 — SHOOT PREP (do this first, no exceptions)
-- [ ] Make the wall sign — A4, thick black marker, eye height:
-      `GATES A-C →` / `BAGGAGE CLAIM ←` / `EXIT ↑`
-- [ ] Make the 5 destination cards (A5): `GATES A-C`, `BAGGAGE CLAIM`,
-      `TOILETS`, `EXIT`, `LOUNGE`
-      *`TOILETS` and `LOUNGE` are deliberately NOT on the wall sign — that is the
-      missing-destination failure mode, and it is what defeats the learning effect.*
-- [ ] Confirm the 2-hour slot with mum **in writing**
-- [ ] Clear the floor: shoes, slippers, rug, trolley, shoe rack, **robot vacuum**
-- [ ] Confirm the wooden door is open, exactly as it was for the homography
-- [ ] Charge everything, check storage, test-record 30 s and play it back
-- [ ] **Do not touch the camera.** camC carries the homography.
-
-### PART 2 — THE ANSWER KEY (20 seconds, before any code)
-- [ ] Walk the corridor once at normal pace. **Count tiles crossed. Count seconds.**
-- [ ] Work it out by hand: `tiles × 30.8 cm ÷ 100 ÷ seconds` = m/s
-- [ ] Write that number down.
-
-*Why: the system is about to print a speed. `1.2`, `120` and `0.012` all look like
-numbers. Without my own measurement I cannot tell which is real, and the failure
-mode here is a silent factor of 100. Rule 18.*
+### PART 2 — THE ANSWER KEY
+- [x] Walked the corridor: **8 tiles, 3.85 s**
+- [x] By hand: 8 x 30.8 / 100 / 3.85 = **0.64 m/s**, distance **2.46 m**
 
 ### PART 3 — VELOCITY
-- [ ] Apply `homography_camC.npz` to every stored footpoint → centimetres
-- [ ] **Convert cm → m in ONE explicit, obvious, commented place**
-- [ ] Compute speed over time per track
-- [ ] Compute heading (direction of travel) per track
-- [ ] Smooth the trajectories; check it kills the Day 3 crossing spikes
-- [ ] **Compare the output against the answer key before moving on**
+- [x] Trajectories saved to JSON (they were never saved before)
+- [x] Homography applied -> metres
+- [x] cm -> m conversion in ONE place
+- [x] Per-frame speed working
+- [x] Compared against the answer key — **passed**
+- [ ] Smoothing — NOT DONE, moved to Day 10
 
-### PART 4 — U-TURN v1 (only if Parts 1–3 are done)
-- [ ] Angle between "before" and "after" movement vectors
-- [ ] Require a minimum travel distance either side, so jitter can't fake a reversal
-- [ ] Thresholds are placeholders — real tuning is Day 12, after labels exist
+### PART 4 — U-TURN v1
+- [ ] SLIDES TO DAY 10 (permitted by the day's own plan)
 
-**If the day runs out:** Part 4 slides to Day 10. Parts 1 and 2 do not slide.
+**Status:** PARTIAL — Parts 1–3 done, smoothing and U-turn slid to Day 10
 
-**Status:**
 **Notes:**
-**Quiz score:      /3**
+
+### Shoot prep finally closed
+Slipped on Day 4 and Day 7. Done now, two days before the shoot. Rule 19 held
+once it was written into the day's order instead of left to willpower.
+
+### Sign design changed — BAGGAGE CLAIM and EXIT now share a left arrow
+Checked first that the left side has **two doors**. Without a second decision at
+the end of the arrow there would be no pause, and a pause the camera can't see
+is not an event. A confusion mechanism only counts if it ends in "...and therefore
+they stop walking."
+- Before/after signage experiment stayed CUT. 21 trips split across two sign
+  states is ~10 each, and the cast would have learned the route by trip 22.
+  **One shoot, one sign state.**
+
+### WayTrace does not diagnose signs — corrected
+WayTrace outputs **where**, never **why**. OCR (Day 18) reads what is nearby.
+A human joins them. Wording stays *"possible signage issue associated with this
+hotspot."* Two cheap deterministic sign checks noted for Day 18 (shared arrow,
+missing destination) — Day 18 only, and it is still first to be cut.
+
+### THE TRAJECTORY DATA WAS NEVER BEING SAVED
+Day 7 printed 329/151/177 points to the terminal and wrote only a video. The
+actual `(x, y, frame)` lists existed nowhere. Every look at the numbers meant an
+8-minute tracker re-run — impossible to iterate on.
+- Fixed: `trajectories.py` now writes `data/output/devwalk_trajectories.json`.
+  **11,155 bytes, 3 tracks.** Cross-check: 657 points x ~17 chars = ~11,000. Two
+  independent numbers agreeing.
+- Saves **all** tracks, unfiltered. Filtering is a decision and belongs downstream
+  where it can be changed.
+- Unit written into the file as a comment: **PIXELS**.
+
+### The edit was saved but the run used the old file
+Ran the script, then saved during the 8-minute run. Python had already loaded the
+old version at launch. Output was correct — but the two new print lines never
+appeared, which is what caught it.
+- **The print you expected and didn't get is as much a signal as an error.**
+- Order is now: **Ctrl+S -> then run.** Never overlap.
+
+### Homography verified against the answer key — 3 cm
+ID 1 walked dx=+2.25 m, dy=+0.93 m -> **2.44 m**. Hand measurement: **2.46 m**.
+No factor of 100 anywhere. Rule 18 paid for itself.
+
+### The walk is mostly on the WEAK axis — README claim now in doubt
+`y` was assumed to be the walking direction. The walk is 2.25 m in **x** and only
+0.93 m in y. x is the across-axis — **2.0 cm error, not 0.6 cm.**
+The README limitation currently claims *"speeds are computed predominantly along
+the corridor axis, which is the well-calibrated direction."* **That may be false.**
+Under 1% error over 2.4 m so not urgent — **re-check on real shoot footage and
+correct the paragraph before Day 20.**
+Found by accident during a units check, not by looking for it.
+
+### The average speed is a number that describes nothing
+ID 1: 2.44 m in 21.9 s = 0.11 m/s. Real distance, real time, meaningless answer —
+it averages a walk with a 10-second standstill and matches neither.
+**This is why hesitation is "below X m/s sustained for Y seconds", never an average.**
+An average over a whole track hides the exact thing being detected.
+
+### Per-second dump of ID 1 — a hesitation, visible in raw numbers
+- t=4.3–7.3 s: walking, ~0.6 m/s (matches the answer key)
+- t=7.3–17.3 s: **stopped.** Ten seconds, x stuck between 0.71 and 1.07
+- t=18.3–25.3 s: moving again, 1.6 m swing in y
+Watched the video to check the last part: **that was real movement, confirmed.**
+Small +/-15 cm wobbles are foot-lift noise — the footpoint is the box bottom edge,
+so lifting a foot moves it.
+
+### max = 3.70 m/s on a 2.7 m hallway
+Nobody ran. ~25 cm of footpoint wobble / 0.067 s = 3.7 m/s.
+**Short time gaps magnify small errors into huge speeds.** The Day 3 spike
+problem, measured instead of asserted.
+- **Smoothing now has a measured spec, not a guess: remove wobbles under ~20 cm,
+  preserve the real 1.6 m swing.** If smoothing flattens that swing it is too strong.
+
+### Indentation bug — Day 3, again
+Three blocks in `speeds.py` sat indented inside `for` loops they didn't belong to
+and ran three times each. Output looked identical because each pass overwrote the
+last with the same value. Harmless here; in a list-building step it would have
+produced three copies and still looked plausible.
+- Fixed, re-ran, **every number identical**. A refactor that changes a number is
+  a bug, not an improvement.
+
+### New file this session
+`src/speeds.py`
+
+### Commits this session
+- Save trajectories to JSON
+- speeds.py: pixel->metre in one place, per-frame speed, verified
+- Tidy speeds.py: imports to top, indentation fixed, output unchanged
+
+**Quiz score: POSTPONED to Day 9.**
+Honest reason recorded: the explanations were being copy-pasted without being
+read, at ~1am, at the end of a long session. Flagged by me, not caught by a test.
+Rule 7 — retention drops when saturated. Re-teach happens tomorrow, fresh, in
+short chunks. Three ideas owed: (1) why a small position error becomes a huge
+speed, (2) why the run used the old file, (3) why the /100 lives in one place.
+**Nothing in the shoot depends on this. The shoot needs signs, a clear floor and
+an untouched camera — all done.**
 
 ## Day 9 — Sat 22 Aug — ★ THE SHOOT ★
 **Highest-risk day in the project. Everything downstream eats this footage.**
@@ -1214,3 +1287,14 @@ Fill these in yourself as you learn them. If a box is empty on Day 20, that's a 
     twice because velocity was more fun to work on. When one task has a hard
     external deadline and the other doesn't, the deadline one goes first —
     written into the day's order, not left to willpower.
+20. **Ctrl+S, then run. Never save during a run.** Python reads the file once, at
+    launch. An 8-minute script gives you 8 minutes to save an edit that run will
+    never see. The tell was a print that didn't appear — **an expected line missing
+    is as much a signal as an error message.**
+21. **Short time gaps magnify small errors.** 25 cm of footpoint wobble over
+    1/15 s reads as 3.70 m/s. The same 25 cm over a second reads as 0.25 and
+    nobody notices. Speed = distance / time, and dividing by a small number makes
+    things big. This is what smoothing exists to fix.
+22. **An average over a whole track hides the thing you are detecting.** ID 1
+    averaged 0.11 m/s: a real walk plus a real 10-second stop, producing a number
+    that describes neither. Events are "below X for Y seconds", never an average.
