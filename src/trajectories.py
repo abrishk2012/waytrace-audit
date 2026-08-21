@@ -49,11 +49,22 @@ while frame_number < MAX_FRAMES:
 
             foot_x = (x1 + x2) // 2
             foot_y = y2
-            trajectories[track_id].append((foot_x, foot_y, frame_number))
 
-            colour = colour_for_id(track_id)
+
+    if boxes.id is not None:
+        for box, track_id in zip(boxes.xyxy, boxes.id.int().tolist()):
+            x1, y1, x2, y2 = [int(v) for v in box]
+
+            foot_x = (x1 + x2) // 2
+            foot_y = y2
+            box_w = x2 - x1
+            box_h = y2 - y1
+            trajectories[track_id].append((foot_x, foot_y, frame_number, box_w, box_h))
+
+            colour = colour_for_id(track_id)            
             cv2.rectangle(frame, (x1, y1), (x2, y2), colour, 1)
             cv2.putText(frame, f"#{track_id}", (x1, y1 - 5),
+
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, colour, 2)
 
     for track_id, points in trajectories.items():
