@@ -107,3 +107,10 @@ for win in (1, 3, 5, 9, 15):
     ws = smooth(w, window=win)
     vs = [v for _, v in speeds_for(ws)]
     print(f"  {win:2d}     {max(vs):.2f} m/s    {y_swing(ws):.2f} m")
+    print()
+print("ID 1, t=13-17s (the known 10-second stop):")
+for win in (1, 5):
+    ws = smooth(w, window=win)
+    stop_vals = [v for f, v in speeds_for(ws) if 13.0 <= f/FPS <= 17.0]
+    print(f"  window={win:2d}   max in stop={max(stop_vals):.2f} m/s   "
+          f"mean={sum(stop_vals)/len(stop_vals):.2f} m/s")
