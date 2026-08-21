@@ -961,14 +961,55 @@ produced three copies and still looked plausible.
 - speeds.py: pixel->metre in one place, per-frame speed, verified
 - Tidy speeds.py: imports to top, indentation fixed, output unchanged
 
-**Quiz score: POSTPONED to Day 9.**
-Honest reason recorded: the explanations were being copy-pasted without being
-read, at ~1am, at the end of a long session. Flagged by me, not caught by a test.
-Rule 7 — retention drops when saturated. Re-teach happens tomorrow, fresh, in
-short chunks. Three ideas owed: (1) why a small position error becomes a huge
-speed, (2) why the run used the old file, (3) why the /100 lives in one place.
-**Nothing in the shoot depends on this. The shoot needs signs, a clear floor and
-an untouched camera — all done.**
+**Quiz score: POSTPONED on the night — taken Day 8.5, scored 2.5/3, PASSED.**
+Honest reason for the postponement: the explanations were being copy-pasted
+without being read, at ~1am, at the end of a long session. Flagged by me, not
+caught by a test. Rule 7 — retention drops when saturated.
+
+## Day 8.5 — Fri 21 Aug — THE DAY THAT WASN'T ON THE PLAN
+
+**This day did not exist in the re-plan.** Day 8 was Thu 20 Aug and Day 9 is
+Sat 22 Aug. Friday fell through the gap when the schedule was rebuilt on 19 Aug.
+Found by reading the tracker dates against the calendar.
+- Shoot prep is already fully ticked, so nothing is at risk.
+- **Do not touch the camera.** camC still carries the homography.
+- Treat this as recovered buffer, not as spare time.
+
+### The postponed quiz — 2.5/3, PASSED
+- Q1 (why 25 cm of wobble reads as 3.70 m/s) — **correct**, including the half
+  that matters: *"it's the clock's fault."* The error did not grow; the gap it
+  was divided by shrank.
+- Q2 (why the run used the old file) — **correct.** *"The file is already read,
+  it won't go back to it."*
+- Q3 (two `/100`s) — **half.** Direction right, size wrong: answered 1000x too
+  small, actual is 100 x 100 = **10,000x** too small.
+  - Re-taught: **the dangerous unit bug is the plausible one, not the insane one.**
+    Two `/100`s turn 0.6 m/s into 0.00006 — obviously broken, so it gets caught.
+    A *missing* `/100` turns 0.6 into 60, and 60 still looks like a number.
+
+### Smoothing — the concept, before the code
+Replace each footpoint with the average of it and its neighbours.
+- Real movement **survives** averaging: it points the same direction frame after
+  frame, so the average still points that way.
+- Random jitter **cancels**: it points a new direction every frame.
+- **Smoothing only kills RANDOM error.** A systematic error leans the same way
+  every frame, so averaging leaves it exactly where it was. (Day 4's tilted-camera
+  footpoint was systematic — that is why it had to be fixed at the camera.)
+- Measured spec carried from Day 8, not guessed:
+  **kill wobbles under ~20 cm, preserve the real 1.6 m swing in ID 1.**
+  If the swing shrinks, the smoothing is too strong. That is the pass/fail test.
+
+### Answer key printed BEFORE smoothing was written (Rule 18 / Rule 13)
+Unsmoothed baseline for ID 1, written down first:
+- max speed: **3.70 m/s**
+- y-swing over t=18.3–25.3 s: **~1.6 m**
+
+Without these two numbers on paper first, "the code ran without error" is a test
+the system cannot fail. New numbers after smoothing mean nothing unless there is
+an old number to compare them to.
+
+**Status:**
+**Notes:**
 
 ## Day 9 — Sat 22 Aug — ★ THE SHOOT ★
 **Highest-risk day in the project. Everything downstream eats this footage.**
@@ -1298,3 +1339,9 @@ Fill these in yourself as you learn them. If a box is empty on Day 20, that's a 
 22. **An average over a whole track hides the thing you are detecting.** ID 1
     averaged 0.11 m/s: a real walk plus a real 10-second stop, producing a number
     that describes neither. Events are "below X for Y seconds", never an average.
+23. **Smoothing only removes RANDOM error.** Systematic error leans the same way
+    every frame, so averaging preserves it perfectly. Ask which kind you have
+    before reaching for a filter.
+24. **The dangerous unit bug is the plausible one.** Two `/100`s make 0.6 into
+    0.00006 and get caught instantly. A missing `/100` makes 0.6 into 60 — and 60
+    still looks like a number.
