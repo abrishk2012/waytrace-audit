@@ -1008,8 +1008,112 @@ Without these two numbers on paper first, "the code ran without error" is a test
 the system cannot fail. New numbers after smoothing mean nothing unless there is
 an old number to compare them to.
 
-**Status:**
-**Notes:**
+### Smoothing BUILT and TUNED — `window=5` locked
+Moving average over `window` neighbours, applied **after** the metre conversion so
+the measured spec applies directly. Frame number is carried through un-averaged:
+**position gets smoothed, the clock does not.** Averaging the frame would smear
+the very thing being divided by.
+- First version returned `(x, y)` only — 2 values into a 3-value unpack. Caught
+  before running. The function was also **defined and never called**, which would
+  have printed numbers identical to yesterday's and looked like "smoothing did
+  nothing." Rule 1 family: no error, no warning, no output change.
+
+Full sweep, one run, one variable:
+
+| window | max speed | y-swing |
+|--------|-----------|---------|
+| 1  | 3.70 m/s | 1.74 m |
+| 3  | 1.99 m/s | 1.73 m |
+| 5  | **1.40 m/s** | **1.72 m** |
+| 9  | 1.03 m/s | 1.71 m |
+| 15 | 0.99 m/s | 1.72 m |
+
+- `window=1` printed 3.70 / 1.74, **identical to unsmoothed** — the sanity check
+  that makes the other four rows trustworthy. Averaging a point with no neighbours
+  must change nothing.
+- **Chose 5, not 9 or 15.** Bigger window = smoother but blurrier *in time*. The
+  hesitation detector is "below X **sustained for Y seconds**" — a time-bounded
+  event. `window=15` averages over a full second and smears every event's start
+  and end by half a second each side. A real 1.5 s hesitation could smudge away.
+  **The smoothest option is not the right one for a detector that cares when
+  things start and stop.**
+- Max speed flattens between 9 (1.03) and 15 (0.99) — a 0.04 drop. That plateau
+  means the random jitter is essentially gone by then and the ~1.0 m/s remainder
+  is real movement averaging cannot erase.
+- 1.40 m/s is still brisk-jog speed for a hallway. Smoothing produced a *less
+  insane* max, not a believable one. **Do not quote 1.40 as "walking speed."**
+
+### The y-swing test was NON-DISCRIMINATING — my own Rule 18 failure
+Swing moved 1.74 -> 1.71 across the entire window range, including `window=15`.
+2%. It was set up as the pass/fail ceiling test and **it never came close to
+failing**, so it carried no information.
+- Why: swing is max-minus-min over a **7-second** excursion. Averaging over 0.33 s
+  or even 1.0 s cannot dent a multi-second movement. The test measured something
+  smoothing was never going to break.
+- **Rule 18 applies to the person writing the test, not just the code.** A test
+  that cannot fail proves nothing, and "I chose the threshold myself" is not
+  protection against that.
+- The column that actually discriminated was max speed. Keep it as the tuning
+  signal; keep swing only as a "did I destroy the signal" guard.
+
+### The known stop: threshold alone is NOT enough
+ID 1, t=13–17 s, ten seconds of confirmed standing still:
+
+| window | max in stop | mean in stop |
+|--------|-------------|--------------|
+| 1 | 0.49 m/s | 0.11 m/s |
+| 5 | 0.38 m/s | 0.10 m/s |
+
+- Predicted 1–2 m/s spikes inside the stop. **Wrong — it is 0.49.** The stop was
+  always fairly quiet; there was little noise there to remove. Smoothing's big win
+  happened during *movement*, not during standstill.
+- Measured walking speed is **0.64 m/s**. So during a genuine standstill the
+  system briefly reports 0.49 — **77% of walking speed**, or 59% after smoothing.
+  The gap between "still" and "walking" is 0.38 vs 0.64, much narrower than hoped.
+- **Therefore: a bare speed threshold cannot work.** Set X=0.2 and one real
+  10-second stop gets chopped into three fake short ones every time a wobble
+  crosses the line. Set X=0.5 and slow walking is called hesitation.
+  **The "sustained for Y seconds" half is what makes it survivable** — the
+  slowness must persist, so a single frame poking above the line cannot end the
+  event. Day 10's design was already written this way; this is the measurement
+  that proves it had to be.
+
+### THE 3.70 m/s SPIKE IS AN EDGE ARTEFACT, NOT FOOT NOISE
+Ranked the five fastest moments instead of staring at the maximum:
+
+```
+t=25.6s   3.70 m/s   <- track ends at 26.2s. Final 0.6 seconds.
+t=17.5s   1.99 m/s
+t=21.4s   1.96 m/s
+t=17.6s   1.88 m/s
+t= 5.4s   1.75 m/s
+```
+
+- The top value is **1.9x the second**. Real noise makes a gentle slope; a cliff
+  like that means a **different cause**, not the extreme end of normal.
+- Cause: the detection box needs a whole person. As she exits frame her body is
+  half out of view, the box shrinks, and its bottom edge — the footpoint — lurches.
+  **The person did not move 25 cm. The box did.**
+- The other four sit in a tight 1.75–1.99 band scattered mid-track. That is the
+  genuine foot-lift noise, and it is consistent. **Two separate populations.**
+- **Smoothing is the wrong tool here.** Averaging an artefact *spreads* it — five
+  frames slightly wrong instead of one frame very wrong. Edge artefacts must be
+  **trimmed, not averaged.**
+- This also reframes the headline: 62% max-speed reduction was mostly smoothing
+  dragging down one artefact. Against real mid-track noise it is 1.99 -> 1.40,
+  which is modest and honest.
+- **DAY 10 ACTION: trim the first and last ~0.5 s of every track before computing
+  anything, then re-check max.** Expect the new max near 1.4–2.0 m/s.
+
+### Commits this session
+- Day 8.5: quiz 2.5/3, smoothing spec, rules 20-24
+- Smoothing: moving average window=5, max 3.70->1.40, swing preserved
+- Smoothing tuned: window=5 locked, swing test found non-discriminating
+- Stop-period analysis: threshold alone insufficient, sustained-duration required
+- Located 3.70 m/s spike: edge artefact at track exit, trim fix scheduled Day 10
+
+**Status:** DONE — smoothing built, tuned, justified, and one real data bug found
+**Quiz score: 2.5/3 (the postponed Day 8 quiz, taken today)**
 
 ## Day 9 — Sat 22 Aug — ★ THE SHOOT ★
 **Highest-risk day in the project. Everything downstream eats this footage.**
@@ -1037,6 +1141,14 @@ Sun 23 Aug is the reshoot slot if needed — hesitation work slides.
 **Quiz score:      /3**
 
 ## Day 10 — Sun 23 Aug — Hesitation detector v1  *(or RESHOOT)*
+
+- [ ] **FIRST: trim first/last ~0.5 s of every track, then re-check max speed.**
+      Carried from Day 8.5 — the 3.70 m/s outlier is an entry/exit box artefact,
+      not movement. Trim it; do not smooth it.
+- [ ] Smoothing is already built and locked at `window=5` (Day 8.5)
+- [ ] Detector MUST be "below X m/s **sustained for Y s**", never a bare
+      threshold — measured reason in Day 8.5 (0.49 m/s recorded mid-standstill
+      against 0.64 m/s walking)
 - [ ] **Absolute speed threshold** — speed below X m/s sustained for Y seconds.
       NOT a per-person baseline: 2.7 m of approach is too short to establish one.
       See Day 4. This limitation is stated plainly in the README.
@@ -1345,3 +1457,19 @@ Fill these in yourself as you learn them. If a box is empty on Day 20, that's a 
 24. **The dangerous unit bug is the plausible one.** Two `/100`s make 0.6 into
     0.00006 and get caught instantly. A missing `/100` makes 0.6 into 60 — and 60
     still looks like a number.
+25. **A function defined but never called is invisible.** No error, no warning,
+    no change in output — and the unchanged numbers read as "it didn't help."
+    Same family as Rule 1.
+26. **When the top value is roughly double the second, it is a different thing,
+    not a bigger version of the same thing.** 3.70 against 1.99/1.96/1.88/1.75 was
+    an edge artefact hiding among foot noise. Rank the top five; never tune against
+    a lone maximum.
+27. **Smoothing spreads an artefact; only trimming removes it.** Averaging a bad
+    frame makes five frames slightly wrong instead of one frame very wrong. Ask
+    what caused the outlier before choosing the tool.
+28. **The smoothest setting is not the best setting.** Bigger windows blur events
+    in time. When the detector cares *when* something starts and stops, sharp
+    edges are worth more than a low maximum.
+29. **A single threshold cannot separate two overlapping populations.** Standstill
+    peaked at 0.49 m/s against 0.64 m/s walking. Duration — "sustained for Y
+    seconds" — is what makes the separation work, not a better threshold value.

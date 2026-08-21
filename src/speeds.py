@@ -114,3 +114,17 @@ for win in (1, 5):
     stop_vals = [v for f, v in speeds_for(ws) if 13.0 <= f/FPS <= 17.0]
     print(f"  window={win:2d}   max in stop={max(stop_vals):.2f} m/s   "
           f"mean={sum(stop_vals)/len(stop_vals):.2f} m/s")
+    print()
+sp = speeds_for(w)
+worst = sorted(sp, key=lambda r: -r[1])[:5]
+print("Top 5 fastest moments, UNSMOOTHED:")
+for f, v in worst:
+    print(f"  t={f/FPS:5.1f}s   {v:.2f} m/s")
+print()
+print("Which axis is the walk actually on?")
+for track_id, points in trajectories.items():
+    w2 = pixels_to_metres(points)
+    dx = abs(w2[-1][0] - w2[0][0])
+    dy = abs(w2[-1][1] - w2[0][1])
+    print(f"  ID {track_id}:  |dx|={dx:.2f} m   |dy|={dy:.2f} m   "
+          f"-> mostly {'X' if dx > dy else 'Y'}")
