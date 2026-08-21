@@ -2,6 +2,21 @@ import json
 import cv2
 import numpy as np
 
+def smooth(points, window=5):
+    """Moving average: replace each point with the average of itself
+    and its neighbours. Kills random jitter, keeps real movement.
+    Input and output are BOTH in METRES, as (x, y, frame)."""
+    half = window // 2
+    out = []
+    for i in range(len(points)):
+        start = max(0, i - half)
+        end   = min(len(points), i + half + 1)
+        chunk = points[start:end]
+        avg_x = sum(p[0] for p in chunk) / len(chunk)
+        avg_y = sum(p[1] for p in chunk) / len(chunk)
+        out.append((avg_x, avg_y, points[i][2]))   # <-- keep this point's own frame
+    return out
+
 FPS = 15.0
 CM_PER_M = 100.0
 
@@ -76,3 +91,16 @@ vals = [v for _, v in speeds_for(w)]
 print()
 print(f"ID 1 speed: min={min(vals):.2f}  max={max(vals):.2f}  "
       f"mean={sum(vals)/len(vals):.2f} m/s   ({len(vals)} samples)")
+# ---- SMOOTHING: OLD vs NEW, SAME RUN ----
+def y_swing(world, t0=18.3, t1=25.3):
+    """Total up-down range in y during the known real movement."""
+    ys = [y for x, y, f in world if t0 <= f / FPS <= t1]
+    return max(ys) - min(ys)
+
+w_smooth = smooth(w, window=5)
+vals_smooth = [v for _, v in speeds_for(w_smooth)]
+
+print()
+print("                max speed     y-swing (18.3-25.3s)")
+print(f"UNSMOOTHED      {max(vals):.2f} m/s      {y_swing(w):.2f} m")
+print(f"SMOOTHED        {max(vals_smooth):.2f} m/s      {y_swing(w_smooth):.2f} m")
