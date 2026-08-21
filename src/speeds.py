@@ -25,7 +25,7 @@ def smooth(points, window=5):
     return out
 
 
-def trim_edges(world, seconds=0.7):
+def trim_edges(world, seconds=0.5):
     """Drop the first and last N seconds of a track.
     Entry/exit box artefacts live there: the person is only half in frame,
     so the box shrinks and its bottom edge (the footpoint) lurches.
@@ -168,3 +168,41 @@ for t in (0.0, 0.3, 0.5, 0.7, 1.0, 1.5):
     wt2 = trim_edges(w, seconds=t)
     vt = [v for _, v in speeds_for(wt2)]
     print(f"  {t:.1f}      {len(wt2):3d}      {max(vt):.2f} m/s")
+
+    print()
+print("Which end is dirty?")
+first_f, last_f = w[0][2], w[-1][2]
+for label, keep in (("entry only", lambda p: p[2] >= first_f + 0.7*FPS),
+                    ("exit only",  lambda p: p[2] <= last_f  - 0.7*FPS)):
+    wt3 = [p for p in w if keep(p)]
+    vt = [v for _, v in speeds_for(wt3)]
+    print(f"  trim {label:11s}  max={max(vt):.2f} m/s")
+
+    print()
+print("Which end is dirty? (all tracks)")
+for track_id, points in trajectories.items():
+    ww = pixels_to_metres(points)
+    f0, f1 = ww[0][2], ww[-1][2]
+    raw   = max(v for _, v in speeds_for(ww))
+    entry = max(v for _, v in speeds_for([p for p in ww if p[2] >= f0 + 0.7*FPS]))
+    exit_ = max(v for _, v in speeds_for([p for p in ww if p[2] <= f1 - 0.7*FPS]))
+    print(f"  ID {track_id}:  raw={raw:.2f}   entry-trim={entry:.2f}   exit-trim={exit_:.2f}")
+
+    print()
+for tid in ("6", "8"):
+    ww = pixels_to_metres(trajectories[tid])
+    f0, f1 = ww[0][2], ww[-1][2]
+    top = sorted(speeds_for(ww), key=lambda r: -r[1])[:5]
+    print(f"ID {tid}  (track runs {f0/FPS:.1f}s to {f1/FPS:.1f}s):")
+    for f, v in top:
+        print(f"   t={f/FPS:5.1f}s   {v:.2f} m/s")
+
+print()
+print("trim   ID1     ID6     ID8")
+for t in (0.0, 0.7, 1.0, 1.5, 2.0, 2.5, 3.0):
+    row = []
+    for tid in ("1", "6", "8"):
+        ww = trim_edges(pixels_to_metres(trajectories[tid]), seconds=t)
+        vv = [v for _, v in speeds_for(ww)]
+        row.append(f"{max(vv):.2f}" if vv else "  - ")
+    print(f"  {t:.1f}   {row[0]}    {row[1]}    {row[2]}")
