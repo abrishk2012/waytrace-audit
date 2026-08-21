@@ -262,3 +262,14 @@ for tid in ("1", "6", "8"):
     for f, v in top:
         x, y = pos[f]
         print(f"  ID {tid}  {v:.2f} m/s  at  x={x:+.2f}  y={y:+.2f}")
+
+        print()
+print("How many cm does ONE pixel cover, across the floor?")
+for py in (150, 250, 350, 450, 550):
+    for px in (200, 500, 800):
+        pts = np.array([[[px, py]], [[px+1, py]], [[px, py+1]]], dtype=np.float32)
+        wp = cv2.perspectiveTransform(pts, H).reshape(-1, 2)
+        dx = np.linalg.norm(wp[1] - wp[0])
+        dy = np.linalg.norm(wp[2] - wp[0])
+        print(f"  img({px:4d},{py:4d}) -> world({wp[0][0]/100:+.2f},{wp[0][1]/100:+.2f}) m"
+              f"   1px = {dx:.2f} cm across, {dy:.2f} cm along")
