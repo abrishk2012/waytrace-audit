@@ -101,6 +101,9 @@ w_smooth = smooth(w, window=5)
 vals_smooth = [v for _, v in speeds_for(w_smooth)]
 
 print()
-print("                max speed     y-swing (18.3-25.3s)")
-print(f"UNSMOOTHED      {max(vals):.2f} m/s      {y_swing(w):.2f} m")
-print(f"SMOOTHED        {max(vals_smooth):.2f} m/s      {y_swing(w_smooth):.2f} m")
+print()
+print("window   max speed   y-swing")
+for win in (1, 3, 5, 9, 15):
+    ws = smooth(w, window=win)
+    vs = [v for _, v in speeds_for(ws)]
+    print(f"  {win:2d}     {max(vs):.2f} m/s    {y_swing(ws):.2f} m")
