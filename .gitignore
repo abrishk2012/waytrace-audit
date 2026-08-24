@@ -21,4 +21,4 @@ data/output/*
 # OS junk
 Thumbs.db
 desktop.ini
-.DS_Store
+.DS_Storedata/*.png
