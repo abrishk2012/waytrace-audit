@@ -3,8 +3,14 @@ import json
 from collections import defaultdict
 from ultralytics import YOLO
 
-video_path = "data/raw/2026-08-19_flat_camC_devwalk_undist.mp4"
-output_path = "data/output/devwalk_trajectories.mp4"
+import sys, os
+video_path = sys.argv[1]
+stem = os.path.splitext(os.path.basename(video_path))[0]
+output_path = f"data/output/{stem}_traj.mp4"
+traj_path = f"data/output/{stem}_traj.json"
+print("Tracking:", video_path)
+print("Video out:", output_path)
+print("JSON out :", traj_path)
 
 MAX_FRAMES = 100000
 TRAIL_LENGTH = 60
@@ -96,7 +102,7 @@ for track_id, points in sorted(trajectories.items()):
 
 # ---- SAVE THE TRAJECTORIES ----
 # Units here are PIXELS in the undistorted frame. Not cm. Not metres.
-traj_path = "data/output/devwalk_trajectories.json"
+
 with open(traj_path, "w") as f:
     json.dump({str(k): v for k, v in trajectories.items()}, f)
 print("Trajectories saved to", traj_path)
