@@ -1,8 +1,9 @@
+import sys
 import cv2
 import numpy as np
-
-IN = "data/raw/2026-08-19_flat_camC_devwalk_cfr.mp4"
-OUT = "data/raw/2026-08-19_flat_camC_devwalk_undist.mp4"
+IN = sys.argv[1]
+OUT = sys.argv[2]
+print("Undistorting:", IN, "->", OUT)
 
 data = np.load("calibration_ezviz.npz")
 K = data["K"]
