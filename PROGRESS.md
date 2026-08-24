@@ -1105,12 +1105,196 @@ t= 5.4s   1.75 m/s
 - **DAY 10 ACTION: trim the first and last ~0.5 s of every track before computing
   anything, then re-check max.** Expect the new max near 1.4–2.0 m/s.
 
+### README WEAK-AXIS CLAIM CONFIRMED FALSE
+Day 8 raised the suspicion. Measured it properly tonight, all three tracks:
+
+```
+ID 1:  |dx|=2.25 m   |dy|=0.93 m   -> X
+ID 6:  |dx|=2.49 m   |dy|=1.00 m   -> X
+ID 8:  |dx|=2.68 m   |dy|=0.59 m   -> X
+```
+
+ID 6 walked the **opposite direction** and is still x-dominant. Every walk is
+along x, by 2.5x to 4.5x. Not a one-off.
+
+- x is the **across-axis**: calibration residual ~**2.0 cm**, not ~0.6 cm.
+- The README currently claims *"speeds are computed predominantly along the
+  corridor axis, which is the well-calibrated direction."* **This is FALSE.**
+- **The numbers are fine.** 2 cm over a 2.4 m walk is under 1%. Nothing needs
+  recomputing.
+- **The sentence is not fine.** A wrong claim in a submission is worse than a
+  missing one — if a judge probes it and it fails, everything else written gets
+  doubted too.
+- **ACTION before Day 20:** rewrite to *"Walking occurs predominantly along the
+  axis with the larger calibration residual (~2 cm). Over a typical 2.4 m walk
+  this is under 1% of the distance travelled and does not materially affect
+  reported speeds, but it is the weaker of the two calibrated axes."*
+- Re-check on real shoot footage first — corridor geometry may differ once the
+  cast walks to the fork rather than straight through.
+
+### Indentation slip — THIRD occurrence (Day 3, Day 8, Day 8.5)
+Two `print()` calls ended up inside `for` loops instead of after them. Cosmetic
+here — extra blank lines, nothing else. **The pattern is the point:** same shape
+every time, a line that belongs outside a loop ending up inside it. In a
+list-building step this produces duplicate entries that look entirely plausible.
+
+### Dating a run from its output
+The axis block appeared in the file but not in the output — no error, nothing
+wrong-looking, just three lines that never printed. Diagnosed by comparing output
+to code: the pasted output had no blank lines between window-table rows, but the
+file contained an indented `print()` that would produce one after every row.
+**Output that does not match the code means the code changed after the run.**
+Rule 20, third time. Ctrl+S **then** run.
+
+### AFTERNOON: FIVE HYPOTHESES FOR THE SPEED SPIKES
+Four rejected with evidence, one confirmed. Full record because the rejections
+are worth as much as the confirmation - each one is a Day 10 dead end avoided.
+
+**Saved box width and height per point first** (`trajectories.py` now writes 5
+values: `x, y, frame, box_w, box_h`). Added to the **end** of the record, so
+`points[-1][2]` and every other index-based read kept working. Re-ran the 8-min
+tracker, verified 5 values per point, and confirmed **every speed number in
+`speeds.py` was byte-identical afterwards.** Doing this before the shoot avoided
+re-running YOLO over 21 trips on Day 10.
+
+| # | Hypothesis | Verdict | Evidence |
+|---|-----------|---------|----------|
+| 1 | Edge artefacts, removable by time-trim | **REJECTED** | Works on ID 1 (3.70->1.99 at 0.7s, then flat). ID 6 and ID 8 unaffected at any value. ID 6 erodes with **no flat region** - 2.36 -> 1.05 -> 0.82 while deleting 60% of a 10-second track. No common boundary exists. |
+| 2 | Box aspect ratio anomaly | **REJECTED** | Medians 2.83 / 2.51 / 2.83. Spikes sit at 1.89, 3.74, 2.99, 1.90, 2.80 - above, below AND exactly at the median. Zero separation. |
+| 3 | Sudden box size change | **REJECTED** | Frame-to-frame area ratios at every spike are **0.82x to 1.12x**. The boxes are stable. Area vs median scatters 0.43x to 2.22x. |
+| 4 | Missing frames inflating the divisor | **REJECTED** | All 9 spike frames have **gap = 1**. Perfectly adjacent. |
+| 5 | **Position on the floor** | **CONFIRMED** | Two independent lines of evidence, below. |
+
+### CONFIRMED: the homography has an ERROR FIELD, not an error
+Evidence A - the data. The three largest spikes across **two different tracks**:
+```
+ID 1  3.70 m/s  at world y = +1.53
+ID 8  2.68 m/s  at world y = +1.52
+ID 8  2.13 m/s  at world y = +1.49
+```
+Within 4 cm of each other. Different people, different moments, same spot.
+
+Evidence B - the maths, computed straight from H, no trajectories involved:
+```
+image row y=550 (near camera)  1px = 0.41 cm along
+image row y=450               1px = 0.52 cm
+image row y=350               1px = 0.70 cm
+image row y=250               1px = 0.98 cm
+image row y=150 (far away)     1px = 1.47-1.68 cm
+```
+**4.2x spread.** A 15-pixel footpoint wobble is **6 cm** near the camera and
+**25 cm** at the far end. Identical jitter, four times the metres.
+
+- Driven almost entirely by image **row**, not column: at a fixed row the three
+  sampled columns differ by under 10%. Ordinary perspective - image-y *is*
+  distance from the camera.
+- **A single RMS figure for the whole scene hides this completely.**
+- Neither line of evidence needed the other. That is much stronger than three
+  coincidental data points.
+
+**DECISION: document it, do not fix it yet.** Considered and rejected:
+- *Position-weighted smoothing* - would be tuned on three dev tracks that all
+  walk the same path. Tomorrow's 21 trips involve stopping, turning, and
+  standing at a fork. Any weighting fitted today gets refitted anyway. **Day 12,
+  once labelled data exists to validate against.**
+- *Capping the usable region* - the stretched region is the far third, and the
+  fork may sit in it. Cutting it before knowing where hesitations occur risks
+  deleting the primary evidence. Fallback only.
+
+### HESITATION DETECTOR v1 - BUILT AND WORKING (pulled forward from Day 10)
+Built today rather than tomorrow specifically because ID 1 has a **known
+answer**: a confirmed stop from 7.3s to 17.3s. Building a detector against
+footage where the right answer is already known is far better than building it
+on fresh footage where it is not.
+
+**v1 - bare threshold. Failed exactly as predicted.**
+Found `7.2-9.9` and `13.4-17.3` - right times, wrong shape. **One real stop
+split into two, losing 3.5 seconds in the middle.** Cause visible in the
+per-second dump: y slides 0.77 -> 0.11 between t=10.3 and t=13.3, about 66 cm.
+Too large for jitter - she shifted weight or turned. The system was *correct*
+that she moved. **Standing still is not zero speed.**
+
+Swept 15 combinations (threshold 0.20-0.40, min_seconds 1.0-2.0).
+**Not one produced a single event.** Best 2, worst 3. Raising the threshold made
+fragments longer and added a third in the middle rather than merging them.
+**When every cell of a grid is wrong, the algorithm shape is wrong, not the
+settings.** Stop turning knobs.
+
+**v2 - gap tolerance. Works.**
+A brief excursion above the threshold no longer ends the event; the event closes
+at `last_slow`, the last genuinely slow moment, not at whatever frame poked over
+the line.
+
+```
+max_gap   result
+  0.0     2 events  7.2-9.9, 13.4-17.3        (null row - reproduces v1 exactly)
+  0.5     3 events  WORSE than none
+  1.0     1 event   7.2-17.3   <- GROUND TRUTH IS 7.3-17.3
+  1.5     1 event   7.2-20.8   swallowed the walk after
+  2.0     1 event   7.2-22.7
+  3.0     1 event   4.4-22.7   18 of 22 seconds called hesitation
+```
+
+- **0.1 s from ground truth at the start, exact at the end.**
+- **NO PLATEAU.** Correct at exactly one value, degrades on both sides. Compare
+  the smoothing sweep, where 9 and 15 gave nearly the same answer. **This is a
+  fragile parameter, fitted to one track - not a settled one.** Expect to refit
+  on real footage.
+- `0.5` giving *three* events is worth understanding: partial gap tolerance let a
+  fragment survive `min_seconds` that had previously been discarded. **A half fix
+  was worse than no fix.**
+
+**Known problem carried to Day 10:** ID 8 is flagged `38.5-48.3s` on a track
+running `38.4-50.1s` - **84% of the walk called hesitation.** Almost certainly a
+false positive, and there is no ground truth for ID 8 to check it against.
+**Day 10's real task is not building the detector - it is measuring the false
+positive rate**, which requires the 21 trips and blind labels.
+
+### README WRITTEN (it did not exist)
+`dir README.md` -> not found. The "false weak-axis claim" discussed for two days
+had never actually been written anywhere except this tracker.
+
+Written today while the findings were fresh, with **eight measured limitations**:
+position-dependent accuracy field (4.2x), walking on the ~2 cm axis, overlapping
+speed populations, meaningless track averages, the five-hypothesis table, absolute
+threshold instead of per-person baseline, cast learning effect, and homography
+bound to camera position.
+
+Two things in it to **verify rather than trust**: the ~83% coverage figure, and
+the claim that the camera looks *along* the corridor (if it is angled across,
+the perspective explanation needs rewording).
+
+### `speeds.py` restructured
+All functions moved above all running code. `FPS` moved to the top - it was
+being defined *after* `smooth()` and worked only by luck, since `smooth()` never
+uses it. `trim_edges()` does, and would have crashed. Renamed a loop variable
+that shadowed `w`. **Every number verified identical after the refactor** - a
+refactor that changes a number is a bug, not an improvement.
+
+### Indentation slips: FIVE occurrences today (Day 3, Day 8, x3 today)
+Same shape every time: the last line of a pasted block keeps the indent of the
+line above it. Today's worst was `return events` sitting **inside** its `if`,
+which would have returned `None` instead of a list on the false branch and
+crashed the caller with "NoneType is not iterable".
+**Five occurrences of one mistake is a habit, not bad luck.** The trigger is
+pasting a block whose previous line was inside a loop. Check the last line of
+every paste.
+
 ### Commits this session
 - Day 8.5: quiz 2.5/3, smoothing spec, rules 20-24
 - Smoothing: moving average window=5, max 3.70->1.40, swing preserved
 - Smoothing tuned: window=5 locked, swing test found non-discriminating
 - Stop-period analysis: threshold alone insufficient, sustained-duration required
 - Located 3.70 m/s spike: edge artefact at track exit, trim fix scheduled Day 10
+- Day 9 shoot run-sheet: 21 trips, slate rule (number only, never destination)
+- Axis check: all 3 tracks x-dominant, README weak-axis claim FALSE
+- Trim sweep: cliff at 0.7s, boundary found (LATER CORRECTED)
+- CORRECTION: 0.7s trim fitted to ID 1 only, no common boundary exists
+- Save box width/height per point, all speed numbers verified unchanged
+- Five hypotheses tested: four dead, position ALIVE
+- CONFIRMED homography stretch 0.40-1.68 cm/px, 4.2x
+- README added with eight measured limitations
+- Hesitation detector v1: gap tolerance, 7.2-17.3s vs truth 7.3-17.3s
 
 **Status:** DONE — smoothing built, tuned, justified, and one real data bug found
 **Quiz score: 2.5/3 (the postponed Day 8 quiz, taken today)**
@@ -1142,13 +1326,18 @@ Sun 23 Aug is the reshoot slot if needed — hesitation work slides.
 
 ## Day 10 — Sun 23 Aug — Hesitation detector v1  *(or RESHOOT)*
 
-- [ ] **FIRST: trim first/last ~0.5 s of every track, then re-check max speed.**
-      Carried from Day 8.5 — the 3.70 m/s outlier is an entry/exit box artefact,
-      not movement. Trim it; do not smooth it.
-- [ ] Smoothing is already built and locked at `window=5` (Day 8.5)
-- [ ] Detector MUST be "below X m/s **sustained for Y s**", never a bare
-      threshold — measured reason in Day 8.5 (0.49 m/s recorded mid-standstill
-      against 0.64 m/s walking)
+**PLAN CHANGED — the detector is already built (Day 8.5). Do not rebuild it.**
+- [x] ~~Trim first/last 0.5 s~~ — **REJECTED on Day 8.5.** No common trim value
+      exists. Do not revisit without new evidence.
+- [x] Smoothing built and locked at `window=5`
+- [x] Hesitation detector v1 built, gap tolerance, validated on ID 1
+- [ ] **THE REAL TASK: measure the FALSE POSITIVE rate.** ID 8 is currently
+      flagged as hesitating for 84% of its track. The detector finding one real
+      stop correctly proves nothing about how often it invents them.
+- [ ] Re-fit `max_gap` on real footage — 1.0 is fitted to one track with **no
+      plateau**, so expect it to move
+- [ ] Check whether the fork sits in the far (4x error) region of frame
+- [ ] Verify the two unverified README claims: ~83% coverage, camera orientation
 - [ ] **Absolute speed threshold** — speed below X m/s sustained for Y seconds.
       NOT a per-person baseline: 2.7 m of approach is too short to establish one.
       See Day 4. This limitation is stated plainly in the README.
@@ -1473,3 +1662,32 @@ Fill these in yourself as you learn them. If a box is empty on Day 20, that's a 
 29. **A single threshold cannot separate two overlapping populations.** Standstill
     peaked at 0.49 m/s against 0.64 m/s walking. Duration — "sustained for Y
     seconds" — is what makes the separation work, not a better threshold value.
+30. **You can date a run by comparing its output to the code.** Output that does
+    not match the file means the file changed after the run. Cheaper than guessing.
+31. **A claim can be wrong while the numbers are right.** Sub-1% error and a false
+    README sentence are both true at once. Fix the sentence; leave the number.
+32. **Say the trip number to camera, never the destination.** Blind labelling stops
+    being blind the moment the destination is audible on the tape. A shoot decision
+    can silently destroy a measurement four days later.
+33. **A cliff-then-flat sweep found a boundary. A steady slide found nothing.**
+    ID 1 dropped at 0.7s then held flat to 1.5s — real. ID 6 eroded continuously
+    with no flat region — no boundary exists there, and the parameter is the wrong
+    tool. One track having a clean cliff is not evidence about the others.
+34. **Add new fields to the END of a record.** Anything reading by index keeps
+    working. Inserting in the middle shifts every later field silently, with no
+    error.
+35. **When every cell of a parameter grid is wrong, the algorithm is wrong.**
+    Fifteen threshold/duration combinations, not one correct result. That is a
+    signal to change the shape, not to keep sweeping.
+36. **A half fix can be worse than no fix.** `max_gap=0.5` produced THREE events
+    where `0.0` produced two — partial tolerance let a fragment survive the
+    minimum-duration filter.
+37. **No plateau means fitted, not settled.** A parameter correct at exactly one
+    value and degrading either side will not survive new data. Record it as
+    provisional and expect to refit.
+38. **Finding one real event correctly proves nothing about false positives.**
+    The detector nailed ID 1's stop and simultaneously called 84% of ID 8's walk
+    a hesitation. Precision needs its own measurement.
+39. **Five identical mistakes is a habit, not bad luck.** Fix the trigger — here,
+    the last line of a pasted block inheriting the previous line's indent — not
+    the individual bug.
