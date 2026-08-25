@@ -21,3 +21,4 @@ E19,18,HESITATION,13,18,SURE,5s,
 E20,18,UTURN,29,30,SURE,"squared-off reversal, two 90 degree turns not one pivot. instantaneous angle may never exceed 135",end by convention
 E21,20,HESITATION,81,85,SURE,4s,
 E22,20,UTURN,86,87,SURE,turn point 86,end by convention
+E23,21,HESITATION,15,17,SURE,"exactly 2.0s, sits on the threshold",

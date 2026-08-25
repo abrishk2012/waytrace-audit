@@ -28,3 +28,9 @@ trip,clip,valid,exclude_reason,person,start_sec,end_sec,others_in_frame,occluded
 18,clip11,TRIP,,P1,10,32,0,NO,YES,SURE,,"walk-back follows. uturn at 29 is squared-off: forward, sideways step, back. two 90 degree turns, not one pivot. stop 20-21 only 1s, under threshold"
 19,clip12,TRIP,,P2,14,23,0,NO,YES,SURE,,walk-back follows
 20,clip12,TRIP,,P3,75,89,0,NO,YES,SURE,,walk-back follows
+,clip13,EXCLUDE,"not a trip, checking the robot vacuum during setup",P1,0,6,0,NO,NO,SURE,,"pre-shoot activity, not a walk. robot vacuum is the object flagged in shoot log row 1"
+21,clip13,TRIP,,P1,13,22,0,NO,YES,SURE,,walk-back follows
+22,clip13,TRIP,,P2,49,58,0,NO,YES,SURE,,walk-back follows
+23,clip13,TRIP,,P1,87,93,0,NO,YES,SURE,,walk-back follows
+24,clip13,TRIP,,P2,116,123,0,NO,YES,SURE,,walk-back follows
+25,clip13,TRIP,,P1,150,155,0,NO,YES,SURE,,walk-back follows
