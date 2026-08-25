@@ -9,3 +9,8 @@ trip,clip,valid,exclude_reason,person,start_sec,end_sec,others_in_frame,occluded
 ,clip3,EXCLUDE,logged wasted on shoot night,P3,44,52,0,NO,YES,SURE,,"stop 48, uturn 50. log: wasted"
 ,clip3,EXCLUDE,not in shoot log at all,P3,59,73,0,NO,YES,SURE,,"stop 62, uturns 64 and 67. UNLOGGED WALK - abrish walked twice, log records once"
 7,clip3,TRIP,,P2,88,92,0,NO,YES,SURE,,walk-back follows
+,clip4,EXCLUDE,logged wasted on shoot night,P1,19,43,0,NO,YES,SURE,,"wasted, but rich: stop 21-28, uturn 32, stop 37-39, uturn 41. reason for wasting not recorded. NOT relabelled - see PROGRESS"
+,clip4,EXCLUDE,logged wasted on shoot night,P3,88,93,0,NO,YES,SURE,,no events
+,clip4,EXCLUDE,logged wasted on shoot night,P2,110,114,0,NO,YES,SURE,,no events
+8,clip5,TRIP,,P1,14,22,0,NO,YES,SURE,,walk-back follows
+9,clip6,TRIP,,P3,2,10,0,NO,YES,SURE,,walk-back follows
