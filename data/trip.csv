@@ -4,3 +4,8 @@ trip,clip,valid,exclude_reason,person,start_sec,end_sec,others_in_frame,occluded
 3,clip1,TRIP,,P3,75,81,0,NO,YES,SURE,,walk-back follows
 4,clip1,TRIP,,P1,111,120,0,NO,YES,SURE,,walk-back follows
 5,clip1,TRIP,,P3,138,168,0,NO,YES,SURE,,"walk-back follows. one continuous walk, multiple stops"
+6,clip2,TRIP,,P2,6,10,0,NO,YES,SURE,,walk-back follows
+,clip3,EXCLUDE,"left frame into side room, ID would split",P1,14,29,0,YES,YES,SURE,,"appeared to hesitate 17, then entered side room. log: wasted"
+,clip3,EXCLUDE,logged wasted on shoot night,P3,44,52,0,NO,YES,SURE,,"stop 48, uturn 50. log: wasted"
+,clip3,EXCLUDE,not in shoot log at all,P3,59,73,0,NO,YES,SURE,,"stop 62, uturns 64 and 67. UNLOGGED WALK - abrish walked twice, log records once"
+7,clip3,TRIP,,P2,88,92,0,NO,YES,SURE,,walk-back follows
