@@ -14,3 +14,10 @@ E12,13,HESITATION,136,139,SURE,,
 E13,13,UTURN,141,142,SURE,turn point 141,end by convention
 E14,13,UTURN,145,146,SURE,turn point 145,end by convention
 E15,14,HESITATION,24,34,SURE,"10s, the longest hesitation in the dataset so far",
+E16,17,UTURN,90,91,SURE,turn point 90,end by convention
+E17,17,HESITATION,96,98,SURE,"exactly 2.0s, sits on the threshold",
+E18,17,HESITATION,101,110,SURE,9s,
+E19,18,HESITATION,13,18,SURE,5s,
+E20,18,UTURN,29,30,SURE,"squared-off reversal, two 90 degree turns not one pivot. instantaneous angle may never exceed 135",end by convention
+E21,20,HESITATION,81,85,SURE,4s,
+E22,20,UTURN,86,87,SURE,turn point 86,end by convention
