@@ -1,0 +1,6 @@
+trip,clip,valid,exclude_reason,person,start_sec,end_sec,others_in_frame,occluded,clean_entry,boundary_sure,category,notes
+1,clip1,TRIP,,P1,3,13,0,NO,YES,SURE,,walk-back follows
+2,clip1,TRIP,,P2,49,53,0,NO,YES,SURE,,walk-back follows
+3,clip1,TRIP,,P3,75,81,0,NO,YES,SURE,,walk-back follows
+4,clip1,TRIP,,P1,111,120,0,NO,YES,SURE,,walk-back follows
+5,clip1,TRIP,,P3,138,168,0,NO,YES,SURE,,"walk-back follows. one continuous walk, multiple stops"
