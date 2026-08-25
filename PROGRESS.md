@@ -1040,10 +1040,12 @@ The hesitation detector itself slides to Day 12.
 - [x] **Split the log: ODD trips = tuning set, EVEN trips = held out**
 - [x] Labelling infrastructure built — two linked tables, dropdowns, zone rule
 - [x] **clip1 labelled: 5 trips, 8 events**
-- [ ] clips 2–13 labelled: **20 trips remaining**
+- [x] clips 2–13 labelled: **all 25 trips, 23 events, 10 excluded walks**
 - [x] Do not open the detector output today. Not once. — held
 
-**Status: PARTIAL — clip1 of 13 done.**
+**Status: DONE — all 13 clips, all 25 trips labelled.**
+**Ran 25 Aug 09:00 through 26 Aug 00:20. Clips 7–13 were labelled after 20:00
+and carry a fatigue flag — see below.**
 
 ### What actually happened
 
@@ -1126,18 +1128,175 @@ E2 is exactly 2.0 s — sitting on the threshold, hence MAYBE. If several events
 land on exactly 2.0 across the dataset, that says the threshold needs moving,
 which is what Day 12 is for.
 
-**Quiz score: not taken — no new concept was taught, the session was file
-archaeology and labelling. A quiz would have been a fake score.**
+### Final counts
 
-### Honest schedule note
+**13 clips · 25 trips · 23 events · 10 excluded walks recorded**
+14 hesitations, 9 U-turns. `data/trip.csv` 3417 bytes, `data/event.csv` 1420.
+Ten commits, last `5c6bbcb`, all pushed.
 
-clip1 took roughly an hour and it is 1 of 13, holding 5 of 25 trips. Day 11 as
-planned also contained the `smooth()` verification and two detectors. That was
-never going to fit. Detectors move to Day 12; tuning moves to Day 13; the event
-log and hotspot engine compress. **Day 15 validation does not move.**
+| Clip | Walks | Trips | Excluded | Events | Log agreed? |
+|---|---|---|---|---|---|
+| clip1 | 5 | 5 | 0 | 8 | yes |
+| clip2 | 1 | 1 | 0 | 0 | yes |
+| clip3 | 4 | 1 | 3 | 0 | **NO — abrish walked twice, logged once** |
+| clip4 | 3 | 0 | 3 | 0 | yes — all three wasted |
+| clip5 | 1 | 1 | 0 | 0 | yes |
+| clip6 | 1 | 1 | 0 | 0 | yes |
+| clip7 | 3 | 1 | 2 | 0 | yes |
+| clip8 | 4 | 3 | 1 | 6 | yes |
+| clip9 | 1 | 1 | 0 | 1 | yes |
+| clip10 | 3 | 3 | 0 | 3 | yes |
+| clip11 | 1 | 1 | 0 | 2 | yes |
+| clip12 | 2 | 2 | 0 | 2 | yes |
+| clip13 | 6 | 5 | 1 | 1 | yes |
+| **Total** | **35** | **25** | **10** | **23** | 12 of 13 |
+
+### The result the labels produced
+
+`category` was filled LAST, from the shoot log, after every clip was watched.
+
+| Category | Trips | Events |
+|---|---|---|
+| MISSING | 9 | **14** |
+| AMBIG | 8 | 7 |
+| EASY | 8 | **2** |
+
+Trips whose destination is absent from the sign produce roughly seven times the
+behavioural events of unambiguous ones. **This is the core hypothesis, and it
+came out of labels written without knowing which trip was which.** That ordering
+is the entire evidential value. No label is touched from here.
+
+### Split as labelled
+
+- **Tuning (odd, 13 trips):** 3 MISSING, 5 AMBIG, 5 EASY — 14 events
+- **Held out (even, 12 trips):** 6 MISSING, 3 AMBIG, 3 EASY — 9 events
+
+The held-out set is **harder** than the tuning set — it carries 6 of the 9
+MISSING trips. Rule 8 warns that easy test data flatters a score; here the bias
+runs the other way, so Day 15 will understate. Leave it, and state it in the
+README. A judge will respect an unbalanced split fixed in advance more than a
+tidy one chosen afterwards.
+
+### Schema repair before labelling could continue
+
+Labelling the remaining 20 trips into the morning's schema would have meant
+labelling them twice.
+
+- **`confidence` was answering two questions at once.** By convention every
+  U-turn got `end_sec = start_sec + 1` and was marked MAYBE — but that MAYBE was
+  about the invented end second, not about whether the turn happened. Day 15
+  computes headline metrics on SURE only, so the SURE set would have held **zero
+  U-turns**, and precision and recall cannot be computed on an empty set. U-turn
+  detection is a MUST HAVE. Fixed by splitting the two doubts: `confidence` now
+  means *did this event happen*, and boundary doubt lives in a new
+  `boundary_note` column. Rule 33.
+- **The dropdowns were warnings, not guards.** `UTRURN` was typed into four
+  cells inside the dropdown's own range. Sheets validation defaults to "show a
+  warning" and lets bad values through. Set to **Reject the input**, extended to
+  row 200, then **tested with a deliberately wrong value** — a guard that has not
+  been watched to fail is a guess. Rule 34.
+- **Six invisible trailing spaces in the headers** (`person `, `start_sec `,
+  `others_in_frame `, `clean_entry `, `boundary_sure `, `category `).
+  `df['person']` would have raised KeyError on Day 15 and been blamed on
+  something else. Found by byte count, not by reading.
+- **`zone` deleted.** Nothing in the pipeline reads it — Day 14 clusters on
+  centimetre coordinates from the homography, Day 15 matches on trip and time.
+  Re-checked against the video, **2 of 5 values were wrong**, and two more could
+  only be described as "between" the thirds. A field the machine can compute from
+  the `y` coordinate should never be filled by a human. Rule 35.
+- **Twenty pre-guessed trip rows deleted.** Rows 6–25 held trip numbers and clip
+  assignments for clips not yet watched. Since ODD/EVEN is keyed to trip number,
+  a shifted count would have migrated trips between tuning and held-out
+  mid-labelling. Numbers are now assigned at labelling time, in clip order then by
+  `start_sec` — deterministic, no discretion.
+
+### Three findings
+
+**1. The shoot log undercounts the footage.** clip3 holds four walks on video;
+the log records three. abrish walked twice in a row and was logged once. Found
+only because walks were counted from the video *before* the log was opened. The
+log is a check, never a source — labelling from it would have made the two
+incapable of disagreeing. Rule 13 in a new setting.
+
+**2. The squared-off U-turn — clip11, trip 18, 0:29.** The walker reverses by
+going forward, stepping sideways, then walking back: **two 90° turns, not one
+pivot.** A human sees an obvious reversal. The instantaneous direction change may
+never exceed 135°, so the detector as defined may be blind to it. Likely fix:
+compare heading across a window (3 s ago vs now) rather than frame to frame.
+Ground truth records what a human sees, not what the detector can catch — that is
+the point of labelling blind, and this is what it bought.
+
+**3. Seven of the 14 hesitations are exactly 2.0 seconds.** E2, E3, E7, E10,
+E11, E17, E23. The definition says ≥2 s, and the protocol said event boundaries
+to one decimal place — every value written is a whole second. **The definition
+anchored the boundaries.** The labels stand, but half the hesitations sit exactly
+on the threshold, so small threshold changes will swing Day 12 metrics hard.
+Report sensitivity across a range, never a single number.
+
+### Excluded walks — 10 recorded, none deleted
+
+| Clip | Reason |
+|---|---|
+| clip3 ×1 | Left frame into a side room — the tracker would split the ID |
+| clip3 ×2 | Logged wasted on the night |
+| clip4 ×3 | Logged wasted on the night |
+| clip7 ×2 | Stopped before the far end, broke character while still in frame |
+| clip8 ×1 | Logged wasted on the night |
+| clip13 ×1 | Checking the robot vacuum during setup — not a walk |
+
+**clip4's first excluded walk is the hard case.** It contains a 7-second
+hesitation, a U-turn, a 2-second stop and a second U-turn — the richest behaviour
+outside clip1's trip 5 — and it was binned as a wasted take on the night. The
+reason for wasting was not recorded. **It was not reinstated.** A judgement made
+live, with information the footage does not contain, stands. Overturning it after
+seeing it was full of the events I wanted is choosing data because I like what is
+in it. Written down here so it can be revisited honestly if Day 15 recall is
+thin, rather than edited quietly. Rule 36.
+
+### Things that are deliberately not events
+
+- **45° course correction** — clip9, trip 14, 0:18. Under 135°.
+- **90° turn at the sign** — clip7 trip 10; clip10 trip 17. A direction choice,
+  not a reversal. Worth noting for the signage audit.
+- **1-second stops** — clip7 excluded walk 0:27–0:28; clip11 trip 18 0:20–0:21.
+  Under the 2 s threshold. Recorded in notes only.
+
+### PROGRESS.md had ~90 lines silently deleted
+
+`git diff` before committing showed the working copy was missing, against
+`2c7b427`: **Day 9's entire notes section** (the 720p catastrophe, the 1.25×
+rescale proof with three landmarks, the one-ffmpeg-command reasoning, the
+frame-count pattern, the stray `clip5.mp4`, the `git mv` lesson), the risk
+register row for resolution mismatch, two vocabulary entries (Resolution vs
+calibration; Field of view vs rescale), and the full text of rules 23–26 replaced
+by one-line stubs.
+
+**Cause: a previous session regenerated the whole file from an older copy** and
+pasted new sections back in. Anything not consciously carried across vanished. No
+error, and the file still reads as complete and well-written.
+
+All of it survives in `2c7b427`. **Restore by hand, one section at a time.
+Never regenerate this file.** Rule 37. **Still outstanding — Day 12 job one.**
+
+### Fatigue flag
+
+Clips 1–6 were labelled during the day; clips 7–13 between 20:00 and 00:20. In
+the last hour: a clip was labelled under the wrong clip number (caught by a length
+mismatch), a person was written down as the wrong person (caught by the log), a
+stop was logged as `2:16–2:16` (zero seconds), a mental state was written into a
+note, and two commits were skipped. All caught, none reached the file — but
+roughly six near-misses in one hour against roughly zero in the first three.
+
+**Clips 2, 4, 5 and 6 produced zero events between them.** Zero is a legitimate
+result — a detector that fires on every trip cannot be distinguished from a
+working one without trips where the correct answer is silence. But a *missed*
+event is invisible: it looks exactly like a clean trip. Re-check the late clips
+before Day 15 trusts them. Rule 38.
+
+**Quiz score: 3/3 (multiple choice — easier than cold recall, Rule 13)**
 
 ## Day 12 — Wed 26 Aug — Hesitation + U-turn detectors, then tune **on ODD trips only**
-**Re-scoped Day 11: detectors slid from Day 10, labelling is 1/13 done.**
+**Re-scoped: detectors slid from Day 10. Labelling is COMPLETE — Day 11 done.**
 
 - [ ] **BLOCKING FIRST:** `smooth()` verification in `speeds.py` — print
       unsmoothed vs smoothed side by side. Wobbles under ~20 cm must die; the
@@ -1148,8 +1307,9 @@ log and hotspot engine compress. **Day 15 validation does not move.**
       saves 7. Same gap on every clip. Either the JSON holds short fragments the
       printout filters out, or the count measures something else. If fragments,
       the detector will invent events from 1-second scraps of people.
-- [ ] Finish labelling clips 2–13 (20 trips)
-- [ ] Hesitation detector v1
+- [ ] **BLOCKING THIRD:** restore the four sections deleted from PROGRESS.md,
+      by hand from `2c7b427`. Never regenerate the file (Rule 37).
+- [ ] Hesitation detector v1 — test against trip 18's squared-off U-turn
 - [ ] U-turn detector v1
 - [ ] Tune U-turn thresholds against ODD trips only
 - [ ] Tune hesitation thresholds against ODD trips only
@@ -1367,25 +1527,31 @@ Fill these in yourself as you learn them. If a box is empty on Day 20, that's a 
 
 ## UNRESOLVED — must be closed before Day 15
 
-**1. 24 or 25 clean trips?**
-`shoot_log.csv` lists 25 numbered trips, every one marked Clean, plus 7 wasted
-takes with no number. HANDOFF.md says 24 clean. Cause unknown and not
-remembered. **Resolvable by evidence, not memory:** the log says which clip each
-trip belongs to, so counting walks per clip during labelling settles it.
-Expected trips per clip: 1→5, 2→1, 3→1, 5→1, 6→1, 7→1, 8→3, 9→1, 10→3, 11→1,
-12→2, 13→5. That totals 25 across **12** clips — but there are **13** clips.
-**Clip4 should contain zero numbered trips** (all three of its takes were
-wasted). If a clean walk turns up in clip4, the log is wrong and that is the
-answer. A number that cannot be explained must not reach the results slide.
+**1. RESOLVED — 25 clean trips, not 24.** The shoot log holds 25 numbered clean
+trips, 1–25, no gaps, plus **8** wasted takes (HANDOFF said 7). The "24" has no
+supporting evidence and is discarded. Confirmed independently: 25 trips were
+labelled from video, and every clip's walk count was reconciled against the log
+afterwards. Clip4 did contain zero numbered trips, exactly as predicted.
+
+**1b. NEW — the shoot log undercounts the footage.** clip3 holds four walks on
+video; the log records three. abrish walked twice in a row and was logged once.
+Every other clip reconciled exactly. The log is a check, never a source.
 
 **2. Printed vs saved track counts disagree on every clip.** See Day 12.
 
-**3. `data/New Text Document.xlsx`** — untracked stray in `data/`, name nobody
-chose. Same family as the 3.9 MB file called `c`. Identify and delete or rename.
+**3. CLOSED, UNANSWERABLE — `data/New Text Document.xlsx`** was deleted without
+being identified. It was untracked, so git never held a copy. The question can no
+longer be answered — deleting an unknown destroys the evidence along with the
+problem.
 
-**4. `shoot_log.csv` is an .xlsx and has a stray note above its header row.**
-Nothing can parse it as-is. Rename to `.xlsx` or re-export as a real CSV, and
-move the robot-vacuum note out of row 1.
+**4. `shoot_log.csv` is an .xlsx — CONFIRMED by evidence.** First two bytes are
+`PK`, which is a zip, which is what an Office file is (Rule 30, proven rather
+than inferred). The stray robot-vacuum note is still in row 1, so any parser
+reads that sentence as the column names. **Still needs fixing.**
+
+**5. Clips 2, 4, 5 and 6 produced zero events**, and clips 7–13 were labelled
+after 20:00. Zero is a legitimate result, but a missed event is invisible — it
+looks exactly like a clean trip. Re-check the late clips before Day 15.
 
 ---
 
@@ -1482,3 +1648,32 @@ move the robot-vacuum note out of row 1.
     at a time with 5-second gaps made trip boundaries labellable — the right
     call — and also means the tracker never handled an occlusion. Name the
     limitation in the README before a judge names it for me.
+33. **One column cannot answer two questions.** "Did this happen?" and "are the
+    exact seconds right?" are different doubts. Stored together, the stricter one
+    swallows the looser one — every U-turn was marked MAYBE because its end second
+    was invented, and a SURE-only filter would have left zero U-turns to measure
+    on Day 15. Split the doubts into separate columns, never the labels.
+34. **A guard that has not been watched to fail is a guess.** The dropdown held
+    the right values and still accepted `UTRURN` four times, because Sheets
+    validation defaults to warning rather than rejecting. Typing a valid value to
+    "test" it proves nothing. The only informative test is the one that should be
+    refused. Rule 13, wearing a spreadsheet.
+35. **Never hand-label what the machine already measures.** `zone` was a human
+    reading thirds of a frame while the homography already produced the `y`
+    coordinate in centimetres. 2 of 5 re-checked values were wrong and two more
+    were "between" the thirds. The test: does the field come from *observing*
+    something only a human can judge, or from *measuring* something already in the
+    data? Watching → human. Measuring → machine.
+36. **Never reinstate excluded data after seeing what is in it.** A take binned
+    live, with information the footage does not contain, stays binned — even when
+    it turns out to hold the richest behaviour in the dataset. Record what was
+    lost and why; do not quietly edit the decision once the contents are known.
+37. **Never regenerate a long file — edit it in place.** Rewriting PROGRESS.md
+    from an older copy deleted ~90 lines with no error and no visible gap.
+    Anything not consciously carried across is gone, and the result reads as
+    complete afterwards. Scoped edits to one section at a time, then `git diff`
+    before committing.
+38. **A missed observation is invisible; an invented one is not.** Tired
+    labelling does not produce obviously wrong events — it produces trips that
+    look clean because nothing was noticed. Flag the session, not the row: the row
+    gives no sign that there is anything to check.
