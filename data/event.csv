@@ -7,3 +7,10 @@ E5,5,UTURN,148,149,SURE,turn point 148,end by convention
 E6,5,UTURN,150,151,SURE,turn point 150,end by convention
 E7,5,HESITATION,153,155,SURE,,
 E8,5,UTURN,159,160,SURE,turn point 159,end by convention
+E9,12,HESITATION,49,53,SURE,"stopped, facing the sign",
+E10,12,HESITATION,55,57,SURE,"exactly 2.0s, sits on the threshold",
+E11,12,HESITATION,62,64,SURE,"exactly 2.0s, sits on the threshold",
+E12,13,HESITATION,136,139,SURE,,
+E13,13,UTURN,141,142,SURE,turn point 141,end by convention
+E14,13,UTURN,145,146,SURE,turn point 145,end by convention
+E15,14,HESITATION,24,34,SURE,"10s, the longest hesitation in the dataset so far",

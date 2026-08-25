@@ -14,3 +14,11 @@ trip,clip,valid,exclude_reason,person,start_sec,end_sec,others_in_frame,occluded
 ,clip4,EXCLUDE,logged wasted on shoot night,P2,110,114,0,NO,YES,SURE,,no events
 8,clip5,TRIP,,P1,14,22,0,NO,YES,SURE,,walk-back follows
 9,clip6,TRIP,,P3,2,10,0,NO,YES,SURE,,walk-back follows
+,clip7,EXCLUDE,"stopped before reaching the far end, broke character while still in frame",P2,23,36,0,NO,YES,SURE,,"stop 27-28, only 1s so under the 2s threshold. log: wasted"
+,clip7,EXCLUDE,"stopped before reaching the far end, broke character while still in frame",P2,94,100,0,NO,YES,SURE,,no events. log: wasted
+10,clip7,TRIP,,P2,142,150,0,NO,YES,SURE,,"turned left at the sign, 90 degrees not a reversal"
+11,clip8,TRIP,,P1,14,20,0,NO,YES,SURE,,walk-back follows
+12,clip8,TRIP,,P3,45,66,0,NO,YES,SURE,,walk-back follows. three separate stops
+,clip8,EXCLUDE,logged wasted on shoot night,P2,85,93,0,NO,YES,SURE,,no events. log: wasted
+13,clip8,TRIP,,P1,133,149,0,NO,YES,SURE,,walk-back follows
+14,clip9,TRIP,,P3,12,40,0,NO,YES,SURE,,"walk-back follows. 45 degree course correction at 18-19, not a uturn under the 135 degree rule"
