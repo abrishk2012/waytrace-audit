@@ -1426,9 +1426,9 @@ before Day 15 trusts them. Rule 38.
       label says *"instantaneous angle may never exceed 135"*: detected at
       **28.1 s, 138.8°** against a labelled 29 s. A frame-to-frame detector is
       blind to this shape. The window design decision is vindicated with evidence.
-- [ ] Tune U-turn thresholds against ODD trips only → **Day 13**
-- [ ] Tune hesitation thresholds against ODD trips only → **Day 13**
-- [ ] Kill false positives from tracker jitter → **Day 13**
+- [x] Tune U-turn thresholds against ODD trips only → **done Day 13**
+- [x] Tune hesitation thresholds against ODD trips only → **done Day 13**
+- [x] Kill false positives from tracker jitter → **done Day 13**, 7 → 2
 - [x] **One variable at a time.** Every trustworthy number in this file came from that.
 - [x] **Do not open EVEN trips** for tuning. See the contamination note below.
 
@@ -1497,7 +1497,14 @@ a concourse. Recording this on Day 12 rather than acting on it is the point:
 `definitions.md` says the numbers are "expected to be wrong", and this is the
 evidence — not a licence to edit a threshold minutes after seeing a number.
 
-**Quiz score:      /3  — DUE**
+**Quiz score: 8/9 (89%)** — one combined cold quiz covering Days 12, 13 and 14,
+taken 26 Aug at the end of the session. Nine questions: smooth()'s null test,
+the 13-vs-5 track breakdown, why walk-backs are false positives by construction,
+why a stationary person has no heading, what max_gap was for and why it reversed,
+what caught the half-applied threshold, what the odd/even guard actually restored,
+why the junction had to be measured from the building, and which trips the old
+direction rule decided on noise. **8 correct. The missed question was not
+recorded at the time — note it here if it comes back to mind.**
 
 ## Day 13 — Thu 27 Aug — Tune on ODD trips only, then event log
 > **✅ SCHEDULE CONFLICT RESOLVED on Day 12, 26 Aug.**
@@ -1671,7 +1678,7 @@ spaces, pattern had five) and `results.json` was rebuilt with half the tuning.
 `summarise.py` printed `"max_gap": 1.0` when the commit said 0.0. Without that,
 a wrong number goes into Day 15 with nothing to catch it.
 
-**Quiz score:      /3  — POSTPONED, three days of questions outstanding**
+**Quiz score: covered by the combined 8/9 quiz logged under Day 12.**
 
 ## Day 14 — Fri 28 Aug — Hotspot engine
 - [x] Cluster event coordinates — grid density, not DBSCAN
@@ -1814,7 +1821,7 @@ trust, never by inspection.**
 From here: `[System.IO.File]::WriteAllText(path, text, (New-Object
 System.Text.UTF8Encoding $false))`.
 
-**Quiz score:      /3  — POSTPONED**
+**Quiz score: covered by the combined 8/9 quiz logged under Day 12.**
 
 ## Day 15 — Sat 29 Aug — ★ VALIDATION METRICS (held-out set) ★
 **Moved before the dashboard. If the numbers are bad, there is still time.**
@@ -1866,7 +1873,19 @@ live mode and fix the detector. Metrics are MUST HAVE; those two are not.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 19 — ~~Tue 1 Sep~~ — Live sensor mode — **CUT on Day 12, 26 Aug.** Returns on the 2–5 Sep buffer if free.
+## Day 19 — ~~Tue 1 Sep~~ — Live sensor mode — **CUT from the plan, NOT abandoned**
+
+> **Cut on Day 12 to make the 1 Sep target, and it should COME BACK.**
+> VoltHacks is a hardware/IoT hackathon and the whole framing is "real camera,
+> real data, not a simulation". A live webcam mode is the strongest form of that
+> argument — the difference between showing a video of results and showing the
+> system running. Estimated 4–5 hours.
+>
+> **Plan: first job on the buffer (2 Sep), if 1 Sep lands clean and nothing is
+> broken.** Devpost allows edits until the deadline, so it can be added to an
+> already-submitted entry. It is cut from the plan through 1 Sep only so that it
+> cannot threaten the submission — a future session reading "CUT" should not
+> treat it as dead.
 - [ ] Same pipeline on a live webcam feed
 - [ ] Record a short clip of a real U-turn detected live
 - [ ] **OpenVINO conversion** — measure ms/frame before and after against the
@@ -2216,3 +2235,13 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     on the dev walk. On real shoot trips it does the reverse, gluing events to the
     slow moments around them: 7 false positives at 1.0, 4 at 0.0, with no hits
     lost either way. Sweep every inherited parameter against the real data.
+
+46. **No copy of a file is authoritative unless git says so.** On 26 Aug the
+    project-folder copy of this file was observably in TWO different states at
+    once — one session read it at commit `58be847`, the same folder reported by
+    the user as a Day 8 version with rules stopping at 22 and no mention of the
+    odd/even split. Neither is the arbiter. **The working tree and GitHub are.**
+    Any session offering to edit this file must diff its copy against the real
+    one first and list every line it removes. Rule 37's sibling: 37 says never
+    rebuild from an unverified copy; 46 says you cannot verify a copy by looking
+    at it, only by diffing it against git.
