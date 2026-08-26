@@ -43,7 +43,7 @@ def label(im, text, x, y, colour, scale=0.55, box=True):
     (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, scale, 1)
     if box:
         cv2.rectangle(im, (int(x) - 5, int(y) - th - 5),
-                      (int(x) + tw + 5, int(y) + 6), (22, 22, 22), -1)
+                      (int(x) + tw + 5, int(y) + 6), (32, 32, 32), -1)
     cv2.putText(im, text, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX,
                 scale, colour, 1, cv2.LINE_AA)
 
