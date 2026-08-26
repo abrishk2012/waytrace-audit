@@ -1,6 +1,6 @@
-"""Burn detected events onto a clip's video.
+﻿"""Burn detected events onto a clip's video.
 
-Reads results.json only - never re-runs YOLO. This is the display half of the
+Reads results_odd.json only - never re-runs YOLO. This is the display half of the
 Day 1 processing/display split: the demo cannot be broken by a slow CPU because
 nothing is computed here.
 """
@@ -11,7 +11,7 @@ import numpy as np
 clip = sys.argv[1] if len(sys.argv) > 1 else "clip1"
 FPS = 15.0
 
-d = json.load(open("data/output/results.json"))
+d = json.load(open("data/output/results_odd.json"))
 events = [e for e in d["events"] if e["clip"] == clip]
 print(f"{len(events)} events in {clip}")
 

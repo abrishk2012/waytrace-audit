@@ -1,9 +1,9 @@
-"""Which trips did the system examine, and what did it find in each?
-A trip with zero events and a trip never seen look identical in results.json.
+﻿"""Which trips did the system examine, and what did it find in each?
+A trip with zero events and a trip never seen look identical in results_odd.json.
 Day 15 must not confuse them (Rule 38)."""
 import json, collections
 
-d = json.load(open("data/output/results.json"))
+d = json.load(open("data/output/results_odd.json"))
 ev = collections.defaultdict(list)
 for e in d["events"]:
     ev[(e["clip"], e["track_id"])].append(e)
