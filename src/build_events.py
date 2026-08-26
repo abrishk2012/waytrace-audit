@@ -62,7 +62,8 @@ for path in clips:
             x, y = position_at(w, a)
             events.append({"clip": clip, "track_id": tid, "type": "HESITATION",
                            "start_sec": round(a, 1), "end_sec": round(b, 1),
-                           "duration_sec": round(d, 1), "x_m": x, "y_m": y})
+                           "duration_sec": round(d, 1), "x_m": x, "y_m": y,
+                           "confidence": round(min(1.0, d / MIN_SECONDS), 2)})
 
         for t, ang in find_uturns(w, min_angle=MIN_ANGLE, sustain=SUSTAIN,
                                   span_seconds=SPAN_SECONDS, window=WINDOW,
@@ -70,7 +71,8 @@ for path in clips:
             x, y = position_at(w, t)
             events.append({"clip": clip, "track_id": tid, "type": "UTURN",
                            "start_sec": round(t, 1), "end_sec": round(t + 1, 1),
-                           "duration_sec": 1.0, "x_m": x, "y_m": y})
+                           "duration_sec": 1.0, "x_m": x, "y_m": y,
+                           "confidence": round(min(1.0, (float(ang) - MIN_ANGLE) / 45.0 + 0.5), 2)})
 
     print(f"  {clip:>7}: {len(tr):2d} tracks, {n_trips} trips")
 
@@ -86,4 +88,5 @@ with open(out, "w") as f:
 h = sum(1 for e in events if e["type"] == "HESITATION")
 u = len(events) - h
 print(f"\n{len(events)} events written to {out}  ({h} hesitations, {u} u-turns)")
+
 
