@@ -10,7 +10,7 @@ import speeds
 
 MAX_SPEED   = 0.3    # definitions.md
 MIN_SECONDS = 2.0    # definitions.md
-MAX_GAP     = 1.0    # not in definitions.md - see note below
+MAX_GAP     = 0.0    # not in definitions.md - see note below
 WINDOW      = 5      # locked on Day 8
 MIN_ANGLE     = 135.0   # definitions.md
 SUSTAIN       = 1.0     # definitions.md

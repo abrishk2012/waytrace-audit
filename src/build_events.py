@@ -20,7 +20,7 @@ WINDOW       = 5
 MIN_ANGLE    = 135.0
 SUSTAIN      = 1.0
 SPAN_SECONDS = 1.5
-MIN_SPEED    = 0.15
+MIN_SPEED    = 0.20
 
 speeds.H = np.load("homography_camC.npz")["H"]
 

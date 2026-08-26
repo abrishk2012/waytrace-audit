@@ -1,4 +1,4 @@
-"""Tune thresholds against ODD trips ONLY.
+﻿"""Tune thresholds against ODD trips ONLY.
 
 Never reads even trips. Never reads results.json (which covers all clips).
 Matches detected events to labelled events with a tolerance window, because
@@ -85,3 +85,29 @@ if __name__ == "__main__":
                 min_angle=135.0, sustain=1.0, span_seconds=1.5, min_speed=0.15)
     h, m, f = run(**base)
     print(f"BASELINE (definitions.md): {h} hits, {m} misses, {f} false positives")
+
+
+    for name, values in [("max_speed", (0.25, 0.30, 0.35, 0.40)),
+                         ("max_gap", (0.0, 0.5, 1.0, 1.5, 2.0)),
+                         ("min_seconds", (1.5, 2.0, 2.5, 3.0)),
+                         ("min_angle", (120.0, 135.0, 150.0, 165.0)),
+                         ("min_speed", (0.05, 0.10, 0.15, 0.20, 0.25))]:
+        print()
+        print(f"{name} sweep (one variable, all else fixed):")
+        for v in values:
+            cfg = dict(base); cfg[name] = v
+            h, m, f = run(**cfg)
+            flag = "  <- baseline" if v == base[name] else ""
+            print(f"  {name}={v:<6} {h:2d} hits  {m:2d} misses  {f:2d} false{flag}")
+
+    print()
+    print("candidate combinations:")
+    for label, changes in [("baseline", {}),
+                           ("gap=0", {"max_gap": 0.0}),
+                           ("spd=0.20", {"min_speed": 0.20}),
+                           ("gap=0 + spd=0.20", {"max_gap": 0.0, "min_speed": 0.20})]:
+        cfg = dict(base); cfg.update(changes)
+        h, m, f = run(**cfg)
+        p = h / (h + f) if h + f else 0
+        r = h / (h + m) if h + m else 0
+        print(f"  {label:<20} {h:2d} hits {m:2d} miss {f:2d} false   P={p:.0%} R={r:.0%}")
