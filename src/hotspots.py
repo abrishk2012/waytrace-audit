@@ -102,3 +102,27 @@ if signs and hotspots:
                    "min_events": MIN_EVENTS, "hotspots": hotspots}, f, indent=2)
     print()
     print(f"{out} rewritten with sign distances")
+
+# ---- PIPELINE SANITY CHECK (Day 14) ----
+# Junction geometry is measured from the BUILDING, never from detector output.
+# If the biggest hotspot does not land near the junction, something upstream is
+# wrong even when every number looks reasonable.
+try:
+    junc = json.load(open("data/signs.json"))["junction"]
+except Exception:
+    junc = None
+
+if junc and hotspots:
+    jx, jy = junc["centre_x_m"], junc["centre_y_m"]
+    print()
+    print(f"junction centre ({jx:+.2f}, {jy:+.2f}) from "
+          f"{len(junc['openings'])} measured openings")
+    for i, h in enumerate(hotspots, 1):
+        dj = math.hypot(h["x_m"] - jx, h["y_m"] - jy)
+        h["distance_to_junction_m"] = round(dj, 2)
+        side = "approach side" if h["y_m"] < jy else "beyond the junction"
+        print(f"  hotspot {i}: {dj:.2f} m from junction, {side}")
+    with open(out, "w") as f:
+        json.dump({"scope": d["scope"], "cell_m": CELL_M,
+                   "min_events": MIN_EVENTS, "hotspots": hotspots}, f, indent=2)
+    print("  SANITY CHECK PASSES if every hotspot is on the approach side")
