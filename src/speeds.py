@@ -28,6 +28,14 @@ def smooth(points, window=5):
         out.append((avg_x, avg_y, points[i][2]))
     return out
 
+def drop_fragments(trajectories, fps=FPS, min_seconds=1.0):
+    """Remove tracks too short to be a person walking.
+    Definition: docs/definitions.md, `int(fps * 1.0)`.
+    Measured on clip1 (Day 12): shortest real track 37 points,
+    longest fragment 4 points. The gap is a cliff, not a judgement call."""
+    keep = int(fps * min_seconds)
+    return {tid: pts for tid, pts in trajectories.items() if len(pts) >= keep}
+
 
 def trim_edges(world, seconds=0.5):
     """Drop the first and last N seconds of a track.
