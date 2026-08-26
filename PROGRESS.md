@@ -2,7 +2,9 @@
 
 **Hackathon:** VoltHacks 2026 (Devpost)
 **Hard deadline:** Sat 5 Sep 2026, 17:00 EDT = **22:00 Lisbon time**
-**Target finish:** Day 22 (Fri 4 Sep) — SUBMIT. Day 23 (Sat 5 Sep) is buffer only.
+**Target finish:** Day 22 (Tue 1 Sep) — SUBMIT. Days 2–5 Sep are four buffer days.
+**Re-planned again:** Wed 26 Aug (Day 12), resolving the 12-blocks-into-11-days
+collision. Signage OCR cut; live sensor mode cut to a post-submission addition.
 **Re-planned:** Wed 19 Aug, after lens calibration overran by two days.
 **Builder:** solo, 14, learning Python
 
@@ -75,12 +77,12 @@ Many small commits per day. Each one is a save point you can go back to.
 
 ## MUST HAVE (never sacrifice these)
 
-- [ ] Person detection
-- [ ] Anonymous tracking IDs
-- [ ] Trajectories drawn on video
+- [x] Person detection
+- [x] Anonymous tracking IDs
+- [x] Trajectories drawn on video
 - [x] Real-world units via homography
-- [ ] U-turn detection
-- [ ] Hesitation detection
+- [x] U-turn detection — v1 Day 12, untuned
+- [x] Hesitation detection — v1 Day 12, untuned
 - [ ] Hotspot clustering
 - [ ] Precision / recall numbers from hand-labelled ground truth
 - [ ] Polished dashboard
@@ -88,8 +90,14 @@ Many small commits per day. Each one is a save point you can go back to.
 
 ## SHOULD HAVE — cuttable, in this order
 
-- [ ] Signage OCR + arrow direction (Day 18 — cut first)
-- [ ] Live webcam "sensor mode" + OpenVINO (Day 19 — cut second)
+- ~~Signage OCR + arrow direction (Day 18)~~ — **CUT on Day 12, 26 Aug.**
+  Twelve blocks of work against eleven calendar days. Sign wording is hardcoded
+  instead: the corridor signs are fixed and their text is already known, so the
+  signage audit survives and only the *reading* of it is manual. OCR automates a
+  fact already in hand; it does not earn a day.
+- ~~Live webcam "sensor mode" + OpenVINO (Day 19)~~ — **CUT on Day 12, 26 Aug**,
+  to bring the finish date to 1 Sep. Becomes a post-submission addition on the
+  2–5 Sep buffer, re-submitted via Devpost edit if the buffer is genuinely free.
 
 ## CUT on 19 Aug
 
@@ -1357,7 +1365,12 @@ pasted new sections back in. Anything not consciously carried across vanished. N
 error, and the file still reads as complete and well-written.
 
 All of it survives in `2c7b427`. **Restore by hand, one section at a time.
-Never regenerate this file.** Rule 37. **Still outstanding — Day 12 job one.**
+Never regenerate this file.** Rule 37.
+**DONE — restored in `880e979`.** Verified on Day 12 by diffing the working file
+against `2c7b427`: 424 insertions, 43 deletions, and all 43 deletions confirmed
+intentional replacements (the old chronological 1–12/13–21 split, the superseded
+"24 clean" count, empty day templates, two tightened rules). The Day 11 handoff
+said this was still outstanding; it was two commits stale.
 
 ### Fatigue flag
 
@@ -1376,46 +1389,144 @@ before Day 15 trusts them. Rule 38.
 
 **Quiz score: 3/3 (multiple choice — easier than cold recall, Rule 13)**
 
-## Day 12 — Wed 26 Aug — Hesitation + U-turn detectors, then tune **on ODD trips only**
+## Day 12 — Wed 26 Aug — Hesitation + U-turn detectors v1  ✅ COMPLETE
 **Re-scoped: detectors slid from Day 10. Labelling is COMPLETE — Day 11 done.**
 
-- [ ] **BLOCKING FIRST:** `smooth()` verification in `speeds.py` — print
-      unsmoothed vs smoothed side by side. Wobbles under ~20 cm must die; the
-      real 1.6 m y-swing in ID 1 must survive. Outstanding since Day 8. Without
-      it the hesitation detector fires on footsteps (Rule 21).
-- [ ] **BLOCKING SECOND:** printed-vs-saved track count mismatch. clip1 prints
-      10 IDs and saves 13; clip13 prints 11 and saves 16; clip12 prints 3 and
-      saves 7. Same gap on every clip. Either the JSON holds short fragments the
-      printout filters out, or the count measures something else. If fragments,
-      the detector will invent events from 1-second scraps of people.
-- [ ] **BLOCKING THIRD:** restore the four sections deleted from PROGRESS.md,
-      by hand from `2c7b427`. Never regenerate the file (Rule 37).
-- [ ] Hesitation detector v1 — test against trip 18's squared-off U-turn
-- [ ] U-turn detector v1
-- [ ] Tune U-turn thresholds against ODD trips only
-- [ ] Tune hesitation thresholds against ODD trips only
-- [ ] Kill false positives from tracker jitter
-- [ ] **One variable at a time.** Every trustworthy number in this file came from that.
-- [ ] **Do not open EVEN trips.** Touching them turns the Day 15 metrics into fiction.
+- [x] **BLOCKING FIRST — `smooth()` VERIFIED.** `window=1` reproduces the
+      unsmoothed numbers exactly (3.70 m/s max, 1.74 m y-swing), so the function
+      is correct. `window=5` cuts the spurious spike to 1.40 m/s while the real
+      1.6 m y-swing survives at 1.72 m. Wobble dies, real movement lives — the
+      Day 8 requirement, met. The test *and its expected answer* had been written
+      on Day 8 before the answer was known (Rule 18), so verification took five
+      minutes against the day budgeted for it.
+- [x] **BLOCKING SECOND — track-count mismatch SOLVED.** Neither number lied.
+      The printout filters short tracks; the JSON keeps them.
+      clip1: 13 saved = 10 real + 3 fragments.
+      clip2: 3 saved = 2 real + 1 fragment.
+      clip13: 16 saved = 11 printed + 5 fragments, and the 11 decompose exactly
+      as 5 trips + 5 walk-backs + 1 excluded robot-vacuum walk.
+      Threshold measured, not guessed (Rule 11): shortest real track 37 points,
+      longest fragment 4 points — a cliff, not a judgement call.
+      `drop_fragments()` in `speeds.py` now implements `int(fps * 1.0)`, which
+      `docs/definitions.md` had specified but no code had ever applied.
+- [x] **BLOCKING THIRD — PROGRESS.md restore.** Already done in `880e979`; see
+      the damage section above. The handoff was two commits stale.
+- [x] **Trip direction confirmed against real data.** Every trip runs y-rising,
+      every walk-back y-falling, on clip1, clip2 and clip13 independently, and
+      every labelled trip start matches a rising track to within ~1 s. The
+      excluded robot-vacuum walk in clip13 runs y-falling and is therefore
+      dropped by the direction rule automatically, exactly as `definitions.md`
+      predicted. `docs/definitions.md` was right all along — the Day 11 handoff
+      transcribed it backwards as `<`. **Nothing was changed.**
+- [x] **Hesitation detector v1** — `src/detect.py`, thresholds straight from
+      `definitions.md` (0.3 m/s, 2.0 s), untuned.
+- [x] **U-turn detector v1** — window heading, ±1.5 s either side, per
+      `definitions.md`'s "measured over a window, never frame to frame".
+- [x] **The squared-off reversal is caught.** Trip 18 / E20, the case whose own
+      label says *"instantaneous angle may never exceed 135"*: detected at
+      **28.1 s, 138.8°** against a labelled 29 s. A frame-to-frame detector is
+      blind to this shape. The window design decision is vindicated with evidence.
+- [ ] Tune U-turn thresholds against ODD trips only → **Day 13**
+- [ ] Tune hesitation thresholds against ODD trips only → **Day 13**
+- [ ] Kill false positives from tracker jitter → **Day 13**
+- [x] **One variable at a time.** Every trustworthy number in this file came from that.
+- [x] **Do not open EVEN trips** for tuning. See the contamination note below.
 
-**Status:**
+**Status: DONE.** All five assigned jobs complete. Five commits, all pushed:
+`b1ae34c`, `26157a5`, `9f72adb`, `c2c0f17`, plus the PROGRESS commit.
+
 **Notes:**
-**Quiz score:      /3**
 
-## Day 13 — Wed 26 Aug — Event log
-> **⚠ SCHEDULE CONFLICT — Days 12 and 13 are both Wed 26 Aug.**
-> Days 12–23 is twelve blocks of work. Wed 26 Aug to Sat 5 Sep is **eleven
-> calendar days**. One block has to go, and right now the overrun is hidden by
-> two days sharing a date rather than being decided.
+### Detector v1 vs ground truth — clip1 and clip11, untuned
+
+| Trip | Category | Labelled | Detected | Result |
+|---|---|---|---|---|
+| 1 | AMBIG | E1 hes 7–10 | 6.9–11.1 | HIT, start 0.1 s off |
+| 2 | MISSING | none | none | correct reject |
+| 3 | AMBIG | none | none | correct reject |
+| 4 | EASY | E2 hes 114–116, **MAYBE** | none | MISS |
+| 5 | MISSING | E3 hes 142–144 | 142.3–147.0 | HIT, start 0.3 s off |
+| 5 | MISSING | E7 hes 153–155 | 153.1–156.3 | HIT, start 0.1 s off |
+| 5 | MISSING | E4/E5/E6/E8 uturns 146/148/150/159 | 147.3/149.4/153.1/157.9 | **4 for 4** |
+| 18 | MISSING | E19 hes 13–18 | 13.3–18.3 | HIT |
+| 18 | MISSING | E20 uturn 29 (squared-off) | 28.1, 138.8° | **HIT** |
+
+**4 of 5 hesitations, 5 of 5 U-turns, correct rejects on four clean trips** —
+from thresholds chosen blind before the code existed.
+
+**The single miss is the single `MAYBE` in the whole event file.** E2 is the only
+event labelled with doubt in all 23, and it is the only one the detector missed.
+Human uncertainty and machine failure landed on the same event independently.
+
+### Three known false positives, all diagnosed, none fixed today
+
+1. **Ends run long, starts are exact.** Starts land within 0.3 s; ends overshoot
+   by ~3 s. `max_gap=1.0` holds an event open across the U-turns that follow it —
+   the person is turning, so they are slow, so the hesitation never closes.
+   **Event timing is trustworthy; event duration is not yet.**
+2. **A stationary person has no heading.** Two false U-turns fired at 13.9 s and
+   15.0 s on trip 18, *inside* a labelled hesitation. Someone standing still and
+   shifting weight has no meaningful direction, so `heading()` returns noise, and
+   noise clears 135° easily. This is a design flaw, not a threshold: the fix is a
+   speed gate, not a bigger angle. Day 13.
+3. **1-second pauses inflate.** The 20–21 s pause on trip 18, excluded from the
+   labels as under threshold, was detected as a 3.7 s hesitation. Same `max_gap`
+   cause as (1).
+
+### CONTAMINATION NOTE — read before Day 15
+
+Running a detector over a whole clip prints every trip in it, and clips mix odd
+and even. **Detector output has therefore been seen for even trips 2 and 4.** No
+threshold was moved on the basis of it and no tuning has occurred, but the fact is
+recorded here rather than quietly dropped, and it goes in the README. The honest
+framing: the held-out set protects against *tuning* contamination, and tuning has
+not happened; but "never observed" is now false and must not be claimed.
+
+### Definitions live elsewhere
+
+Event definitions are in **`docs/definitions.md`**, committed blind in `2c7b427`
+before labelling began — not in this file. The Day 11 handoff implied they were
+here and cost ~15 minutes of searching.
+
+### Threshold evidence for Day 13 — NOT acted on today
+
+A confirmed standstill peaks at **0.38 m/s** smoothed, above the 0.3 m/s in
+`definitions.md`, and measured walking is **0.64 m/s** against the 1.2 m/s the
+definitions assumed. Both roughly half, because the corridor is a hallway and not
+a concourse. Recording this on Day 12 rather than acting on it is the point:
+`definitions.md` says the numbers are "expected to be wrong", and this is the
+evidence — not a licence to edit a threshold minutes after seeing a number.
+
+**Quiz score:      /3  — DUE**
+
+## Day 13 — Thu 27 Aug — Tune on ODD trips only, then event log
+> **✅ SCHEDULE CONFLICT RESOLVED on Day 12, 26 Aug.**
+> Both cuttable features cut: signage OCR *and* live sensor mode. Eleven blocks
+> of work now map onto real calendar days, finishing **Tue 1 Sep** with **four
+> buffer days** (2–5 Sep) before the real deadline of Sat 5 Sep, 22:00 Lisbon.
+> Calibration overran by two days and the shoot overran by two days; a third
+> overrun is the pattern, not a surprise, and the buffer is what absorbs it.
 >
-> As written, Wed 26 Aug holds: the PROGRESS.md repair, the `smooth()`
-> verification, the track-count bug, both detectors, tuning on the ODD set, and
-> the event log. That will not fit in one day.
->
-> **Days 18 (signage OCR) and 19 (live sensor) are already marked CUTTABLE.**
-> Cut one, give the day back to Day 13, and every date below shifts to a real
-> calendar day. **Day 15 does not move either way** — it stays Fri 28 Aug.
-> Decide this on Day 12, before the compression decides it for you.
+> | Day | Date | Work |
+> |---|---|---|
+> | 12 | Wed 26 Aug | Detectors v1 ✅ |
+> | 13 | Thu 27 Aug | Tune on ODD only + event log |
+> | 14 | Fri 28 Aug | Hotspot engine |
+> | 15 | Sat 29 Aug | ★ Validation on EVEN |
+> | 16–17 | Sun 30 – Mon 31 Aug | Dashboard |
+> | 20 | Mon 31 Aug | Polish, README, GitHub |
+> | 21–22 | Tue 1 Sep | Demo video + SUBMIT |
+> | — | 2–5 Sep | Buffer. Live sensor mode returns here if free. |
+
+- [ ] **Speed gate on the U-turn detector.** A stationary person has no heading;
+      two false U-turns on trip 18 came from noise inside a hesitation. Fix the
+      design before touching any threshold.
+- [ ] **`max_gap` sensitivity.** Half a second either side changes the answer
+      completely (0.5 → 3 events, 1.0 → 2, 1.5 → 1). Report a range on Day 15,
+      never a single number.
+- [ ] Tune hesitation thresholds against **ODD trips only**
+- [ ] Tune U-turn thresholds against **ODD trips only**
+- [ ] **Do not open EVEN trips.**
 - [ ] Event schema: type, track ID, timestamp, x, y (metres), confidence
 - [ ] Every detected event written to `results.json`
 - [ ] Events drawn on the output video as they fire
@@ -1426,7 +1537,7 @@ before Day 15 trusts them. Rule 38.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 14 — Thu 27 Aug — Hotspot engine
+## Day 14 — Fri 28 Aug — Hotspot engine
 - [ ] Cluster event coordinates (DBSCAN or grid density)
 - [ ] Output hotspot centre, event count, type breakdown
 - [ ] Heatmap overlay on a still frame
@@ -1437,7 +1548,7 @@ before Day 15 trusts them. Rule 38.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 15 — Fri 28 Aug — ★ VALIDATION METRICS (held-out set) ★
+## Day 15 — Sat 29 Aug — ★ VALIDATION METRICS (held-out set) ★
 **Moved before the dashboard. If the numbers are bad, there is still time.**
 
 - [ ] Open the EVEN trips for the first time
@@ -1454,7 +1565,7 @@ live mode and fix the detector. Metrics are MUST HAVE; those two are not.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 16 — Sat 29 Aug — Dashboard part 1 (Streamlit)
+## Day 16 — Sun 30 Aug — Dashboard part 1 (Streamlit)
 - [ ] Upload / select video
 - [ ] Analyse button + progress indicator
 - [ ] Show the processed video
@@ -1474,7 +1585,7 @@ live mode and fix the detector. Metrics are MUST HAVE; those two are not.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 18 — Mon 31 Aug — Signage MVP  *(CUTTABLE — SHOULD HAVE)*
+## Day 18 — ~~Mon 31 Aug~~ — Signage MVP — **CUT on Day 12, 26 Aug**
 - [ ] User draws a box around a sign; OCR reads the text
 - [ ] Arrow direction, basic
 - [ ] Associate a sign with the nearest hotspot
@@ -1487,7 +1598,7 @@ live mode and fix the detector. Metrics are MUST HAVE; those two are not.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 19 — Tue 1 Sep — Live sensor mode  *(CUTTABLE — SHOULD HAVE)*
+## Day 19 — ~~Tue 1 Sep~~ — Live sensor mode — **CUT on Day 12, 26 Aug.** Returns on the 2–5 Sep buffer if free.
 - [ ] Same pipeline on a live webcam feed
 - [ ] Record a short clip of a real U-turn detected live
 - [ ] **OpenVINO conversion** — measure ms/frame before and after against the
@@ -1501,7 +1612,7 @@ Valuable — but not worth a broken detector. Cut it before cutting metrics.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 20 — Wed 2 Sep — Polish + GitHub + README
+## Day 20 — Mon 31 Aug — Polish + GitHub + README
 - [ ] `.gitignore` verified (no `.venv`, no videos, no `*.pt`) — `git status` first
 - [ ] README: pitch, architecture, definitions, privacy, metrics, limitations
 - [ ] **Homography limitation paragraph** (Day 5) + `floor_points.jpg` as evidence
@@ -1517,7 +1628,7 @@ Valuable — but not worth a broken detector. Cut it before cutting metrics.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 21 — Thu 3 Sep — Demo video
+## Day 21 — Tue 1 Sep — Demo video
 - [ ] Storyboard the first 10 seconds FIRST
 - [ ] Real system output only — zero fake numbers
 - [ ] **Blur faces in every frame shown.** Proves the privacy claim instead of
@@ -1534,7 +1645,7 @@ Structure (2 min, landscape):
 **Status:**
 **Notes:**
 
-## Day 22 — Fri 4 Sep — ★ SUBMIT ★
+## Day 22 — Tue 1 Sep — ★ SUBMIT ★
 - [ ] Description, screenshots, tech list, GitHub link, video link
 - [ ] **Click every link yourself, logged out**
 - [ ] SUBMIT TODAY. Do not wait for Day 23.
@@ -1542,7 +1653,7 @@ Structure (2 min, landscape):
 **Status:**
 **Notes:**
 
-## Day 23 — Sat 5 Sep — BUFFER ONLY
+## Day 23 — Wed 2 Sep – Fri 5 Sep — BUFFER ONLY (four days)
 - [ ] Fix anything broken. **Deadline 22:00 Lisbon.**
 - [ ] If the submission is already in, this day is for sleeping.
 
@@ -1789,3 +1900,25 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     labelling does not produce obviously wrong events — it produces trips that
     look clean because nothing was noticed. Flag the session, not the row: the row
     gives no sign that there is anything to check.
+
+39. **A summary is a weaker witness than the thing it summarises.** On Day 12
+    the handoff was wrong four times — the path to `speeds.py`, the identity of
+    the last commit, whether the PROGRESS restore was outstanding, and the sign
+    in the trip rule — and the committed file was right every time. The handoff
+    was written at 00:30 from memory; each file was written carefully, at the
+    time, doing one job. Rule 27 extended: not just "verify with the filesystem",
+    but **the artefact outranks any note about the artefact**, including one
+    written yesterday, including one written by me.
+
+40. **A walk-back is not a trip.** Every trip in the dataset is followed by the
+    person returning to the start. That return contains a genuine, sustained 180°
+    turn the U-turn detector fires on *correctly*, with no matching ground-truth
+    row — a false positive by construction, not by bug. Half of every clip is
+    walk-backs. Direction filtering happens BEFORE detection, never after.
+
+41. **A stationary object has no direction.** Heading is computed from
+    displacement, so when displacement is noise, heading is noise, and noise
+    clears any angle threshold you like. Two false U-turns fired inside a
+    labelled *hesitation* on trip 18. The fix is a speed gate, not a bigger
+    angle: some quantities are undefined rather than merely uncertain, and no
+    threshold on an undefined quantity is meaningful.
