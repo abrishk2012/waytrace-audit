@@ -83,7 +83,7 @@ Many small commits per day. Each one is a save point you can go back to.
 - [x] Real-world units via homography
 - [x] U-turn detection — v1 Day 12, untuned
 - [x] Hesitation detection — v1 Day 12, untuned
-- [ ] Hotspot clustering
+- [x] Hotspot clustering — Day 14, grid density not DBSCAN. 2 hotspots, count stable across a 3x range of cell size
 - [ ] Precision / recall numbers from hand-labelled ground truth
 - [ ] Polished dashboard
 - [ ] Demo video
@@ -1869,8 +1869,8 @@ live mode and fix the detector. Metrics are MUST HAVE; those two are not.
 
 **Cut this whole day if Day 15 metrics need rescuing.**
 
-**Status:**
-**Notes:**
+**Status:** CUT on Day 12, 26 Aug. Not attempted.
+**Notes:** OCR was never built. The signage audit landed on Day 14 by a different route — sign_A measured from the building, five clicks agreeing to 1 cm, sign text hardcoded because the corridor signs are fixed and already known. Measured, not read. The four boxes above describe OCR and stay unticked.
 **Quiz score:      /3**
 
 ## Day 19 — ~~Tue 1 Sep~~ — Live sensor mode — **CUT from the plan, NOT abandoned**
