@@ -82,6 +82,51 @@ def find_hesitations(world, max_speed=0.25, min_seconds=1.5,
         events.append((run_start, last_slow, last_slow - run_start))
     return events
 
+def heading(world, i, span):
+    """Direction of travel at point i, measured over `span` points either side.
+    Returns an angle in degrees, or None if too close to the ends.
+    Measured over a WINDOW, never frame to frame: two consecutive frames are
+    0.067 s apart and heading over that gap is dominated by position error
+    (Rule 21, docs/definitions.md)."""
+    if i - span < 0 or i + span >= len(world):
+        return None
+    x0, y0, _ = world[i - span]
+    x1, y1, _ = world[i + span]
+    if abs(x1 - x0) < 1e-9 and abs(y1 - y0) < 1e-9:
+        return None
+    return np.degrees(np.arctan2(y1 - y0, x1 - x0))
+
+
+def find_uturns(world, min_angle=135.0, sustain=1.0, span_seconds=1.5,
+                window=5):
+    """Find direction changes over min_angle that hold for `sustain` seconds.
+
+    span_seconds is the half-width of the heading window. 1.5 s is chosen so a
+    SQUARED-OFF reversal (walk forward, step sideways, walk back - two 90 degree
+    turns, never one pivot) is spanned as a single movement. A frame-to-frame
+    detector is blind to that shape - see trip 18 / E20.
+
+    Returns list of (turn_time, angle_degrees)."""
+    w = smooth(world, window=window)
+    span = max(1, int(span_seconds * FPS))
+    hold = max(1, int(sustain * FPS))
+
+    events = []
+    last_turn = -999.0
+    for i in range(len(w)):
+        before = heading(w, i, span)
+        after  = heading(w, min(i + hold, len(w) - 1), span)
+        if before is None or after is None:
+            continue
+        diff = abs(after - before)
+        if diff > 180:
+            diff = 360 - diff          # 350 degrees apart is really 10
+        if diff >= min_angle:
+            t = (w[i][2] - 1) / FPS
+            if t - last_turn >= sustain:     # one event per turn, not per frame
+                events.append((t, diff))
+                last_turn = t
+    return events
 
 # ---- THE ONE AND ONLY UNIT CONVERSION ----
 # H maps pixels -> CENTIMETRES (see Day 5 notes).
