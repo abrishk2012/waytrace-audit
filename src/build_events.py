@@ -15,7 +15,7 @@ import speeds
 
 MAX_SPEED    = 0.3
 MIN_SECONDS  = 2.0
-MAX_GAP      = 1.0
+MAX_GAP      = 0.0
 WINDOW       = 5
 MIN_ANGLE    = 135.0
 SUSTAIN      = 1.0
