@@ -978,41 +978,122 @@ speed, (2) why the run used the old file, (3) why the /100 lives in one place.
 **Nothing in the shoot depends on this. The shoot needs signs, a clear floor and
 an untouched camera — all done.**
 
-## Day 9 — Sat 22 Aug — ★ THE SHOOT ★
+## Day 9 — Sun 23 Aug (shot) / Mon 24 Aug (verified) — ★ THE SHOOT ★
 **Highest-risk day in the project. Everything downstream eats this footage.**
+**Slipped ~2 days from plan. Shoot happened Sun 23 Aug evening; verification and
+CFR conversion ran Mon 24 Aug.**
 
-- [ ] Consent on camera first — each person says their name and that they agree
-- [ ] One continuous recording for the whole session
-- [ ] 21 trips (~7 each), roughly two-thirds using the missing destinations
-      (`TOILETS`, `LOUNGE` — deliberately absent from the wall sign)
-- [ ] **5 full seconds between people. Never two in frame at once.**
-- [ ] Log each trip on paper as it happens: trip number, destination card, clean or wasted
-- [ ] **DO NOT TOUCH THE CAMERA**
+- [x] Consent on camera first
+- [x] ~~One continuous recording~~ — **13 separate clips instead.** See notes.
+- [x] 25 trips logged, **all 25 clean** (target was 21), plus 8 wasted takes
+- [x] **5 full seconds between people. Never two in frame at once.**
+- [x] Log each trip as it happens — `data/shoot_log.csv`
+- [x] **CAMERA NOT TOUCHED** — homography and calibration both survive
 
-**Same day, before bed — verify it, don't assume it:**
-- [ ] `check_video.py` on the raw file — resolution, real frame count, duration
-- [ ] `ffmpeg -r 15 -an` CFR conversion, then `check_video.py` again
-- [ ] Undistort one frame and eyeball it
-- [ ] Run the existing tracker over 500 frames and watch the preview
-- [ ] **Back the raw file up to a second location before touching anything**
+**Verification — Mon 24 Aug:**
+- [x] `check_video.py` on all 13 raw clips
+- [x] **Backed up** to `OneDrive\waytrace_raw_backup\` — verified by count and
+      byte total, not by the copy finishing without an error
+- [x] `ffmpeg` CFR conversion of all 13 → `data/cfr/`, then `check_video.py` again
+- [ ] Undistort one frame and eyeball it — **carried to Day 10**
+- [ ] Tracker over 500 frames — **carried to Day 10**
 
-If the footage is unusable, that is discovered tonight, not on Day 15.
-Sun 23 Aug is the reshoot slot if needed — hesitation work slides.
+**Status:** DONE (footage secured and CFR-converted; two eyeball checks carried)
 
-**Status: DONE** (ran Sun 24 Aug, not 22 Aug)
-**Notes:** 13 clips, 25 numbered trips logged, 7 wasted takes. Every trip shot
-alone with 5+ s between people and a hands-up walk-back to close each take —
-exactly as planned on this day. That protocol is why the trip boundaries are
-reliable, and it is also a stated limitation: the tracker never had to handle
-two people at once, so ByteTrack's performance here overstates what it would do
-on real airport footage. Say so in the README rather than waiting to be asked.
-Backed up to OneDrive, verified by file count AND byte total (Rule 23).
-**5 clips were 1280x720 instead of 1024x576** — would have silently broken the
-homography on 3 of the 9 MISSING trips. Proved it was a pure 1.25x rescale with
-the same field of view, then scaled down to match the calibration.
-**Quiz score: n/a — shoot day**
+**Notes:**
 
-## Day 10 — Sun 23 Aug — Hesitation detector v1  *(or RESHOOT)*
+### Trip counts — better than planned
+25 trips logged, all 25 clean, 8 wasted takes. Category split:
+- **MISSING** (destination not on the sign — `TOILETS`, `LOUNGE`): 9
+- **AMBIG** (`EXIT` / `BAGGAGE CLAIM` sharing one left arrow): 8
+- **EASY** (`GATES A-C`, unambiguous right arrow): 8
+
+*(Corrected on Day 11: an earlier note said 24 clean / 7 wasted / 7 EASY. The log
+holds 25 numbered clean trips with no gaps and 8 wasted takes. Every clip was
+reconciled against the log after labelling.)*
+
+### FIVE CLIPS WERE THE WRONG RESOLUTION — caught by verification, not by luck
+Clips **2, 5, 6, 9, 11** recorded at **1280x720**. The other eight are 1024x576.
+The 720p clips are all short (21–55 s) and high-bitrate (1763 vs 660 kb/s, tbr
+29.42 vs 15.17); the 576p ones are long. Two different ways of pulling video off
+the same camera, **interleaved through the evening** — clip4 is timestamped
+20:32:06 and clip5 20:34:38, so this is not two sessions.
+
+**Why this was nearly fatal and completely silent.** `calibration_ezviz.npz` and
+the homography are both measured **in pixels at 1024x576**. K says the lens axis
+sits at pixel (512, 288); the homography says pixel (640, 400) is a specific spot
+on the floor. Feed a 1280x720 frame to either and every number is wrong — and
+**nothing errors.** It would have produced confident, wrong centimetres.
+
+**What it would have cost.** Those five clips hold trips 6, 8, 9, 14, 18 —
+**three of them MISSING**, out of only 9 MISSING trips in the whole dataset. A
+third of the most valuable category. Worse, trips 6/8/14/18 are all **even**, so
+under the odd/even split the loss would have landed almost entirely on one half
+and quietly unbalanced tuning against held-out.
+
+**The diagnosis took five minutes because the shoot log existed.** Clip → trip →
+category was a lookup, not an investigation. This is the argument for logging on
+paper *during* the shoot.
+
+### It was a pure rescale, so the calibration survives
+Compared one frame from clip4 (576p) against one from clip5 (720p). Three
+landmarks — robot vacuum edge 180→225 px, top of painting 140→175, wall sign
+810→1012 — all exactly **1.25x**, and `1280/1024 = 1.25`. No new room visible at
+the edges; the barrel arc on the left curves identically in both. **Same lens,
+same mount, same field of view, bigger picture.**
+
+Fix = scale the video **down** to match the calibration, never adjust the
+calibration to match the video.
+
+### One command for all 13, no special cases
+`ffmpeg -vf scale=1024:576 -r 15 -an`, run over every clip. `scale=1024:576` on a
+clip already at 1024x576 does nothing, so there is **no branch, no list of which
+clips are special, and no chance of missing one in three days.** Same instinct as
+the /100 living in exactly one place.
+
+### The frame counts confirm the conversion rather than just surviving it
+Eleven clips gained exactly **one** frame; clips 6 and 9 gained none. Those two
+were the only clips whose original FPS was *above* 15 (15.0010 and 15.0009) —
+everything else was slightly below and needed one duplicate frame to stretch to a
+true 15.0. The pattern matches the cause, which is what separates "it worked"
+from "it didn't complain".
+A duplicated frame is one 0.067 s blip where the walker appears frozen. Hesitation
+is *sustained* slowness over seconds, so it cannot fake an event. The payoff:
+**frame 150 is now exactly 10.000 s on every clip.**
+
+### Stray file caught in `data/cfr`
+The single-clip conversion test wrote `clip5.mp4` alongside the full-length names,
+leaving 14 files where there should be 13. Deleted. A second copy of one clip
+under a different name is how a trip gets labelled twice. Rule 10.
+
+### `git mv` on a file already renamed in Explorer
+`fatal: bad source`. Explorer renames the file; git is never told, so it sees a
+deletion and a stranger. Fixed with `git add -A data/`, which matched them at
+**100% similarity** and recorded a proper rename. **Renaming in the file manager
+does half the job.**
+
+### The shoot protocol is also a stated limitation
+Every trip was shot alone, with 5+ seconds between people and a hands-up walk-back
+to close each take. That protocol is why the trip boundaries are reliable — and it
+means **the tracker never had to handle two people at once.** ByteTrack's
+performance here overstates what it would do on real airport footage. Say so in
+the README rather than waiting to be asked. Rule 32.
+
+### Commits this session
+- Rename shoot log to shoot_log.csv/.xlsx
+- CFR convert all 13 shoot clips to 1024x576 @ 15fps
+
+### Re-teach delivered (owed from Day 8)
+All three explained fresh: (1) short time gaps magnify small position errors,
+(2) Python reads the file once at launch, (3) why /100 lives in one place.
+**Quiz deliberately NOT taken immediately after** — answering right after reading
+the answers proves nothing. Rule 13.
+
+**Quiz score: not taken — deferred cold, then overtaken by Days 10–11.**
+
+## Day 10 — Mon 24 Aug — Hesitation detector v1  *(or RESHOOT)*
+**Planned for Sun 23 Aug as the reshoot slot; ran Mon 24 Aug alongside the tail
+of Day 9's verification.**
 - [ ] **Absolute speed threshold** — speed below X m/s sustained for Y seconds.
       NOT a per-person baseline: 2.7 m of approach is too short to establish one.
       See Day 4. This limitation is stated plainly in the README.
@@ -1031,7 +1112,7 @@ research done. `docs/definitions.md` written blind. Quiz 3/3 cold.
 The hesitation detector itself slides to Day 12.
 **Quiz score: 3/3 cold**
 
-## Day 11 — Mon 25 Aug — ★ GROUND TRUTH LABELLING (BLIND) ★
+## Day 11 — Tue 25 Aug — ★ GROUND TRUTH LABELLING (BLIND) ★
 **Moved forward from Day 19. Do this before looking at any detector output.**
 
 - [x] **Write the definitions FIRST, before watching anything.** `docs/definitions.md`,
@@ -1322,6 +1403,19 @@ before Day 15 trusts them. Rule 38.
 **Quiz score:      /3**
 
 ## Day 13 — Wed 26 Aug — Event log
+> **⚠ SCHEDULE CONFLICT — Days 12 and 13 are both Wed 26 Aug.**
+> Days 12–23 is twelve blocks of work. Wed 26 Aug to Sat 5 Sep is **eleven
+> calendar days**. One block has to go, and right now the overrun is hidden by
+> two days sharing a date rather than being decided.
+>
+> As written, Wed 26 Aug holds: the PROGRESS.md repair, the `smooth()`
+> verification, the track-count bug, both detectors, tuning on the ODD set, and
+> the event log. That will not fit in one day.
+>
+> **Days 18 (signage OCR) and 19 (live sensor) are already marked CUTTABLE.**
+> Cut one, give the day back to Day 13, and every date below shifts to a real
+> calendar day. **Day 15 does not move either way** — it stays Fri 28 Aug.
+> Decide this on Day 12, before the compression decides it for you.
 - [ ] Event schema: type, track ID, timestamp, x, y (metres), confidence
 - [ ] Every detected event written to `results.json`
 - [ ] Events drawn on the output video as they fire
@@ -1466,6 +1560,7 @@ Structure (2 min, landscape):
 | **Footage unusable, found late** | 15 | Fatal — no time to reshoot | Full verification on the night of the shoot, not later |
 | **Poor precision/recall** | 15 | Weak README, weak demo | Metrics moved before dashboard; Days 18–19 are sacrificial |
 | **Unit error (cm vs m)** | 10 | Every speed 100x wrong, silently | One explicit conversion point, written down on Day 7 |
+| ~~**Resolution mismatch vs calibration**~~ **— HAPPENED, Day 9** | would have bitten 15 | 5 clips (3 MISSING) producing silently wrong cm | Caught by `check_video.py` on every clip on shoot night. Fixed by scaling 720p→576p. **The risk register did not predict this one.** |
 | **Contaminated ground truth** | 15 | Metrics become fiction | Labels blind on Day 11; held-out set untouched until Day 15 |
 | **Overrun like Days 5–6** | any | Buffer already spent once | Days 18 and 19 are the release valve. Cut, don't extend. |
 
@@ -1503,7 +1598,9 @@ that can be dropped. There is no third cut after that.
 | Occlusion | One person blocking another from the camera. Detection merges them into one box; the tracker will swap their IDs. Seen on Day 1 in the 0.89 box. |
 | ID switch | The tracker loses someone and re-registers them as a stranger with a new number. Visible as a colour change mid-walk. Dangerous because WayTrace measures per person over time — if a U-turn is split across two IDs, neither ID contains the reversal and the event becomes invisible. |
 | Fragment track | A track only a few frames long — noise, a shadow, half a person. Has a position but no movement, so it reads as "never moved" and can become a fake hesitation event. Filter must be `int(fps * 1.0)`, not a hardcoded 25. |
-| Variable frame rate (VFR) | The camera doesn't space frames evenly — it drops or adds them depending on light and motion. Deadly here because trajectories store `frame_number` and never a timestamp, so **frame numbers are the clock**. Uneven spacing = every speed silently wrong, worst during fast movement. Fixed with `ffmpeg -r 15`. |
+| Variable frame rate (VFR) | The camera doesn't space frames evenly — it drops or adds them depending on light and motion. Deadly here because trajectories store `frame_number` and never a timestamp, so **frame numbers are the clock**. Uneven spacing = every speed silently wrong, worst during fast movement. Fixed with `ffmpeg -r 15`. Day 9: all 13 clips converted; eleven gained one duplicate frame, the two already above 15 fps gained none. Frame 150 is now exactly 10.000 s on every clip. |
+| Resolution vs calibration | K, the distortion coefficients and the homography are all **numbers of pixels**. They only mean anything at the frame size they were measured at (1024x576). A 1280x720 frame puts the principal point and every homography source point in the wrong place, and **produces plausible wrong centimetres with no error**. Day 9: 5 clips were 720p. Fixed by scaling the video down, not by touching the calibration. |
+| Field of view vs rescale | Two ways a frame can be a different size. **Rescale** = same room, more pixels — landmarks all move by one constant factor, calibration survives a resize. **Different FOV** = more or less room visible at the edges — a different optical view, needing its own calibration. Told apart by measuring landmark positions in both: mine were all exactly 1.25x, and 1280/1024 = 1.25. |
 | Barrel distortion / fisheye | Wide CCTV lenses bend straight lines outward, worst at the frame edges. Breaks the footpoint and will break homography, because homography assumes straight world lines stay straight in the image. Fixed by measuring the distortion with `cv2.calibrateCamera` on a known grid — never by guessing a constant. Mine: **k1 = -0.41**, negative = barrel. |
 | `imgsz` | The size YOLO resizes the frame to before looking at it. Not "bigger is better": trained near 640, so 1280 gave **zero** detections on my footage while 640 gave the best result. |
 | Systematic vs random error | Random error scatters both ways and partly cancels out under smoothing. Systematic error leans the same way every single time, so it survives smoothing and becomes a real offset in metres. The tilted-camera footpoint was systematic — that's why it mattered. |
@@ -1616,15 +1713,28 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
 22. **An average over a whole track hides the thing you are detecting.** ID 1
     averaged 0.11 m/s: a real walk plus a real 10-second stop, producing a number
     that describes neither. Events are "below X for Y seconds", never an average.
-23. **A copy is not a backup until the count AND the byte total match.** "Copy
-    complete" is a message, not evidence.
+23. **A copy is not a backup until the count and the byte total match.**
+    `Copy-Item` finishing silently proves nothing — same trap as the 257-byte file
+    that printed "Saved to". 13 files and 143,138,488 bytes on both sides is the
+    proof. (And OneDrive is *sync*, not backup: delete the source and the cloud
+    obediently deletes too. It protects against the laptop dying, not against me.
+    Never edit raw footage in place — always write to a new folder.)
 24. **Calibration is measured in pixels, so resolution is part of the
-    calibration.** 5 clips came off the camera at 1280x720 against a 1024x576
-    calibration. Same lens, same view, silently wrong maths.
-25. **Prefer the command that is harmless when unnecessary.** `Get-ChildItem`,
-    `Select-String`, `git status` cost nothing and cannot break a run.
-26. **A loud failure is a cheap failure.** `Cannot find path` took five seconds
-    to read and saved an evening. The expensive failures are the silent ones.
+    calibration.** Change the frame size and K, the distortion model and the
+    homography are all silently wrong, with no error anywhere. 5 clips came off the
+    camera at 1280x720 against a 1024x576 calibration. When footage and calibration
+    disagree, **scale the footage to fit the calibration** — never adjust the
+    calibration to fit the footage.
+25. **Prefer the command that is harmless when it's unnecessary.** Running
+    `scale=1024:576` over all 13 clips is safe because it's a no-op on the eight
+    that already match. One command with no exceptions beats a correct list of
+    exceptions, because the list is what gets forgotten. Same reasoning as one
+    conversion point for /100. `Get-ChildItem`, `Select-String` and `git status`
+    are the same shape: they cost nothing and cannot break a run.
+26. **A loud failure is a cheap failure.** A wrong script path errored 13 times in
+    a row and cost ten seconds. The hardcoded path in `check_video.py` said nothing
+    and cost four wrong conclusions. Ranked by danger: silent wrong answer >
+    silent no-op > loud crash.
 27. **My own notes are a suspect witness.** HANDOFF.md claimed two files existed
     that did not. Written tired, at the end of a long day, recording intentions
     as completed work. Verify with the filesystem before building on any
@@ -1668,11 +1778,13 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     live, with information the footage does not contain, stays binned — even when
     it turns out to hold the richest behaviour in the dataset. Record what was
     lost and why; do not quietly edit the decision once the contents are known.
-37. **Never regenerate a long file — edit it in place.** Rewriting PROGRESS.md
-    from an older copy deleted ~90 lines with no error and no visible gap.
-    Anything not consciously carried across is gone, and the result reads as
-    complete afterwards. Scoped edits to one section at a time, then `git diff`
-    before committing.
+37. **Never rebuild a file from a copy you have not verified is the current
+    one.** Length is not the risk; provenance is. PROGRESS.md was rebuilt from a
+    Day 8 snapshot that a previous session could see, and ~90 lines written since
+    then quietly stopped existing — no error, and the result read as complete.
+    Check the source is current, edit in place where possible, and `git diff`
+    before every commit. A stale copy that silently refreshes to your last commit
+    is more dangerous than one that obviously looks old.
 38. **A missed observation is invisible; an invented one is not.** Tired
     labelling does not produce obviously wrong events — it produces trips that
     look clean because nothing was noticed. Flag the session, not the row: the row
