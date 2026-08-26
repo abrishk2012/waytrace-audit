@@ -1,4 +1,4 @@
-﻿"""Draw hotspots and signage onto a still frame - the picture for the README
+"""Draw hotspots and signage onto a still frame - the picture for the README
 and the opening of the demo video.
 
 Reads hotspots_odd.json and signs.json. Computes nothing: the Day 1
