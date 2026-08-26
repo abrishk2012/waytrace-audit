@@ -47,7 +47,12 @@ for path in clips:
     n_trips = 0
     for tid, pts in tr.items():
         w = pixels_to_metres(pts)
-        if w[-1][1] <= w[0][1]:
+        # A trip STARTS at the near end (y about -1); a walk-back starts at
+        # the far end (y about +2). Judged by START position, not by net
+        # displacement: a trip containing a U-turn ends where it began, so
+        # 'final y > starting y' decides those on noise. Day 13: clip12
+        # ID 19 rejected at -0.12 m, clip11 ID 1 accepted at +0.01 m.
+        if w[0][1] > 0.5:
             continue                                  # walk-back, not a trip
         n_trips += 1
 
@@ -81,3 +86,4 @@ with open(out, "w") as f:
 h = sum(1 for e in events if e["type"] == "HESITATION")
 u = len(events) - h
 print(f"\n{len(events)} events written to {out}  ({h} hesitations, {u} u-turns)")
+
