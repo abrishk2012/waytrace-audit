@@ -67,3 +67,38 @@ for cm in (0.3, 0.4, 0.5, 0.6, 0.75, 1.0):
     covered = sum(len(v) for v in hs)
     print(f"  cell={cm:.2f} m   {len(cc):2d} cells   {len(hs)} hotspots   "
           f"{covered}/{len(d['events'])} events clustered")
+
+# ---- SIGNAGE AUDIT ----
+# "possible signage issue associated with this hotspot", never "this sign
+# caused it". The system measures distance, not causation.
+import math
+try:
+    signs = json.load(open("data/signs.json"))["signs"]
+except Exception as err:
+    signs = []
+    print("no signs.json:", err)
+
+if signs and hotspots:
+    print()
+    print("distance from each hotspot to the nearest sign:")
+    for h in hotspots:
+        best, best_d = None, 1e9
+        for s in signs:
+            dist = math.hypot(h["x_m"] - s["x_m"], h["y_m"] - s["y_m"])
+            if dist < best_d:
+                best, best_d = s, dist
+        h["nearest_sign"] = best["id"]
+        h["distance_to_sign_m"] = round(best_d, 2)
+        kind = ("u-turn dominated" if h["uturns"] > h["hesitations"]
+                else "hesitation dominated" if h["hesitations"] > h["uturns"]
+                else "mixed")
+        print(f"  ({h['x_m']:+.2f}, {h['y_m']:+.2f})  {h['event_count']} events, "
+              f"{kind:<20} {best_d:.2f} m from {best['id']}")
+        print(f"      sign reads: {', '.join(best['text'])}")
+        print(f"      absent from sign: {', '.join(best['absent'])}")
+
+    with open(out, "w") as f:
+        json.dump({"scope": d["scope"], "cell_m": CELL_M,
+                   "min_events": MIN_EVENTS, "hotspots": hotspots}, f, indent=2)
+    print()
+    print(f"{out} rewritten with sign distances")

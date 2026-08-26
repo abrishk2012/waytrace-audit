@@ -1,0 +1,15 @@
+{
+  "note": "Sign positions measured Day 14, 26 Aug, by clicking the FLOOR at the base of the wall each sign is mounted on, in an undistorted clip1 frame, converted through homography_camC.npz. Five clicks along the sign wall agreed on y to within 1 cm (1.64-1.65 m), so the y figure is a measurement, not a single reading. Hardcoded rather than OCR'd: signage OCR was cut on Day 12 and the sign text was known in advance, so only the reading is manual - the audit is unaffected.",
+  "signs": [
+    {
+      "id": "sign_A",
+      "x_m": 0.60,
+      "y_m": 1.645,
+      "y_spread_m": 0.01,
+      "clicks": 5,
+      "text": ["BAGGAGE CLAIM <-", "EXIT <-"],
+      "absent": ["TOILETS", "LOUNGE"],
+      "absent_note": "TOILETS and LOUNGE were deliberately omitted at shoot time to generate genuine wayfinding uncertainty. Trips categorised MISSING are those whose destination is absent from this sign."
+    }
+  ]
+}
