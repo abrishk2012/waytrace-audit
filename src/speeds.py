@@ -98,7 +98,7 @@ def heading(world, i, span):
 
 
 def find_uturns(world, min_angle=135.0, sustain=1.0, span_seconds=1.5,
-                window=5):
+                window=5, min_speed=0.15):
     """Find direction changes over min_angle that hold for `sustain` seconds.
 
     span_seconds is the half-width of the heading window. 1.5 s is chosen so a
@@ -106,10 +106,16 @@ def find_uturns(world, min_angle=135.0, sustain=1.0, span_seconds=1.5,
     turns, never one pivot) is spanned as a single movement. A frame-to-frame
     detector is blind to that shape - see trip 18 / E20.
 
+    min_speed is a SPEED GATE. Heading comes from displacement, so a person who
+    is not moving has no heading, only noise - and noise clears any angle
+    threshold (Rule 41). Two false u-turns fired inside a labelled hesitation on
+    trip 18 before this gate existed.
+
     Returns list of (turn_time, angle_degrees)."""
     w = smooth(world, window=window)
     span = max(1, int(span_seconds * FPS))
     hold = max(1, int(sustain * FPS))
+    speed_at = {fr: v for fr, v in speeds_for(w)}
 
     events = []
     last_turn = -999.0
@@ -118,6 +124,11 @@ def find_uturns(world, min_angle=135.0, sustain=1.0, span_seconds=1.5,
         after  = heading(w, min(i + hold, len(w) - 1), span)
         if before is None or after is None:
             continue
+
+        v = speed_at.get(w[i][2])
+        if v is None or v < min_speed:
+            continue                   # not moving = no heading (Rule 41)
+
         diff = abs(after - before)
         if diff > 180:
             diff = 360 - diff          # 350 degrees apart is really 10

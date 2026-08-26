@@ -1,4 +1,4 @@
-"""Hesitation detector v1.
+﻿"""Hesitation detector v1.
 Thresholds come from docs/definitions.md, NOT from tuning.
 0.3 m/s, 2.0 s. These are expected to be wrong. Day 13 tunes them, ODD trips only.
 """
@@ -45,3 +45,25 @@ for tid, w in sorted(trips.items(), key=lambda kv: kv[1][0][2]):
         print(f"        HESITATION  {a:6.1f}s to {b:6.1f}s   ({d:.1f}s)")
     for t, ang in utn:
         print(f"        UTURN       {t:6.1f}s   {ang:5.1f} degrees")
+
+    if len(sys.argv) > 2:
+        tid = sys.argv[2]
+        w = trips[tid]
+        speed_at = {fr: v for fr, v in speeds_for(smooth(w, window=WINDOW))}
+        print()
+        print("speed and heading change, one row per 0.5 s:")
+        from speeds import heading
+        ws = smooth(w, window=WINDOW)
+        span = int(SPAN_SECONDS * FPS)
+        hold = int(SUSTAIN * FPS)
+        for i in range(0, len(ws), 7):
+            t = (ws[i][2] - 1) / FPS
+            b = heading(ws, i, span)
+            a = heading(ws, min(i + hold, len(ws) - 1), span)
+            v = speed_at.get(ws[i][2])
+            if b is None or a is None or v is None:
+                continue
+            d = abs(a - b)
+            if d > 180:
+                d = 360 - d
+            print(f"  t={t:6.1f}s   speed={v:5.2f} m/s   turn={d:6.1f} deg")
