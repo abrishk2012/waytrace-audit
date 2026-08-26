@@ -1518,35 +1518,303 @@ evidence — not a licence to edit a threshold minutes after seeing a number.
 > | 21–22 | Tue 1 Sep | Demo video + SUBMIT |
 > | — | 2–5 Sep | Buffer. Live sensor mode returns here if free. |
 
-- [ ] **Speed gate on the U-turn detector.** A stationary person has no heading;
-      two false U-turns on trip 18 came from noise inside a hesitation. Fix the
-      design before touching any threshold.
-- [ ] **`max_gap` sensitivity.** Half a second either side changes the answer
-      completely (0.5 → 3 events, 1.0 → 2, 1.5 → 1). Report a range on Day 15,
-      never a single number.
-- [ ] Tune hesitation thresholds against **ODD trips only**
-- [ ] Tune U-turn thresholds against **ODD trips only**
-- [ ] **Do not open EVEN trips.**
-- [ ] Event schema: type, track ID, timestamp, x, y (metres), confidence
-- [ ] Every detected event written to `results.json`
-- [ ] Events drawn on the output video as they fire
-- [ ] Processing stays separated from display — the Day 1 decision that makes the
-      demo immune to a slow CPU
+- [x] **Speed gate on the U-turn detector.** `min_speed`, gating on speed before
+      the angle is even computed. A stationary person has no heading (Rule 41).
+- [x] **`max_gap` sensitivity swept** on real shoot data, not the dev walk.
+- [x] Tune hesitation thresholds against **ODD trips only**
+- [x] Tune U-turn thresholds against **ODD trips only**
+- [x] **Do not open EVEN trips** — now enforced in code, not by memory. See below.
+- [x] Event schema: type, trip, track ID, timestamps, x, y (metres), confidence,
+      and `angle_deg` on U-turns.
+- [x] Every detected event written to `results_odd.json`
+- [x] Events drawn on the output video as they fire — `annotate_events.py`
+- [x] Processing stays separated from display — `annotate_events.py`, `hotspots.py`
+      and `heatmap.py` all read JSON and re-run nothing.
 
-**Status:**
+**Status: DONE.** Everything above complete, plus a detector flaw found and fixed
+that was not on the list. Commits `c741020` … `df6edfc`.
+
 **Notes:**
-**Quiz score:      /3**
+
+### The scoring harness — `tune.py`, ODD trips only, by construction
+
+`odd_only.py` filters `data/trip.csv` to odd trip numbers before anything runs,
+and `trip_for_track()` decides membership in ONE place that every tool calls.
+Match tolerance 3 s, because tracks begin 0.1–1.8 s after the labelled start on
+every clip measured (YOLO needs the person properly in frame).
+
+**BASELINE, thresholds untouched from `definitions.md`:**
+**11 hits, 3 misses, 7 false positives** on 14 labelled odd-trip events.
+Precision 61%, recall 79%. Committed as `de4412f` **before** any tuning, so the
+starting point is in git and cannot be quietly improved afterwards.
+
+### Five sweeps, one variable at a time, every baseline row reproducing 11/3/7
+
+| Threshold | Range swept | Result |
+|---|---|---|
+| `max_speed` | 0.25 – 0.40 | **unimprovable.** 0.30 already optimal |
+| `min_seconds` | 1.5 – 3.0 | **unimprovable.** 2.0 already optimal |
+| `min_angle` | 120 – 165 | **unimprovable.** 135 already optimal |
+| `max_gap` | 0.0 – 2.0 | **0.0 beats 1.0**: 7 false → 4, zero hits lost |
+| `min_speed` | 0.05 – 0.25 | **0.20 beats 0.15**: 7 false → 5, zero hits lost |
+
+Three of five thresholds, written blind on Day 11 from reasoning alone, could not
+be improved by a sweep. That is worth stating in the README exactly as it is: not
+"we guessed well" but "we tested six values either side and the original was best".
+
+**Combination test — the two changes are independent and stack:**
+
+| Config | hits | miss | false | P | R |
+|---|---|---|---|---|---|
+| baseline | 11 | 3 | 7 | 61% | 79% |
+| `max_gap=0` | 11 | 3 | 4 | 73% | 79% |
+| `min_speed=0.20` | 11 | 3 | 5 | 69% | 79% |
+| **both** | **11** | **3** | **2** | **85%** | **79%** |
+
+**Precision 61% → 85%, recall unchanged. Five false positives removed, not one
+hit sacrificed.** No trade was made; noise was removed.
+
+`max_gap` deserves a note. It was invented on Day 8 to stop one long stop
+fragmenting into several — on the DEV WALK. On real shoot trips it does the
+opposite: it holds an event open across the slow moments around it, and each
+glued-on piece becomes a false event. **A parameter that helps on one dataset can
+hurt on another, and only a sweep on the real data will say which.**
+
+### The U-turn detector: what was tried, and what it cost
+
+Three versions were built and measured on ODD trips 5 and 18.
+
+1. **Angle + speed gate at 0.15** — trip 5: 4 of 4 U-turns, exact. Trip 18's
+   squared-off reversal: MISSED.
+2. **Speed gate at 0.05** — recovers trip 18's turn, but adds **2 false positives
+   inside a labelled hesitation**. The real turn sits at 0.07 m/s and the noise at
+   0.02–0.03; a 4 cm/s margin is inside the measurement error and would be tuning
+   to one event on one trip.
+3. **Net reversal over a 2 s window** (a definition change, not a threshold move)
+   — WORSE on both. Trip 5: 7 detections against 4 labelled, because turns 2 s
+   apart get straddled by a 2 s window. Trip 18: found a turn at 20.5 s, which is
+   not the labelled 29 s, so it missed the real one and invented a new one.
+
+**Version 1 kept, `min_speed` tuned to 0.20.** Precision over recall: a false
+hotspot sends an airport to fix a working sign, and a judge who sees a marker on
+someone standing still stops trusting every other marker.
+
+**The squared-off reversal (trip 18 / E20) is a documented MISS.** It was
+predicted on Day 11, in the label's own note, before the detector existed. A
+detector that caught it by clearing 135° by 3.8° is not a detector you can defend
+when asked why the threshold is 135.
+
+**Second U-turn miss:** E22 on trip 20, a proper pivot at 86 s, missed for the
+same reason — the person is turning right after stopping, so the speed gate
+rejects it. **The gate buys precision and costs U-turns that follow a hesitation.**
+That is a sentence a judge can check against the footage.
+
+### FLAW FOUND AND FIXED — the trip direction rule decided U-turn trips on noise
+
+`definitions.md` says a trip is `final y > starting y`. But **a trip containing a
+U-turn ends roughly where it began**, so its net displacement is noise and the
+sign of that noise decides whether the trip is kept or thrown away.
+
+Measured: clip11 ID 1 (trip 18) passed at **+0.01 m**. clip12 ID 19 (trip 20)
+was rejected at **−0.12 m**. Both are real trips. **The most valuable trips in the
+dataset — the ones with reversals — were passing or failing a coin flip.**
+
+Fix: judge by **START position**, not net displacement. A trip starts at the near
+end (y ≈ −1); a walk-back starts at the far end (y ≈ +2). Unambiguous, and it
+recovered trip 20 plus two others. Trip 20's labelled hesitation E21 (81–85 s)
+was then detected at 79.9 s, so the recovery is confirmed against ground truth
+rather than against a trip count.
+
+I first diagnosed clip12 ID 19 as an ID switch on a single number. It was not.
+Checking every track's net displacement showed eight tracks under 1 m, and the
+one used all day for the squared-off analysis was among them at 0.01 m. **Rule 9,
+committed by me: wrong input, wrong conclusion.**
+
+### ODD/EVEN GUARD — the honest fix, not the comfortable one
+
+The Day 12 note said even trips 2 and 4 had been seen. The real position was
+worse: `build_events.py` processed all 13 clips and `summarise.py` printed
+per-trip counts, so **detector output had been displayed for every even trip.**
+No threshold was ever selected against them — `tune.py` reads odd only, by
+construction — but "never observed" had stopped being true.
+
+Two options were available: accept and document, or restore the guarantee.
+The guarantee was restored, because the first sharp question a judge asks about
+methodology is exactly this one, and an answer with a hedge in it is worth much
+less than one with code behind it.
+
+`build_events.py` now processes ODD trips only and writes `results_odd.json`.
+`--all` writes `results.json` and **is for Day 15, once**. The contaminated
+`results.json` was deleted. Verified by test, not assumption:
+
+```
+scope: ODD_TRIPS_ONLY
+trips with events: [1, 5, 13, 17, 21]
+any even? []
+```
+
+**What can now be claimed:** the held-out trips were not processed after Day 13,
+and the guard is in the code with a commit date. **What cannot:** that they were
+never seen at all, during Days 12–13. Both go in the README.
+
+### Two float32 leaks and a whitespace near-miss
+
+`results.json` came out at **402 bytes** twice — `json` refuses numpy's float32,
+and `round()` on a float32 returns a float32. Fixed at the ONE point data leaves
+the maths and enters the file (`to_json_safe`), not at each point of use. Same
+principle as the single unit-conversion point.
+
+Worse: a commit message claimed both tuned thresholds were applied. **Only one
+was.** A PowerShell replace missed on whitespace (`MAX_GAP      = 1.0`, six
+spaces, pattern had five) and `results.json` was rebuilt with half the tuning.
+**Caught only because the thresholds block is written INTO the output file** —
+`summarise.py` printed `"max_gap": 1.0` when the commit said 0.0. Without that,
+a wrong number goes into Day 15 with nothing to catch it.
+
+**Quiz score:      /3  — POSTPONED, three days of questions outstanding**
 
 ## Day 14 — Fri 28 Aug — Hotspot engine
-- [ ] Cluster event coordinates (DBSCAN or grid density)
-- [ ] Output hotspot centre, event count, type breakdown
-- [ ] Heatmap overlay on a still frame
-- [ ] Sanity check: does the biggest hotspot land at the fork? If it lands somewhere
-      nobody stopped, something upstream is wrong
+- [x] Cluster event coordinates — grid density, not DBSCAN
+- [x] Output hotspot centre, event count, type breakdown
+- [x] Heatmap overlay on a still frame
+- [x] Sanity check: does the biggest hotspot land at the fork?
+- [x] **BONUS — the signage audit**, which had been cut from the schedule on
+      Day 12 and turned out to be measurable in twenty minutes.
 
-**Status:**
+**Status: DONE.** Commits `2bcb327` … `b266b24`.
+
 **Notes:**
-**Quiz score:      /3**
+
+### Grid clustering, not DBSCAN
+
+The corridor is 3 m long and the whole tuning set is 13 events. A grid has ONE
+parameter; DBSCAN has two. Easier to explain to a judge and easier to sweep.
+`CELL_M = 0.5`, `MIN_EVENTS = 2`.
+
+**Two hotspots on the ODD set:**
+
+| # | position | events | breakdown | trips |
+|---|---|---|---|---|
+| 1 | (+0.50, +1.00) | 4 | 1 hesitation, 3 U-turns | 5, 17 |
+| 2 | (+1.00, +0.50) | 3 | 3 hesitations, 0 U-turns | 1, 13, 21 |
+
+Hotspot 2 is three hesitations from **three separate trips** inside one 0.5 m
+square. Not one slow person — a location producing the same behaviour repeatedly.
+The two hotspots also have different characters: one is reversals, one is pauses.
+
+### CELL_M sensitivity — the honest framing
+
+| cell | hotspots | events clustered |
+|---|---|---|
+| 0.30 m | 2 | 4/13 |
+| 0.40 m | 2 | 5/13 |
+| 0.50 m | 2 | 7/13 |
+| 0.60 m | 3 | 8/13 |
+| 0.75 m | 3 | 9/13 |
+| 1.00 m | 3 | 11/13 |
+
+**The hotspot COUNT is stable at 2–3 across a 3× range of cell size.** It never
+collapses to 1 or explodes. So the number of friction locations is a property of
+the data, not of the grid. What moves between runs is which events fall inside a
+boundary, which is what happens when a cluster sits near a cell edge with only
+13 events. 0.5 m chosen as the largest cell still giving the conservative answer.
+
+**Say this before a judge says it:** 13 events over 13 trips demonstrates that
+the method works. It is not a statistically strong result.
+
+### The signage audit — measured, not OCR'd
+
+Sign position found by clicking the FLOOR at the base of the wall the sign is
+mounted on, in an undistorted frame, through the homography. **Never the sign
+itself:** the homography maps the floor plane, so a point up a wall is placed as
+if lying flat — the same reason trajectories use the box bottom, not the centre.
+
+**Five clicks along the sign wall agreed on y to within 1 cm** (1.64–1.65 m).
+One click is a number; five that agree is a measurement. `sign_A` at
+(+0.60, +1.645), saved to `data/signs.json` with its text and its omissions.
+
+| hotspot | distance to sign_A |
+|---|---|
+| 1 — U-turn dominated | **0.65 m** |
+| 2 — hesitation dominated | **1.21 m** |
+
+**Both hotspots fall within 1.21 m of the only sign.** And the pattern is
+readable: U-turns cluster nearer the sign (people read it and turn back),
+hesitations further away (people stop at reading distance and think).
+
+The sign says `BAGGAGE CLAIM ←` and `EXIT ←`. **TOILETS and LOUNGE are absent**,
+omitted deliberately at shoot time. Trips categorised MISSING are exactly those
+whose destination is not on this sign.
+
+Wording discipline holds: *"possible signage issue associated with this hotspot"*,
+never *"this sign caused it"*. The system measures distance, not causation.
+
+### PIPELINE SANITY CHECK — passed
+
+The junction is not one fork. **There are three openings**, so the decision is a
+zone, not a point. All three measured by clicking the floor at each mouth:
+left (−0.54, +1.05), middle (+0.06, +1.69), right (+1.21, +1.79); centre
+(+0.24, +1.51). **Measured from the building, independent of any detector
+output** — that independence is the whole value of the check.
+
+| hotspot | distance to junction | side |
+|---|---|---|
+| 1 | 0.57 m | **approach side** |
+| 2 | 1.26 m | **approach side** |
+
+**Both hotspots are in front of the junction, neither beyond it.** Nobody stops
+after choosing; they stop while deciding. Every stage upstream — detection,
+tracking, homography, both detectors, clustering — is placing events somewhere
+physically sensible. If the biggest hotspot had landed in an empty stretch of
+corridor, every number in this file would have looked fine and been wrong.
+
+**The story, in one line for the demo:** three ways to go, one sign naming two
+destinations, two of the four destinations absent, and friction concentrated in
+front of the junction where the choice is made.
+
+### The heatmap, and four hours lost to a text bug
+
+`heatmap.py` draws hotspots, sign and junction openings on a still frame.
+Geometry was correct on the FIRST attempt — circles land on the tiles people
+walked on, the sign marker lands where the five measurement clicks were.
+
+The text ghosted, and it took eleven patches, two broken files and four wrong
+diagnoses from me to fix. Wrong theories, in order: mismatched coordinates,
+antialiasing, the image viewer, PNG scaling. **The answer came from one test that
+could only have one outcome** — `text_test.py`, three sizes, one `putText` each,
+nothing else on the image. Clean at every size. So the fault was the two-pass
+outline in `label()`: a thick non-antialiased black stroke with a thin
+antialiased fill inside it reads as doubled letters at small sizes.
+
+Fix: ONE `putText` on an optional dark plate (32,32,32), plates on the panel and
+caption where the background is busy photography, `box=False` on saturated
+backgrounds. Rewritten clean rather than patched a twelfth time.
+
+**Also fixed:** the fill loop and the outline loop each computed their own
+position and radius, so shrinking the circles moved only the fill, and the
+frame-edge shift was applied twice. `circle_pos()` is now the single source.
+
+Hotspot 2 sits **below the camera's field of view** — real, inside the calibrated
+area, but the floor there is off the bottom edge of every frame from this camera
+position. It is drawn at the lowest visible row and labelled "below frame edge".
+That is a field-of-view fact worth stating in the README, not a drawing bug.
+
+### BOM in ten source files
+
+Every file written with `Set-Content -Encoding UTF8` on Windows PowerShell 5
+carries `239 187 191` at the start. Python's source loader tolerates it;
+`json.load` does not, and `ast.parse` does not. It made `signs.json` unreadable
+and produced a `SyntaxError` that looked like file damage.
+
+All ten stripped. Verified harmless by rerunning the whole pipeline: baseline
+still 11/3/7, hotspots still 2 at the same coordinates and the same sign
+distances. **Bulk edits are verified by re-running against a number you already
+trust, never by inspection.**
+
+From here: `[System.IO.File]::WriteAllText(path, text, (New-Object
+System.Text.UTF8Encoding $false))`.
+
+**Quiz score:      /3  — POSTPONED**
 
 ## Day 15 — Sat 29 Aug — ★ VALIDATION METRICS (held-out set) ★
 **Moved before the dashboard. If the numbers are bad, there is still time.**
@@ -1922,3 +2190,29 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     labelled *hesitation* on trip 18. The fix is a speed gate, not a bigger
     angle: some quantities are undefined rather than merely uncertain, and no
     threshold on an undefined quantity is meaningful.
+
+42. **One file, one tool.** An open editor holds a snapshot of a file taken when
+    it opened. Edit that file from anywhere else and the editor's copy goes stale
+    silently — and "Save" then overwrites the real work with no warning about what
+    it contains. Twice on Day 14: `build_events.py` nearly lost its float32 fix,
+    and `heatmap.py` sat in an editor showing ONE EMPTY LINE with unsaved changes
+    while the real 3.7 kB file ran fine on disk. If a script is editing a file,
+    close it in the editor first.
+
+43. **When code and output disagree, test — do not theorise.** The heatmap text
+    ghosting cost eleven patches, two broken files and four confident wrong
+    diagnoses. What settled it was a ten-second test with exactly one possible
+    answer: draw the same text at three sizes with a single call and nothing else
+    on the image. Build the test that can only come out one way, and build it
+    FIRST, not after the fourth theory.
+
+44. **A test script must never write to the real output path.** `hotspots_test.py`
+    wrote to `hotspots_odd.json`, so a throwaway 0.75 m experiment silently
+    replaced the saved 0.5 m result. A test that overwrites the thing it is
+    testing is not a test.
+
+45. **A parameter tuned on one dataset can be actively harmful on another.**
+    `max_gap` was invented on Day 8 to stop a long stop fragmenting, and it worked
+    on the dev walk. On real shoot trips it does the reverse, gluing events to the
+    slow moments around them: 7 false positives at 1.0, 4 at 0.0, with no hits
+    lost either way. Sweep every inherited parameter against the real data.
