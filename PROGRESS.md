@@ -1506,7 +1506,7 @@ why the junction had to be measured from the building, and which trips the old
 direction rule decided on noise. **8 correct. The missed question was not
 recorded at the time — note it here if it comes back to mind.**
 
-## Day 13 — Thu 27 Aug — Tune on ODD trips only, then event log
+## Day 13 — Wed 26 Aug — Tune on ODD trips only, then event log
 > **✅ SCHEDULE CONFLICT RESOLVED on Day 12, 26 Aug.**
 > Both cuttable features cut: signage OCR *and* live sensor mode. Eleven blocks
 > of work now map onto real calendar days, finishing **Tue 1 Sep** with **four
@@ -1680,7 +1680,7 @@ a wrong number goes into Day 15 with nothing to catch it.
 
 **Quiz score: covered by the combined 8/9 quiz logged under Day 12.**
 
-## Day 14 — Fri 28 Aug — Hotspot engine
+## Day 14 — Wed 26 Aug — Hotspot engine
 - [x] Cluster event coordinates — grid density, not DBSCAN
 - [x] Output hotspot centre, event count, type breakdown
 - [x] Heatmap overlay on a still frame
@@ -1823,7 +1823,7 @@ System.Text.UTF8Encoding $false))`.
 
 **Quiz score: covered by the combined 8/9 quiz logged under Day 12.**
 
-## Day 15 — Sat 29 Aug — ★ VALIDATION METRICS (held-out set) ★
+## Day 15 — Thu 27 Aug — ★ VALIDATION METRICS (held-out set) ★
 **Moved before the dashboard. If the numbers are bad, there is still time.**
 
 - [ ] Open the EVEN trips for the first time
@@ -1840,7 +1840,7 @@ live mode and fix the detector. Metrics are MUST HAVE; those two are not.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 16 — Sun 30 Aug — Dashboard part 1 (Streamlit)
+## Day 16 — Fri 28 Aug — Dashboard part 1 (Streamlit)
 - [ ] Upload / select video
 - [ ] Analyse button + progress indicator
 - [ ] Show the processed video
@@ -1849,7 +1849,7 @@ live mode and fix the detector. Metrics are MUST HAVE; those two are not.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 17 — Sun 30 Aug — Dashboard part 2
+## Day 17 — Sat 29 Aug — Dashboard part 2
 - [ ] Event counts, hotspot map, event timeline
 - [ ] Precision/recall shown in the UI, not hidden in the README
 - [ ] Privacy-by-design statement visible on screen
@@ -1899,7 +1899,7 @@ Valuable — but not worth a broken detector. Cut it before cutting metrics.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 20 — Mon 31 Aug — Polish + GitHub + README
+## Day 20 — Sun 30 Aug — Polish + GitHub + README
 - [ ] `.gitignore` verified (no `.venv`, no videos, no `*.pt`) — `git status` first
 - [ ] README: pitch, architecture, definitions, privacy, metrics, limitations
 - [ ] **Homography limitation paragraph** (Day 5) + `floor_points.jpg` as evidence
@@ -1915,7 +1915,7 @@ Valuable — but not worth a broken detector. Cut it before cutting metrics.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 21 — Tue 1 Sep — Demo video
+## Day 21 — Mon 31 Aug — Demo video
 - [ ] Storyboard the first 10 seconds FIRST
 - [ ] Real system output only — zero fake numbers
 - [ ] **Blur faces in every frame shown.** Proves the privacy claim instead of
