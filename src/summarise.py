@@ -1,4 +1,4 @@
-﻿"""Which trips did the system examine, and what did it find in each?
+"""Which trips did the system examine, and what did it find in each?
 A trip with zero events and a trip never seen look identical in results_odd.json.
 Day 15 must not confuse them (Rule 38)."""
 import json, collections

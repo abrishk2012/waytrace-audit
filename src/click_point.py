@@ -1,4 +1,4 @@
-﻿"""Click ONE floor point, get its position in metres.
+"""Click ONE floor point, get its position in metres.
 
 For locating fixed objects - signage, doors - in the same coordinates as the
 events. Click the FLOOR directly below the object, never the object itself:

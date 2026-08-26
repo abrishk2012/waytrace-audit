@@ -1,4 +1,4 @@
-﻿"""Run both detectors over the clips and write an event log.
+"""Run both detectors over the clips and write an event log.
 
 ODD/EVEN GUARD
 --------------

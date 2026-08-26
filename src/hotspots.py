@@ -1,4 +1,4 @@
-﻿"""Cluster events into wayfinding friction hotspots.
+"""Cluster events into wayfinding friction hotspots.
 
 One hesitation is a person. Six hesitations in one spot is a hotspot.
 

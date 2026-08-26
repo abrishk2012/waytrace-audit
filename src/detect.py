@@ -1,4 +1,4 @@
-﻿"""Hesitation detector v1.
+"""Hesitation detector v1.
 Thresholds come from docs/definitions.md, NOT from tuning.
 0.3 m/s, 2.0 s. These are expected to be wrong. Day 13 tunes them, ODD trips only.
 """

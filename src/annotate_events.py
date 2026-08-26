@@ -1,4 +1,4 @@
-﻿"""Burn detected events onto a clip's video.
+"""Burn detected events onto a clip's video.
 
 Reads results_odd.json only - never re-runs YOLO. This is the display half of the
 Day 1 processing/display split: the demo cannot be broken by a slow CPU because

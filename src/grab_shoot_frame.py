@@ -1,4 +1,4 @@
-﻿"""Grab one undistorted frame from a shoot clip, for locating fixed objects
+"""Grab one undistorted frame from a shoot clip, for locating fixed objects
 like signage in world coordinates. Takes clip name and frame number."""
 import cv2, sys, glob
 

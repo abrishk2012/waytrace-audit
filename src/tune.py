@@ -1,4 +1,4 @@
-﻿"""Tune thresholds against ODD trips ONLY.
+"""Tune thresholds against ODD trips ONLY.
 
 Never reads even trips. Never reads results.json (which covers all clips).
 Matches detected events to labelled events with a tolerance window, because
