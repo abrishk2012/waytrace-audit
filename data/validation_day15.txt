@@ -1,0 +1,26 @@
+LOCKED THRESHOLDS (Day 13, committed before any even trip was scored)
+  max_speed     0.3
+  min_seconds   2.0
+  max_gap       0.0
+  window        5
+  min_angle     135.0
+  sustain       1.0
+  span_seconds  1.5
+  min_speed     0.2
+
+ODD  (tuning set, 13 trips)
+  11 hits  3 misses  2 false positives
+  precision 85%   recall 79%   F1 81%
+  self-check: must be 11/3/2, P=85% R=79%
+
+EVEN (HELD-OUT,   12 trips)
+  5 hits  4 misses  3 false positives
+  precision 62%   recall 56%   F1 59%
+  *** THE REAL NUMBER ***
+
+ALL  (25 trips)
+  16 hits  7 misses  5 false positives
+  precision 76%   recall 70%   F1 73%
+  context only - includes the tuning set
+
+Whatever EVEN says is the honest number. It goes in the README as-is.
