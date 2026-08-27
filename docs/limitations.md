@@ -20,6 +20,22 @@ method runs end to end and can be measured. They do not establish a rate.**
 
 Anyone reporting a percentage from 9 events without saying so is overclaiming.
 
+## 1b. The held-out set is harder — but only mildly
+
+Trip categories, counted from `data/trip.csv`, not from memory:
+
+| category | odd (tuning) | even (held-out) |
+|---|---|---|
+| MISSING (destination absent from the sign — the hard cases) | 3 | 5 |
+| AMBIG | 5 | 3 |
+| EASY | 5 | 4 |
+
+The held-out set holds the majority of MISSING trips, so validation was not
+performed on the easy cases (Rule 8). But the imbalance is 5 against 3, not the
+lopsided split claimed in an earlier session summary, which said "6 of 9". The
+real figure is 5 of 8. **Difficulty explains part of the drop from 85% to 62%.
+It does not explain all of it, and it should not be offered as though it does.**
+
 ## 2. The U-turn detector caught nothing on the held-out set
 
 | | tuning set (odd, 13 trips) | held-out set (even, 12 trips) |
