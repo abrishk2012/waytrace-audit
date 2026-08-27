@@ -17,8 +17,12 @@ __pycache__/
 # Processed output
 data/output/*
 !data/output/.gitkeep
+# results are small and are the evidence - keep them
+!data/output/results*.json
+!data/output/hotspots*.json
 
 # OS junk
 Thumbs.db
 desktop.ini
-.DS_Storedata/*.png
+.DS_Store
+data/*.png

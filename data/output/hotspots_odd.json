@@ -1,0 +1,38 @@
+{
+  "scope": "ODD_TRIPS_ONLY",
+  "cell_m": 0.5,
+  "min_events": 2,
+  "hotspots": [
+    {
+      "x_m": 0.5,
+      "y_m": 1.0,
+      "event_count": 4,
+      "hesitations": 1,
+      "uturns": 3,
+      "trips_affected": [
+        5,
+        17
+      ],
+      "mean_confidence": 0.73,
+      "nearest_sign": "sign_A",
+      "distance_to_sign_m": 0.65,
+      "distance_to_junction_m": 0.57
+    },
+    {
+      "x_m": 1.0,
+      "y_m": 0.5,
+      "event_count": 3,
+      "hesitations": 3,
+      "uturns": 0,
+      "trips_affected": [
+        1,
+        13,
+        21
+      ],
+      "mean_confidence": 1.0,
+      "nearest_sign": "sign_A",
+      "distance_to_sign_m": 1.21,
+      "distance_to_junction_m": 1.26
+    }
+  ]
+}
