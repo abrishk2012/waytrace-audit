@@ -57,3 +57,13 @@ def all_trips():
             out.setdefault(row["clip"].strip(), []).append(
                 (int(t), float(row["start_sec"]), float(row["end_sec"])))
     return out
+
+def even_trips():
+    """Every labelled EVEN trip — the HELD-OUT set. Day 15 only.
+    Same reader as all_trips(); the only difference is the parity filter."""
+    out = {}
+    for clip, trips in all_trips().items():
+        keep = [t for t in trips if t[0] % 2 == 0]
+        if keep:
+            out[clip] = keep
+    return out
