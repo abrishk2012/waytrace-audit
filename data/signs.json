@@ -17,9 +17,10 @@
       "y_m": 1.645,
       "y_spread_m": 0.01,
       "clicks": 5,
-      "text": ["BAGGAGE CLAIM <-", "EXIT <-"],
+      "text": ["GATE A-C ->", "BAGGAGE CLAIM <-", "EXIT <-"],
+      "text_note": "Three lines, top to bottom, as printed. GATE A-C was present throughout the 24 Aug shoot; it was omitted from this file on Day 14 and added on Day 15 after checking the physical sign. Same board, same position - nothing to re-measure.",
       "absent": ["TOILETS", "LOUNGE"],
-      "absent_note": "TOILETS and LOUNGE were deliberately omitted at shoot time to generate genuine wayfinding uncertainty. Trips categorised MISSING are those whose destination is absent from this sign."
+      "absent_note": "TOILETS and LOUNGE were deliberately omitted at shoot time to generate genuine wayfinding uncertainty. Trips categorised MISSING are those whose destination is absent from this sign. The sign carries THREE destinations - GATE A-C, BAGGAGE CLAIM, EXIT - and neither TOILETS nor LOUNGE is one of them. This is a signage GAP, not a sparse sign: the corridor is signposted, just not for where these people were going."
     }
   ]
 }
