@@ -9,14 +9,14 @@ import numpy as np
 from speeds import (pixels_to_metres, drop_fragments,
                     find_hesitations, find_uturns, FPS)
 import speeds
-from odd_only import odd_trips
+from odd_only import odd_trips, even_trips, all_trips
 
 speeds.H = np.load("homography_camC.npz")["H"]
 TOLERANCE = 3.0          # seconds either side counts as a match
 
-def labelled_events():
+def labelled_events(trips_fn=odd_trips):
     """{(clip, trip): [(type, start_sec)]} for ODD trips only."""
-    odd = odd_trips()
+    odd = trips_fn()
     trip_clip = {n: c for c, v in odd.items() for n, _, _ in v}
     out = {}
     with open("data/event.csv", newline="") as f:
@@ -33,10 +33,10 @@ def labelled_events():
 
 
 def run(max_speed, min_seconds, max_gap, window,
-        min_angle, sustain, span_seconds, min_speed):
+        min_angle, sustain, span_seconds, min_speed, trips_fn=odd_trips):
     """Returns hits, misses, false positives across all ODD trips."""
-    odd = odd_trips()
-    truth = labelled_events()
+    odd = trips_fn()
+    truth = labelled_events(trips_fn)
     hits = misses = false = 0
 
     for clip, trips in odd.items():
