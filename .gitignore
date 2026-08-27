@@ -29,3 +29,4 @@ desktop.ini
 data/*.png
 !data/output/*_traj.json
 data/uploads/
+data/scratch/
