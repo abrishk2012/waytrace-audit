@@ -23,3 +23,23 @@ clip12  trip 20  (75.0-89.0s)
 
 EVEN totals: 5 hits, 4 misses, 3 false positives
 must match validate.py: 5 hits, 4 misses, 3 false positives
+
+## Day 15 miss analysis - all four explained, none unexplained
+
+clip1 t4 114.0s   HESITATION  pause under 2 s. min_seconds=2.00, written blind
+                              in definitions.md, swept unimprovable Day 13.
+                              The definition excluded it. Not a detector failure.
+clip8 t12 62.0s   HESITATION  ONE event typed wrong, not two errors: a UTURN
+                              fired at 62.5s, 0.5 s away. Matcher requires type
+                              match, so it cost a miss AND a false positive.
+clip11 t18 29.0s  UTURN       speed gate - u-turn following a hesitation.
+clip12 t20 86.0s  UTURN       same. Both PREDICTED on Day 14, before the
+                              held-out set was scored. A predicted failure
+                              confirmed on unseen data is evidence of
+                              understanding, not of weakness.
+
+U-TURN TIMING OFFSET (found Day 15, visually)
+find_uturns stamps t at frame i (speeds.py:136) but compares heading at i
+against i+hold, hold=1.0 s. The marker therefore lands ~1 s BEFORE the visible
+pivot. Systematic, well inside the 3 s match tolerance, affects no score.
+Report it; do not "fix" it after seeing the numbers.
