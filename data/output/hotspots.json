@@ -17,7 +17,8 @@
       "mean_confidence": 0.79,
       "nearest_sign": "sign_A",
       "distance_to_sign_m": 0.65,
-      "distance_to_junction_m": 0.57
+      "distance_to_junction_m": 0.57,
+      "side": "approach"
     },
     {
       "x_m": 0.5,
@@ -33,7 +34,8 @@
       "mean_confidence": 1.0,
       "nearest_sign": "sign_A",
       "distance_to_sign_m": 1.15,
-      "distance_to_junction_m": 1.04
+      "distance_to_junction_m": 1.04,
+      "side": "approach"
     },
     {
       "x_m": 1.0,
@@ -49,7 +51,8 @@
       "mean_confidence": 1.0,
       "nearest_sign": "sign_A",
       "distance_to_sign_m": 1.21,
-      "distance_to_junction_m": 1.26
+      "distance_to_junction_m": 1.26,
+      "side": "approach"
     },
     {
       "x_m": 0.5,
@@ -64,7 +67,8 @@
       "mean_confidence": 0.91,
       "nearest_sign": "sign_A",
       "distance_to_sign_m": 1.65,
-      "distance_to_junction_m": 1.53
+      "distance_to_junction_m": 1.53,
+      "side": "approach"
     }
   ]
 }

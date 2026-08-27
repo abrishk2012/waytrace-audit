@@ -117,12 +117,22 @@ if junc and hotspots:
     print()
     print(f"junction centre ({jx:+.2f}, {jy:+.2f}) from "
           f"{len(junc['openings'])} measured openings")
+    sides = []
     for i, h in enumerate(hotspots, 1):
         dj = math.hypot(h["x_m"] - jx, h["y_m"] - jy)
         h["distance_to_junction_m"] = round(dj, 2)
-        side = "approach side" if h["y_m"] < jy else "beyond the junction"
+        approach = h["y_m"] < jy
+        h["side"] = "approach" if approach else "beyond"
+        sides.append(approach)
+        side = "approach side" if approach else "beyond the junction"
         print(f"  hotspot {i}: {dj:.2f} m from junction, {side}")
     with open(out, "w") as f:
         json.dump({"scope": d["scope"], "cell_m": CELL_M,
                    "min_events": MIN_EVENTS, "hotspots": hotspots}, f, indent=2)
-    print("  SANITY CHECK PASSES if every hotspot is on the approach side")
+    if all(sides):
+        print(f"  SANITY CHECK PASSED - all {len(sides)} hotspots on the approach side")
+    else:
+        bad = [i for i, s in enumerate(sides, 1) if not s]
+        print(f"  *** SANITY CHECK FAILED *** hotspot(s) {bad} beyond the junction")
+        print("  *** People do not hesitate after choosing. Suspect the homography,")
+        print("  *** the junction measurement, or the trip direction filter.")
