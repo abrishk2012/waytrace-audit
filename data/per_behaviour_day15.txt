@@ -1,0 +1,17 @@
+
+ODD  (tuning)
+  HESITATION    6 hits  1 miss  0 false   P=100%  R=86%  F1=92%
+  UTURN         5 hits  2 miss  2 false   P=71%  R=71%  F1=71%
+  COMBINED     11 hits  3 miss  2 false   P=85%  R=79%  F1=81%
+
+EVEN (HELD-OUT)
+  HESITATION    5 hits  2 miss  1 false   P=83%  R=71%  F1=77%
+  UTURN         0 hits  2 miss  2 false   P=0%  R=0%  F1=0%   <-- SCORED NOTHING
+  COMBINED      5 hits  4 miss  3 false   P=62%  R=56%  F1=59%
+
+ALL  (context)
+  HESITATION   11 hits  3 miss  1 false   P=92%  R=79%  F1=85%
+  UTURN         5 hits  4 miss  4 false   P=56%  R=56%  F1=56%
+  COMBINED     16 hits  7 miss  5 false   P=76%  R=70%  F1=73%
+
+Rule 22: averages hide events. Report the split, not just the total.
