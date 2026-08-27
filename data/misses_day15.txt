@@ -1,0 +1,25 @@
+
+clip1  trip 4  (111.0-120.0s)
+   MISS            HESITATION  labelled 114.0s
+
+clip8  trip 12  (45.0-66.0s)
+   hit             HESITATION  labelled 49.0s -> 49.1s
+   hit             HESITATION  labelled 55.0s -> 54.5s
+   MISS            HESITATION  labelled 62.0s
+   FALSE POSITIVE  UTURN       detected 62.5s
+
+clip9  trip 14  (12.0-40.0s)
+   hit             HESITATION  labelled 24.0s -> 24.7s
+   FALSE POSITIVE  HESITATION  detected 15.6s
+   FALSE POSITIVE  UTURN       detected 21.1s
+
+clip11  trip 18  (10.0-32.0s)
+   hit             HESITATION  labelled 13.0s -> 13.3s
+   MISS            UTURN       labelled 29.0s
+
+clip12  trip 20  (75.0-89.0s)
+   hit             HESITATION  labelled 81.0s -> 80.9s
+   MISS            UTURN       labelled 86.0s
+
+EVEN totals: 5 hits, 4 misses, 3 false positives
+must match validate.py: 5 hits, 4 misses, 3 false positives
