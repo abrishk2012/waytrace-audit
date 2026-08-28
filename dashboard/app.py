@@ -74,7 +74,7 @@ else:
         cap.release()
         mins = round(frames * 0.549 / 60, 1)
 
-        st.write(f"**{up.name}** — {frames} frames")
+        st.write(f"**{up.name}** - {frames} frames")
         st.warning(
             f"Full analysis runs at about 8x video length on CPU. "
             f"This clip will take roughly **{mins} minutes**."
@@ -85,6 +85,8 @@ else:
             und = os.path.join(SCRATCH, f"{stem}.mp4")
             traj = os.path.join(SCRATCH, f"{stem}_traj.json")
             out = os.path.join(SCRATCH, f"{stem}_events.json")
+            raw_mp4 = os.path.join(SCRATCH, f"{stem}_traj_raw.mp4")
+            web_mp4 = os.path.join(SCRATCH, f"{stem}_traj_web.mp4")
 
             bar = st.progress(0.0)
             status = st.empty()
@@ -93,25 +95,38 @@ else:
                 [sys.executable, "src/undistort_video.py", dest, und],
                 "Undistorting (lens correction)...", frames, bar, status)
             if rc != 0:
-                st.error("Undistort failed"); st.code("\n".join(tail)); st.stop()
+                st.error("Undistort failed")
+                st.code("\n".join(tail))
+                st.stop()
 
             bar.progress(0.0)
             rc, tail = run_stage(
                 [sys.executable, "src/trajectories.py", und],
                 "Tracking people (this is the slow part)...", frames, bar, status)
             if rc != 0:
-                st.error("Tracking failed"); st.code("\n".join(tail)); st.stop()
+                st.error("Tracking failed")
+                st.code("\n".join(tail))
+                st.stop()
 
-            produced = os.path.join(ROOT, "data", "output", f"{stem}_traj.json")
-            if os.path.exists(produced):
-                shutil.move(produced, traj)
-            produced_mp4 = os.path.join(ROOT, "data", "output", f"{stem}_traj.mp4")
+            for ext, target in ((".json", traj), (".mp4", raw_mp4)):
+                produced = os.path.join(ROOT, "data", "output",
+                                        f"{stem}_traj{ext}")
+                if os.path.exists(produced):
+                    shutil.move(produced, target)
 
             rc, tail = run_stage(
                 [sys.executable, "src/analyse_one.py", traj, out],
                 "Running detectors...", frames, bar, status)
             if rc != 0:
-                st.error("Detection failed"); st.code("\n".join(tail)); st.stop()
+                st.error("Detection failed")
+                st.code("\n".join(tail))
+                st.stop()
+
+            status.write("Re-encoding for browser playback...")
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
+                            "-i", raw_mp4, "-c:v", "libx264",
+                            "-pix_fmt", "yuv420p", "-an", web_mp4],
+                           cwd=ROOT, capture_output=True)
 
             bar.progress(1.0)
             status.write("Done.")
@@ -121,6 +136,11 @@ else:
 
             st.success(f"{res['tracks_examined']} tracks, "
                        f"{len(res['events'])} events")
+            if os.path.exists(web_mp4):
+                st.video(web_mp4)
+            else:
+                st.warning("Tracked video could not be re-encoded for playback.")
+
             if res["events"]:
                 st.dataframe(res["events"], width="stretch")
             else:
