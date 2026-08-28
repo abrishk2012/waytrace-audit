@@ -20,6 +20,20 @@ At the end of every working day:
 4. Record your **Quiz score** (Claude asks you 3–5 questions each night).
 5. Paste this day's block back to Claude at the start of the next session.
 
+**How the tracker gets updated — Claude does it, not me.**
+I do not hand-edit this file. At the end of every working day, and any time
+this file needs changing:
+
+- I upload the current `PROGRESS.md` into the chat FIRST. Claude's own copy is
+  routinely stale — on Day 15 and again on Day 16 the project-folder copy was
+  a Day 8 version, 1300 lines with rules stopping at 22, while git held 2371
+  lines to rule 50. **Rebuilding from a held copy silently deletes over a
+  thousand lines of real work.** Rule 37, Rule 46.
+- Claude then produces the **complete updated file as a download** in the chat.
+  Not pasted text for me to copy. Not a patch script I have to run. A file.
+- I save it over `PROGRESS.md`, then verify with `git diff --stat` and
+  `Select-String -SimpleMatch` before committing.
+
 Rule: if a quiz score is below 3/5, we re-teach before moving forward. Understanding is not optional — you have to defend this project.
 
 **Commit rule: commit after every working chunk, not once at the end of the day.**
@@ -415,8 +429,13 @@ One wall sign at the fork, A4, thick black marker, eye height:
 ```
 GATES A-C        →
 BAGGAGE CLAIM    ←
-EXIT             ↑
+EXIT             ←
 ```
+
+*Arrow corrected Day 16: `EXIT` points LEFT, the same way as `BAGGAGE
+CLAIM`, not up. `data/signs.json` recorded it correctly as `EXIT <-` when the
+physical sign was measured on Day 14; this planning block had it wrong and
+nobody had compared the two. The measured file was right, the plan was not.*
 
 Five A5 destination cards: `GATES A-C`, `BAGGAGE CLAIM`, `TOILETS`, `EXIT`, `LOUNGE`.
 
@@ -1936,8 +1955,10 @@ exposed `0f089fb` and what it had really changed.
 - [x] Analyse button + progress indicator
 - [x] Show the processed video
 
-**Status:** COMPLETE. All three boxes. Streamlit dashboard runs; both sources
-show the same things.
+**Status:** COMPLETE. All three boxes, plus the CFR gap and the double-
+undistortion both found AND closed the same day - nothing was carried to
+Day 17. Streamlit dashboard runs; both sources show the same things and the
+upload path now runs all four real pipeline stages.
 
 **Notes:**
 
@@ -2022,14 +2043,68 @@ TWO FILES WERE SILENTLY CLOBBERED TODAY, BOTH RECOVERED FROM GIT
   Recovered by `git restore` **only because it had been committed 40 minutes
   earlier**. This is the small-commits discipline paying out in real time.
 
-KNOWN GAP, CARRIED TO DAY 17
-The app's chain is upload -> undistort -> track. The real pipeline is raw -> CFR
--> undistort -> track. **The app skips CFR.** Raw footage is 1280x720 at variable
-frame rate; cfr and undist are both 1024x576, so the app cannot tell them apart
-by dimensions and cannot detect a pre-undistorted file. Uploading from
-`data/undist` double-undistorts (visible bowing on the right-hand doorframe);
-uploading raw would break every frames-to-seconds calculation, all of which
-assume exactly 15 fps. Right now only `data/cfr` files are correct input.
+THE CFR GAP - FOUND AND CLOSED THE SAME DAY (nothing carried forward)
+First state: the app's chain was upload -> undistort -> track, while the real
+pipeline is raw -> CFR -> undistort -> track. **The app skipped CFR.**
+
+Why it mattered: trajectories store `frame_number` and never a timestamp, so
+frame numbers ARE the clock. Footage that is not exactly 15 fps makes every
+speed silently wrong. Day 9 established this; the dashboard had quietly
+reintroduced it.
+
+**Fixed:** the app now runs the Day 9 command as its first stage -
+`ffmpeg -vf scale=1024:576 -r 15 -an -c:v libx264 -crf 18 -pix_fmt yuv420p` -
+and hands the CFR output to the undistorter. Verified end to end on raw clip6:
+all four stage files landed in `data/scratch` with a clean timeline (CFR
+4:43:12, undistorted 4:43:28, tracked 4:49:10, analysed 4:49:13).
+
+CFR conversion is **safe to repeat**, which is what makes always running it
+correct rather than risky: Day 9 already proved `scale=1024:576` on a 1024x576
+file does nothing, and `-r 15` on a 15 fps file does nothing.
+
+THE ASYMMETRIC BOWING - DIAGNOSED, NOT DISMISSED
+The dashboard's tracked video came out visibly bent, worse on one side, while
+`undistort_check.jpg` from calibration day is symmetric and fine.
+
+Cause: **the principal point is off centre.** `K` gives `cx = 537.70`,
+`cy = 278.44`; the frame centre is 512, 288. The lens centre sits 25.7 px right
+and 9.6 px up from the middle, and undistortion pushes pixels outward from THAT
+point. One pass hides it. **Two passes double it** - and uploading from
+`data/undist` ran it twice. Confirmed by extracting frame 150 from a
+single-pass and a double-pass copy of clip6 and comparing: once straight, twice
+bent.
+
+`rms = 2.17` px over 40 views. Under 1.0 is good; 2.17 is mediocre. Belongs in
+limitations.md and is not currently there.
+
+**Every frame the Day 15 numbers were computed on had exactly one pass. The
+results stand.**
+
+WHY THERE IS NO "UNDISTORT?" CHECKBOX
+Considered and rejected twice. It hands the project's hardest judgement call to
+someone who cannot make it, and judging is video-only, so a wrong tick gets no
+correction. Detection was attempted instead and **failed honestly**: raw
+footage is a MIX of 1024x576 and 1280x720 (Day 9: five clips were 720p), so
+dimensions cannot separate raw from cfr from undist. Corner-brightness
+detection was measured and rejected - cfr `[185,104,9,177]` vs undist
+`[187,42,15,16]` invert on some corners and depend on scene content, so it
+would work on clip6 and misjudge clip3. **Nothing in the file says which it
+is.** So it is stated on screen as a requirement, not detected.
+
+STAGE CHECKPOINTS AND A PROGRESS BAR THAT MOVES
+Five named stages - Convert, Undistort, Track, Detect, Encode - tick from
+upcoming to running to done as the pipeline advances, driven by real subprocess
+completion, not a timer.
+
+The bar itself sat dead then jumped. Not buffering: `trajectories.py` printed
+`Frame N` every **100** frames, and clip6 is 352 frames, so the bar received
+exactly three updates in three minutes. Changed to every 10.
+
+**The change was proved cosmetic rather than asserted to be.** It is a print
+inside an `if`, a 1-line diff - and re-running clip2 afterwards returned MD5
+`F5541AE670F7A963EC93676A29ACD763`, byte-identical to the morning's run. The
+determinism check from earlier in the day became the tool that verified a later
+change to the same file.
 
 **Quiz score:  2 /3**
 Q1 (why no P/R on uploads) and Q3 (why upload is camera-restricted) correct
@@ -2478,3 +2553,18 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     showed a full video player, `0:00`, and an empty scrub bar for a codec it
     could not read. Absence of an error is not evidence of playback - drag the
     file into the browser and press play.
+
+54. **When you cannot detect it, say it - do not offer a checkbox.** Nothing in an
+    mp4 records whether it has already been undistorted. Dimensions do not
+    separate raw from cfr from undist; corner brightness inverts by scene. A tick
+    box would have moved the judgement onto a judge who cannot make it, in a
+    video-only submission where a wrong tick is never corrected. State the
+    requirement on screen instead.
+55. **A verification built for one purpose is reusable for the next.** The MD5
+    determinism check on clip2 was run to answer "does this pipeline reproduce?".
+    Hours later the same fingerprint proved that changing a print frequency in
+    `trajectories.py` had altered nothing. Cheap checks compound.
+56. **A dead progress bar is usually a quiet source, not a broken display.** The
+    bar was correct; `trajectories.py` only spoke every 100 frames and the clip
+    was 352 frames long. Three updates in three minutes looks identical to
+    broken. Count the updates before rewriting the display.
