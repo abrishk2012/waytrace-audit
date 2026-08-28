@@ -6,6 +6,8 @@ import sys
 import cv2
 import streamlit as st
 from pipeline_ui import STAGES, draw_stages
+from panels import counts_panel, accuracy_panel, parse_per_behaviour
+
 
 st.set_page_config(page_title="WayTrace", layout="wide")
 
@@ -25,6 +27,8 @@ with open(RESULTS) as f:
 
 clips = sorted({t["clip"] for t in results["trips_examined"]},
                key=lambda c: int(c.replace("clip", "")))
+PER_BEHAVIOUR = os.path.join(ROOT, "data", "per_behaviour_day15.txt")
+per_behaviour = parse_per_behaviour(PER_BEHAVIOUR)
 
 
 def run_stage(cmd, label, total_frames, slot, done_upto, running, status):
@@ -53,7 +57,9 @@ def run_stage(cmd, label, total_frames, slot, done_upto, running, status):
     proc.wait()
     return proc.returncode, tail
 
-
+counts_panel(results)
+accuracy_panel(per_behaviour)
+st.divider()
 mode = st.radio("Source", ["Recorded clip", "Upload your own"], horizontal=True)
 
 if mode == "Recorded clip":
