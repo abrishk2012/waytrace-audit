@@ -29,6 +29,8 @@ clips = sorted({t["clip"] for t in results["trips_examined"]},
 def run_stage(cmd, label, total_frames, bar, status):
     """Run a pipeline script, updating the bar from its 'Frame N' prints."""
     status.write(label)
+    if cmd and cmd[0] == sys.executable:
+        cmd = [cmd[0], "-u"] + list(cmd[1:])   # unbuffered: Frame N arrives live
     proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, text=True, bufsize=1)
     tail = []
@@ -44,6 +46,21 @@ def run_stage(cmd, label, total_frames, bar, status):
     proc.wait()
     return proc.returncode, tail
 
+
+STAGES = ["Convert", "Undistort", "Track", "Detect", "Encode"]
+
+
+def draw_stages(slot, done_upto, running=None):
+    """done_upto = number of finished stages; running = index now in progress."""
+    parts = []
+    for i, name in enumerate(STAGES):
+        if i < done_upto:
+            parts.append(f"**:green[[done]] {name}**")
+        elif i == running:
+            parts.append(f"**:blue[[running]] {name}**")
+        else:
+            parts.append(f":gray[( ) {name}]")
+    slot.markdown("  ---  ".join(parts))
 
 mode = st.radio("Source", ["Recorded clip", "Upload your own"], horizontal=True)
 
@@ -87,18 +104,32 @@ else:
             out = os.path.join(SCRATCH, f"{stem}_events.json")
             raw_mp4 = os.path.join(SCRATCH, f"{stem}_traj_raw.mp4")
             web_mp4 = os.path.join(SCRATCH, f"{stem}_traj_web.mp4")
+            cfr = os.path.join(SCRATCH, f"{stem}_cfr.mp4")
 
+            steps = st.empty()
             bar = st.progress(0.0)
             status = st.empty()
+            draw_stages(steps, 0, 0)
+            status.write("Converting to constant frame rate...")
+            cfr_proc = subprocess.run(
+                ["ffmpeg", "-y", "-loglevel", "error", "-i", dest,
+                 "-vf", "scale=1024:576", "-r", "15", "-an",
+                 "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", cfr],
+                cwd=ROOT, capture_output=True, text=True)
+            if cfr_proc.returncode != 0:
+                st.error("CFR conversion failed")
+                st.code(cfr_proc.stderr[-800:])
+                st.stop()
 
             rc, tail = run_stage(
-                [sys.executable, "src/undistort_video.py", dest, und],
+                [sys.executable, "src/undistort_video.py", cfr, und],
                 "Undistorting (lens correction)...", frames, bar, status)
             if rc != 0:
                 st.error("Undistort failed")
                 st.code("\n".join(tail))
                 st.stop()
 
+            draw_stages(steps, 1, 2)
             bar.progress(0.0)
             rc, tail = run_stage(
                 [sys.executable, "src/trajectories.py", und],
@@ -114,6 +145,7 @@ else:
                 if os.path.exists(produced):
                     shutil.move(produced, target)
 
+            draw_stages(steps, 3, 3)
             rc, tail = run_stage(
                 [sys.executable, "src/analyse_one.py", traj, out],
                 "Running detectors...", frames, bar, status)
@@ -122,12 +154,14 @@ else:
                 st.code("\n".join(tail))
                 st.stop()
 
+            draw_stages(steps, 4, 4)
             status.write("Re-encoding for browser playback...")
             subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
                             "-i", raw_mp4, "-c:v", "libx264",
                             "-pix_fmt", "yuv420p", "-an", web_mp4],
                            cwd=ROOT, capture_output=True)
 
+            draw_stages(steps, 5)
             bar.progress(1.0)
             status.write("Done.")
 

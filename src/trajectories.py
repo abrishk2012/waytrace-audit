@@ -87,7 +87,7 @@ while frame_number < MAX_FRAMES:
 
     writer.write(frame)
 
-    if frame_number % 100 == 0:
+    if frame_number % 10 == 0:
         print("Frame", frame_number)
 
 cap.release()
