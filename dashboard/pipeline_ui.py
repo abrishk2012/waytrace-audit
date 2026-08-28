@@ -38,9 +38,14 @@ _CSS = """<style>
 --wt-muted:#8a8f98;position:relative;display:flex;width:100%;
 margin:2.6rem 0 1.2rem;font-size:.8rem;}
 
+/* Per-gap segments, not one bar: a single bar behind transparent nodes was
+   measured showing through the hollow circles. The <i> inside a segment is
+   the part-fill that creeps with the frame count. */
 .wt-seg{position:absolute;top:16px;height:6px;border-radius:3px;
-background:var(--wt-off);}
+background:var(--wt-off);overflow:hidden;}
 .wt-seg.on{background:var(--wt-on);}
+.wt-seg>i{display:block;height:100%;background:var(--wt-on);
+transition:width .25s linear;}
 
 .wt-step{flex:1 1 0;min-width:0;position:relative;display:flex;
 flex-direction:column;align-items:center;outline:none;cursor:default;}
@@ -117,28 +122,29 @@ def stage_states(done_upto, running=None, failed=None):
     return out
 
 
-def _html(states):
+def _html(states, frac=0.0):
     n = len(STAGES)
     half = 50.0 / n                      # first/last node centres, in percent
     span = 100.0 - 2 * half              # rail length between those centres
-    started = [i for i, s in enumerate(states) if s != "upcoming"]
-    active = max(started) if started else 0
-    frac = 1.0 if n < 2 else active / (n - 1)
-    if all(s == "done" for s in states):
-        frac = 1.0
+    gap = span / (n - 1) if n > 1 else 0.0
 
     parts = [_CSS,
              '<div class="wt-pipe" role="list" aria-label="Pipeline progress">']
-    # One segment per gap, stopping 22px short of each node centre so the
-    # line never crosses a hollow circle. Rule 43: the single-bar version
-    # was measured showing through, not assumed to.
+    # One segment per gap, held clear of each node centre so no line crosses
+    # a hollow circle. The segment leading INTO the running stage part-fills,
+    # so the rail creeps with the frame count instead of only jumping.
     for i in range(n - 1):
-        left = half + i * (span / (n - 1))
-        on = "on" if states[i] != "upcoming" and states[i + 1] != "upcoming" \
-             or (states[i] != "upcoming" and i + 1 <= active) else ""
-        parts.append(
-            f'<div class="wt-seg {on}" style="left:calc({left:.2f}% + 22px);'
-            f'width:calc({span / (n - 1):.2f}% - 44px);"></div>')
+        left = half + i * gap
+        style = f'left:calc({left:.2f}% + 22px);width:calc({gap:.2f}% - 44px);'
+        if states[i] == "done" and states[i + 1] in ("done", "failed"):
+            parts.append(f'<div class="wt-seg on" style="{style}"></div>')
+        elif states[i] == "done" and states[i + 1] == "running":
+            pct = max(0.0, min(frac, 1.0)) * 100
+            parts.append(f'<div class="wt-seg" style="{style}">'
+                         f'<i style="width:{pct:.1f}%"></i></div>')
+        else:
+            parts.append(f'<div class="wt-seg" style="{style}"></div>')
+
     for stage, state in zip(STAGES, states):
         label = f"{stage['name']}: {_WORD[state]}. {stage['desc']}."
         parts.append(
@@ -156,9 +162,9 @@ def _html(states):
     return "".join(parts)
 
 
-def draw_stages(slot, done_upto, running=None, failed=None):
-    """Draw the pipeline into a slot. Drop-in for the old draw_stages."""
-    slot.markdown(_html(stage_states(done_upto, running, failed)),
+def draw_stages(slot, done_upto, running=None, failed=None, frac=0.0):
+    """Draw the pipeline. frac = 0..1 progress within the RUNNING stage."""
+    slot.markdown(_html(stage_states(done_upto, running, failed), frac),
                   unsafe_allow_html=True)
 
 
@@ -168,7 +174,8 @@ if __name__ == "__main__":
     st.caption("Rendering only. No video is read and nothing is written.")
     for caption, args in [
         ("Nothing started yet", (0, 0)),
-        ("Two done, tracking now", (2, 2)),
+        ("Two done, tracking now - 0%", (2, 2, None, 0.0)),
+        ("Two done, tracking now - 60%", (2, 2, None, 0.6)),
         ("Detect failed", (3, None, 3)),
         ("All five done", (5,)),
     ]:

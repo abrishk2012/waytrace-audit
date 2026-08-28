@@ -5,6 +5,7 @@ import subprocess
 import sys
 import cv2
 import streamlit as st
+from pipeline_ui import STAGES, draw_stages
 
 st.set_page_config(page_title="WayTrace", layout="wide")
 
@@ -26,9 +27,14 @@ clips = sorted({t["clip"] for t in results["trips_examined"]},
                key=lambda c: int(c.replace("clip", "")))
 
 
-def run_stage(cmd, label, total_frames, bar, status):
-    """Run a pipeline script, updating the bar from its 'Frame N' prints."""
+def run_stage(cmd, label, total_frames, slot, done_upto, running, status):
+    """Run a pipeline script, creeping the rail from its 'Frame N' prints.
+
+    The rail IS the progress bar. A separate st.progress bar used to sit
+    below it showing the same thing, which read as two bars disagreeing.
+    """
     status.write(label)
+    draw_stages(slot, done_upto, running, frac=0.0)
     if cmd and cmd[0] == sys.executable:
         cmd = [cmd[0], "-u"] + list(cmd[1:])   # unbuffered: Frame N arrives live
     proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE,
@@ -40,27 +46,13 @@ def run_stage(cmd, label, total_frames, bar, status):
         if line.startswith("Frame ") or line.startswith("  frame"):
             try:
                 n = int(line.split()[-1])
-                bar.progress(min(n / total_frames, 1.0))
+                draw_stages(slot, done_upto, running,
+                            frac=min(n / total_frames, 1.0))
             except ValueError:
                 pass
     proc.wait()
     return proc.returncode, tail
 
-
-STAGES = ["Convert", "Undistort", "Track", "Detect", "Encode"]
-
-
-def draw_stages(slot, done_upto, running=None):
-    """done_upto = number of finished stages; running = index now in progress."""
-    parts = []
-    for i, name in enumerate(STAGES):
-        if i < done_upto:
-            parts.append(f"**:green[[done]] {name}**")
-        elif i == running:
-            parts.append(f"**:blue[[running]] {name}**")
-        else:
-            parts.append(f":gray[( ) {name}]")
-    slot.markdown("  ---  ".join(parts))
 
 mode = st.radio("Source", ["Recorded clip", "Upload your own"], horizontal=True)
 
@@ -107,8 +99,9 @@ else:
             cfr = os.path.join(SCRATCH, f"{stem}_cfr.mp4")
 
             steps = st.empty()
-            bar = st.progress(0.0)
             status = st.empty()
+
+            # --- Convert ---
             draw_stages(steps, 0, 0)
             status.write("Converting to constant frame rate...")
             cfr_proc = subprocess.run(
@@ -117,24 +110,29 @@ else:
                  "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", cfr],
                 cwd=ROOT, capture_output=True, text=True)
             if cfr_proc.returncode != 0:
+                draw_stages(steps, 0, failed=0)
                 st.error("CFR conversion failed")
                 st.code(cfr_proc.stderr[-800:])
                 st.stop()
 
+            # --- Undistort ---
             rc, tail = run_stage(
                 [sys.executable, "src/undistort_video.py", cfr, und],
-                "Undistorting (lens correction)...", frames, bar, status)
+                "Undistorting (lens correction)...", frames,
+                steps, 1, 1, status)
             if rc != 0:
+                draw_stages(steps, 1, failed=1)
                 st.error("Undistort failed")
                 st.code("\n".join(tail))
                 st.stop()
 
-            draw_stages(steps, 1, 2)
-            bar.progress(0.0)
+            # --- Track ---
             rc, tail = run_stage(
                 [sys.executable, "src/trajectories.py", und],
-                "Tracking people (this is the slow part)...", frames, bar, status)
+                "Tracking people (this is the slow part)...", frames,
+                steps, 2, 2, status)
             if rc != 0:
+                draw_stages(steps, 2, failed=2)
                 st.error("Tracking failed")
                 st.code("\n".join(tail))
                 st.stop()
@@ -145,15 +143,17 @@ else:
                 if os.path.exists(produced):
                     shutil.move(produced, target)
 
-            draw_stages(steps, 3, 3)
+            # --- Detect ---
             rc, tail = run_stage(
                 [sys.executable, "src/analyse_one.py", traj, out],
-                "Running detectors...", frames, bar, status)
+                "Running detectors...", frames, steps, 3, 3, status)
             if rc != 0:
+                draw_stages(steps, 3, failed=3)
                 st.error("Detection failed")
                 st.code("\n".join(tail))
                 st.stop()
 
+            # --- Encode ---
             draw_stages(steps, 4, 4)
             status.write("Re-encoding for browser playback...")
             subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
@@ -162,7 +162,6 @@ else:
                            cwd=ROOT, capture_output=True)
 
             draw_stages(steps, 5)
-            bar.progress(1.0)
             status.write("Done.")
 
             with open(out) as f:
