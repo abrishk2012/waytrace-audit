@@ -233,6 +233,43 @@ and requires rebuilding it from new reference points.
 
 ---
 
+## Responsible AI
+
+**What is collected.** Video of one corridor junction, from one fixed camera, in a
+private building. Thirteen clips, twelve usable. Three participants, all of whom
+consented to public release of the footage.
+
+**What is discarded — and this is structural, not a promise.** The analysis never
+opens a video. The detector and the clustering read a file of numbered tracks:
+positions in metres, frame numbers, box sizes. Every clip could be deleted and every
+number in this repository would still reproduce. Video is an input to tracking, not
+to analysis.
+
+**Where it runs.** A local Streamlit server on the machine holding the footage. No
+`requests`, no `urllib`, no HTTP call anywhere in the codebase. Nothing leaves the
+machine.
+
+**Faces.** All three participants consented to public release. I built face blurring
+from the saved track boxes anyway and verified zero uncovered frames — every frame
+inside any track's lifetime has a rectangle over the head slice. I do not apply it to
+the demo footage, because consent exists here. The tool is in the repo because a real
+deployment wouldn't have consent from anyone walking through an airport.
+See `src/blur_heads.py`.
+
+**Where the system is biased, stated plainly.** Detection is YOLO, and YOLO's
+performance varies with body size, clothing and lighting. A wheelchair user's
+silhouette is not what it was trained on. Neither is a person pushing a luggage
+trolley, or a child. The behaviour detectors sit on top of detection, so anyone the
+detector sees less reliably is also measured less reliably — and those are
+disproportionately the people the system exists to help. I have not measured this,
+because my cast was three adults. I am stating it rather than implying it isn't there.
+
+**What this system must never be.** It counts behaviours at a location. It does not
+identify anyone, and it should not be extended to. The output that matters is
+"four people hesitated near this sign", not "this person hesitated".
+
+---
+
 ## Repository
 
 ```

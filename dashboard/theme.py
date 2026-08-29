@@ -14,6 +14,11 @@ in panels.py. Three places, one palette.
 """
 
 import streamlit as st
+import base64
+from pathlib import Path
+
+_FONT_FILE = Path(__file__).parent / "fonts" / "Archivo.woff2"
+_ARCHIVO_B64 = base64.b64encode(_FONT_FILE.read_bytes()).decode("ascii")
 
 PANEL = "#11151A"       # sign face
 RAISED = "#1A1F26"      # metric tiles
@@ -24,7 +29,13 @@ YELLOW = "#FFD400"      # the finding, and nothing else
 
 _CSS = f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap');
+@font-face {{
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('data:font/woff2;base64,{_ARCHIVO_B64}') format('woff2');
+}}
 
 /* Streamlit caps the content width even at layout="wide". Release it -
    a judge watching a compressed video needs the plots as large as the
