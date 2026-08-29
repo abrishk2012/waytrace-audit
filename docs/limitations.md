@@ -36,6 +36,21 @@ lopsided split claimed in an earlier session summary, which said "6 of 9". The
 real figure is 5 of 8. **Difficulty explains part of the drop from 85% to 62%.
 It does not explain all of it, and it should not be offered as though it does.**
 
+## 1c. One clip is excluded, and it is the one that would have helped
+
+`results.json` covers **12 clips, not 13.** All three of clip 4's rows are marked
+EXCLUDE in `data/trip.csv`, logged as wasted on the night of the shoot — before
+any labelling, and long before any detector existed.
+
+**Clip 4's shoot notes record four events, two of them U-turns.** U-turns are
+exactly what this detector is weakest at, and two more would have roughly
+doubled the held-out U-turn sample. Un-excluding it now, after seeing a 0% score,
+would be choosing data on the basis of the result.
+
+It stays out. This is recorded here rather than left to be discovered, because
+"twelve clips" against a stated thirteen looks like selection unless the reason
+is given first.
+
 ## 2. The U-turn detector caught nothing on the held-out set
 
 | | tuning set (odd, 13 trips) | held-out set (even, 12 trips) |
@@ -91,6 +106,38 @@ fitted region, and this project has not measured how much.**
 The correct fix is a larger calibration pattern covering the full corridor.
 It was not done, and every coordinate outside 0.588 m × 1.54 m should be read as
 an estimate with unquantified error.
+
+## 4b. The lens calibration carries 2.17 px of residual error
+
+From `calibration_ezviz.npz`, read from the file rather than from notes:
+
+| quantity | value |
+|---|---|
+| RMS reprojection error | **2.17 px** |
+| calibration views | 40 |
+| image size | 1024 × 576 |
+| focal length | fx 651.2, fy 653.9 |
+| principal point | **(537.7, 278.4)** |
+| radial `k1` | **−0.410** (strong barrel distortion) |
+
+Two things follow, and neither is fatal, but both should be stated.
+
+**2.17 px is not a small residual.** A well-conditioned calibration lands under
+1 px. Ours is roughly twice that, from 40 views of a hand-held printed board. Read
+through the per-row scale in the README, 2.17 px is about **0.9 cm near the camera
+and 3.2–3.6 cm at the far end** — the same order as the homography error, not
+negligible beside it. The two are measured differently and do not simply add, so
+no combined figure is quoted here; that would be a made-up number.
+
+**The principal point is off-centre by 25.7 px in x** — 2.5% of the frame width —
+where a centred lens would put it at (512, 288). That is ordinary for a
+consumer CCTV module and the calibration accounts for it. It is noted because
+any future step that assumes the optical centre is the image centre would be
+wrong by 25 px, and 25 px at the far end of this corridor is around 40 cm.
+
+`k1 = −0.410` is substantial barrel distortion. This is why undistortion runs on
+the whole video before detection rather than being skipped: at that strength,
+straight corridor edges are visibly curved in the raw frame.
 
 ## 5. What "blind thresholds" does and does not cover
 
@@ -204,7 +251,8 @@ before validation. Combined, 62% precision and 56% recall — down from 85% / 79
 on the tuning set, as expected, since the held-out trips are the harder ones.
 All four misses are explained. Two friction hotspots found on half the data were
 confirmed on the other half, both on the approach side of the junction and both
-within 1.21 m of the only sign, which lists three destinations and not the one
-these people wanted. The dataset is 25 trips in a home corridor and the numbers
+within 1.21 m of the signage at that junction — three separate A5 sheets reading
+GATES A-C, BAGGAGE CLAIM and EXIT, none of which names the destination these
+people were given. Three chances to be signposted, three misses. The dataset is 25 trips in a home corridor and the numbers
 should be read as a demonstration that the measurement works, not as a
 performance figure.
