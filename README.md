@@ -76,6 +76,8 @@ The claim is about the method, not the scale.
 
 ## Pipeline
 
+![WayTrace pipeline](docs/architecture.svg)
+
 ```
 CFR convert  →  undistort  →  detect (YOLO)  →  track (ByteTrack)
      →  homography  →  trajectory storage  →  smooth

@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="Archivo, 'Helvetica Neue', Arial, sans-serif">
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8C949E"/>
+    </marker>
+    <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#FFD400"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="900" fill="#11151A"/>
+
+  <!-- title -->
+  <rect x="100" y="52" width="6" height="46" fill="#FFD400"/>
+  <text x="126" y="80" font-size="34" font-weight="700" fill="#F2F4F6" letter-spacing="0.5">WayTrace — pipeline</text>
+  <text x="126" y="112" font-size="17" font-weight="400" fill="#8C949E">Fixed CCTV to hotspots on a floor plan. Every stage runs on the machine holding the footage.</text>
+
+  <!-- ============ BAND 1 : PIXELS ============ -->
+  <text x="100" y="176" font-size="13" font-weight="700" fill="#FFD400" letter-spacing="2.5">STAGE 1 — PIXELS</text>
+  <text x="316" y="176" font-size="13" font-weight="400" fill="#8C949E" letter-spacing="0.4">video is required here</text>
+
+  <g>
+    <rect x="100" y="196" width="320" height="104" rx="6" fill="#1A1F26" stroke="#2A313A"/>
+    <text x="124" y="234" font-size="20" font-weight="600" fill="#F2F4F6">Constant frame rate</text>
+    <text x="124" y="260" font-size="14" fill="#8C949E">source is VFR — all timing depends on this</text>
+    <text x="124" y="283" font-size="13" font-family="monospace" fill="#8C949E">ffmpeg -r 15 -an</text>
+  </g>
+  <line x1="424" y1="248" x2="472" y2="248" stroke="#8C949E" stroke-width="2" marker-end="url(#a)"/>
+
+  <g>
+    <rect x="480" y="196" width="320" height="104" rx="6" fill="#1A1F26" stroke="#2A313A"/>
+    <text x="504" y="234" font-size="20" font-weight="600" fill="#F2F4F6">Undistort lens</text>
+    <text x="504" y="260" font-size="14" fill="#8C949E">whole video, before detection · RMS 2.17 px</text>
+    <text x="504" y="283" font-size="13" font-family="monospace" fill="#8C949E">undistort_video.py</text>
+  </g>
+  <line x1="804" y1="248" x2="852" y2="248" stroke="#8C949E" stroke-width="2" marker-end="url(#a)"/>
+
+  <g>
+    <rect x="860" y="196" width="320" height="104" rx="6" fill="#1A1F26" stroke="#2A313A"/>
+    <text x="884" y="234" font-size="20" font-weight="600" fill="#F2F4F6">Detect + track</text>
+    <text x="884" y="260" font-size="14" fill="#8C949E">YOLO + ByteTrack · 83% coverage</text>
+    <text x="884" y="283" font-size="13" font-family="monospace" fill="#8C949E">track_people.py</text>
+  </g>
+  <line x1="1184" y1="248" x2="1232" y2="248" stroke="#8C949E" stroke-width="2" marker-end="url(#a)"/>
+
+  <g>
+    <rect x="1240" y="196" width="260" height="104" rx="6" fill="#1A1F26" stroke="#2A313A"/>
+    <text x="1264" y="234" font-size="20" font-weight="600" fill="#F2F4F6">Homography</text>
+    <text x="1264" y="260" font-size="14" fill="#8C949E">pixels → metres</text>
+    <text x="1264" y="283" font-size="13" font-family="monospace" fill="#8C949E">build_homography.py</text>
+  </g>
+
+  <!-- down arrow into the boundary -->
+  <line x1="1370" y1="304" x2="1370" y2="356" stroke="#FFD400" stroke-width="2" marker-end="url(#ay)"/>
+
+  <!-- ============ THE BOUNDARY — signature element ============ -->
+  <line x1="100" y1="392" x2="1500" y2="392" stroke="#FFD400" stroke-width="2" stroke-dasharray="10 8"/>
+  <rect x="100" y="404" width="1400" height="76" rx="6" fill="#1A1F26" stroke="#2A313A"/>
+  <rect x="100" y="404" width="1400" height="3" fill="#FFD400"/>
+  <text x="124" y="440" font-size="20" font-weight="700" fill="#FFD400">Below this line, nothing opens a video.</text>
+  <text x="124" y="466" font-size="15" fill="#F2F4F6">A person has become an integer and a list of floor positions. Delete every clip and every number on the dashboard still reproduces.</text>
+
+  <line x1="230" y1="484" x2="230" y2="524" stroke="#8C949E" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- ============ BAND 2 : NUMBERS ============ -->
+  <text x="100" y="556" font-size="13" font-weight="700" fill="#FFD400" letter-spacing="2.5">STAGE 2 — NUMBERS</text>
+  <text x="330" y="556" font-size="13" font-weight="400" fill="#8C949E" letter-spacing="0.4">(x, y, frame) in metres — no faces, no crops, no names</text>
+
+  <g>
+    <rect x="100" y="576" width="266" height="104" rx="6" fill="#1A1F26" stroke="#2A313A"/>
+    <text x="122" y="614" font-size="19" font-weight="600" fill="#F2F4F6">Store + smooth</text>
+    <text x="122" y="639" font-size="14" fill="#8C949E">5-frame moving average</text>
+    <text x="122" y="662" font-size="13" font-family="monospace" fill="#8C949E">speeds.py</text>
+  </g>
+  <line x1="370" y1="628" x2="410" y2="628" stroke="#8C949E" stroke-width="2" marker-end="url(#a)"/>
+
+  <g>
+    <rect x="418" y="576" width="266" height="104" rx="6" fill="#1A1F26" stroke="#2A313A"/>
+    <text x="440" y="614" font-size="19" font-weight="600" fill="#F2F4F6">Detect events</text>
+    <text x="440" y="639" font-size="14" fill="#8C949E">hesitation · U-turn</text>
+    <text x="440" y="662" font-size="13" font-family="monospace" fill="#8C949E">build_events.py</text>
+  </g>
+  <line x1="688" y1="628" x2="728" y2="628" stroke="#8C949E" stroke-width="2" marker-end="url(#a)"/>
+
+  <g>
+    <rect x="736" y="576" width="266" height="104" rx="6" fill="#1A1F26" stroke="#2A313A"/>
+    <text x="758" y="614" font-size="19" font-weight="600" fill="#F2F4F6">Cluster hotspots</text>
+    <text x="758" y="639" font-size="14" fill="#8C949E">4 found · stable 0.40–0.75 m</text>
+    <text x="758" y="662" font-size="13" font-family="monospace" fill="#8C949E">hotspots.py</text>
+  </g>
+  <line x1="1006" y1="628" x2="1046" y2="628" stroke="#8C949E" stroke-width="2" marker-end="url(#a)"/>
+
+  <g>
+    <rect x="1054" y="576" width="266" height="104" rx="6" fill="#1A1F26" stroke="#2A313A"/>
+    <text x="1076" y="614" font-size="19" font-weight="600" fill="#F2F4F6">Dashboard</text>
+    <text x="1076" y="639" font-size="14" fill="#8C949E">local Streamlit · no HTTP call</text>
+    <text x="1076" y="662" font-size="13" font-family="monospace" fill="#8C949E">dashboard/app.py</text>
+  </g>
+
+  <!-- validation, off to the side -->
+  <g>
+    <rect x="1354" y="576" width="146" height="104" rx="6" fill="#11151A" stroke="#FFD400" stroke-dasharray="5 4"/>
+    <text x="1376" y="612" font-size="17" font-weight="600" fill="#FFD400">Scored</text>
+    <text x="1376" y="636" font-size="13" fill="#8C949E">12 held-out</text>
+    <text x="1376" y="654" font-size="13" fill="#8C949E">trips, once</text>
+    <text x="1376" y="672" font-size="13" font-family="monospace" fill="#8C949E">validate.py</text>
+  </g>
+  <line x1="1324" y1="628" x2="1348" y2="628" stroke="#FFD400" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ay)"/>
+
+  <!-- ============ FOOTER FACTS ============ -->
+  <line x1="100" y1="736" x2="1500" y2="736" stroke="#2A313A" stroke-width="1"/>
+
+  <text x="100" y="774" font-size="13" font-weight="700" fill="#8C949E" letter-spacing="2">MEASURED, NOT CLAIMED</text>
+
+  <text x="100" y="810" font-size="15" fill="#F2F4F6">Homography checked against a tape measure:</text>
+  <text x="100" y="836" font-size="15" fill="#8C949E">system 2.44 m, tape 2.46 m — 3 cm apart.</text>
+
+  <text x="560" y="810" font-size="15" fill="#F2F4F6">Held-out F1: hesitation 77%, U-turn 0%.</text>
+  <text x="560" y="836" font-size="15" fill="#8C949E">Split before coding. Scored once. Worse number kept.</text>
+
+  <text x="1090" y="810" font-size="15" fill="#F2F4F6">Face blur built and verified, not applied.</text>
+  <text x="1090" y="836" font-size="15" fill="#8C949E">Participants consented; deployment wouldn't have consent.</text>
+
+</svg>
