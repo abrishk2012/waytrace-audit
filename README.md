@@ -81,6 +81,34 @@ after conversion to metres. It was chosen over larger windows deliberately:
 larger windows produce lower peak speeds but blur the *start and end* of events
 in time, and the planned hesitation detector is time-bounded.
 
+### Held-out validation
+
+Trips were split odd/even **before any detector code was written**. Odd trips
+were used for tuning; even trips were never looked at until scoring. `validate.py`
+was committed before it was run. The test was run once and the result kept.
+
+|            | Odd (tuning, 13) | **Even (held-out, 12)** | All (25) |
+|------------|------------------|-------------------------|----------|
+| Hesitation | P 100% R 86% F1 92% | P 83% R 71% F1 77% | P 92% R 79% F1 85% |
+| U-turn     | P 71% R 71% F1 71% | **P 0% R 0% F1 0%** | P 56% R 56% F1 56% |
+| Combined   | P 85% R 79% F1 81% | **P 62% R 56% F1 59%** | P 76% R 70% F1 73% |
+
+Source: `data/validation_day15.txt` and `data/per_behaviour_day15.txt`.
+
+**Read the U-turn row, not the combined row.** The combined 62/56 hides a
+detector that scored zero. Only 2 U-turns fell in the held-out set and both were
+missed for the same reason: the speed gate ignores turns made from a standstill.
+Two events is far too small a sample to call the detector broken — and far too
+small to call it working.
+
+**25 trips is a small dataset.** One event moves a percentage by roughly ten
+points, so these are not performance figures. What was controllable was honesty:
+split before coding, thresholds written before the detector existed, scoring
+script committed before it ran, one scoring run, worse number kept.
+
+`data/misses_day15.txt` explains all four held-out misses individually, two of
+them predicted in writing before scoring.
+
 ---
 
 ## Limitations
