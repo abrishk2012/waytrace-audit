@@ -17,7 +17,7 @@
       "y_m": 1.645,
       "y_spread_m": 0.01,
       "clicks": 5,
-      "text": ["GATE A-C ->", "BAGGAGE CLAIM <-", "EXIT <-"],
+      "text": ["GATES A-C ->", "BAGGAGE CLAIM <-", "EXIT <-"],
       "text_note": "THREE SEPARATE A5 SHEETS, not one board: GATES A-C, BAGGAGE CLAIM, EXIT, stacked vertically flush with no gaps, all at the same height on the same wall. Corrected Day 16 - Day 14 and Day 15 both described this as a single sign, and commit 297ede4 says Same board, which is wrong. The floor position is unaffected: the sheets share one wall and one footprint, so the Day 14 measurement (five clicks agreeing on y to within 1 cm) still stands and nothing was re-measured. Modelled as one entry rather than three because three identical coordinates would make nearest_sign arbitrary - hotspots.py uses a strict dist < best_d, so sheets two and three could never win and would be invisible in the output.",
       "absent": ["TOILETS", "LOUNGE"],
       "absent_note": "TOILETS and LOUNGE were deliberately omitted at shoot time to generate genuine wayfinding uncertainty. Trips categorised MISSING are those whose destination is absent from EVERY SIGN AT THIS JUNCTION. Three separate signs are posted here - GATES A-C, BAGGAGE CLAIM, EXIT - and neither TOILETS nor LOUNGE appears on any of them. Three chances to be signposted, three misses. This is a signage GAP, not a sparse sign: the corridor IS signposted, just not for where these people were going."
