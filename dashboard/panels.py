@@ -216,3 +216,80 @@ def hotspot_map(results, hotspots_path, signs_path):
             f"sits {big['distance_to_sign_m']} m from the sign and "
             f"{big['distance_to_junction_m']} m from the junction."
         )
+
+def timeline_panel(results, trips_csv):
+    """One strip per trip that had an event, showing when in that trip.
+
+    Events are NOT plotted on a shared time axis: start_sec is a time within
+    its own clip, and 12 clips overlap in range, so one axis would place
+    clip1's 60 s beside clip8's 60 s as though they were the same moment.
+    Each trip gets its own strip instead, drawn as a fraction of that trip.
+    """
+    import csv
+
+    st.subheader("When it happened")
+    if not os.path.exists(trips_csv):
+        st.warning("trip.csv not found - no timeline shown.")
+        return
+
+    bounds = {}
+    with open(trips_csv, newline="") as f:
+        for row in csv.DictReader(f):
+            row = {(k or "").strip(): v for k, v in row.items()}
+            if row.get("valid") == "TRIP" and row.get("trip"):
+                bounds[int(row["trip"])] = (float(row["start_sec"]),
+                                            float(row["end_sec"]))
+
+    events = [e for e in results["events"] if e["trip"] in bounds]
+    trips = sorted({e["trip"] for e in events})
+    if not trips:
+        st.warning("No events matched a labelled trip.")
+        return
+
+    st.caption(
+        f"{len(events)} events across the {len(trips)} trips that had any. "
+        f"Each bar is one walk from start to finish. Every trip is stretched "
+        f"to the same width, so these are positions WITHIN a walk, not a "
+        f"shared clock - each clip has its own timeline."
+    )
+
+    fig, ax = plt.subplots(figsize=(7, 0.42 * len(trips) + 1.2))
+    for row, trip in enumerate(trips):
+        t0, t1 = bounds[trip]
+        span = max(t1 - t0, 1e-6)
+        ax.add_patch(Rectangle((0, row - 0.22), 1.0, 0.44,
+                               facecolor="#e6e8eb", edgecolor="none",
+                               zorder=1))
+        for e in (x for x in events if x["trip"] == trip):
+            frac = min(max((e["start_sec"] - t0) / span, 0.0), 1.0)
+            marker, colour = (("o", "#1a7f37") if e["type"] == "HESITATION"
+                              else ("^", "#b54708"))
+            ax.scatter([frac], [row], marker=marker, s=46, color=colour,
+                       edgecolor="white", linewidth=0.6, zorder=3)
+
+    ax.set_yticks(range(len(trips)))
+    ax.set_yticklabels([f"trip {t}" for t in trips], fontsize=8)
+    ax.set_xticks([0, 0.5, 1.0])
+    ax.set_xticklabels(["start of walk", "halfway", "end of walk"], fontsize=8)
+    ax.set_xlim(-0.04, 1.04)
+    ax.set_ylim(-0.7, len(trips) - 0.3)
+    ax.invert_yaxis()
+    for side in ("top", "right", "left"):
+        ax.spines[side].set_visible(False)
+    fig.tight_layout()
+    st.pyplot(fig)
+    plt.close(fig)
+
+    fracs = [(e["start_sec"] - bounds[e["trip"]][0])
+             / max(bounds[e["trip"]][1] - bounds[e["trip"]][0], 1e-6)
+             for e in events]
+    lo, hi = min(fracs), max(fracs)
+    st.markdown(
+        f"**How to read this:** each grey bar is one person's walk down the "
+        f"corridor, start on the left, end on the right. A **green dot** is a "
+        f"stop; an **orange triangle** is a turn-around. Nothing fires in the "
+        f"first or last tenth of any walk - the earliest event is at "
+        f"{lo:.0%} of its walk and the latest at {hi:.0%}. That matters: a "
+        f"tracker that lost people at the frame edge would produce fake "
+        f"events exactly there, and none appear."
+    )
