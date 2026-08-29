@@ -16,6 +16,7 @@ would cost hours and detect less.
 """
 
 import cv2
+import numpy as np
 import json
 import glob
 import sys
@@ -23,8 +24,9 @@ import os
 
 # ---------------------------------------------------------------- settings
 
-HEAD_FRACTION = 0.22   # top 30% of the person box is the head region
-MARGIN_X = 0.08        # widen sideways by 15% of box width each side
+HEAD_FRACTION = 0.30   # top 30% of the person box is the head region
+MARGIN_X = 0.0
+HEAD_WIDTH = 1.0       # widen sideways by 15% of box width each side
 MARGIN_Y = 0.10        # extend downwards by 10% of box height
 MOSAIC_PX = 6          # head region is squashed to this many pixels wide
 MAX_INTERP_GAP = 8     # holes up to this length are interpolated
@@ -46,17 +48,33 @@ def box_from_point(point):
 
 
 def head_rect(box):
-    """Top slice of a person box, widened by the margins."""
+    """
+    Top slice of the person box, guarded against raised arms.
+
+    Measured from your own data: the median box is 2.41x taller than
+    wide, 95% are under 3.38. Anything past 3.0 has an arm in it, so
+    the height is capped there. Width is capped too, because a raised
+    arm also pushes one side of the box out and drags the centre with it.
+    """
     x1, y1, x2, y2 = box
     w = x2 - x1
     h = y2 - y1
-    mx = int(w * MARGIN_X)
-    my = int(h * MARGIN_Y)
-    return (x1 - mx,
-            y1 - my,
-            x2 + mx,
-            y1 + int(h * HEAD_FRACTION) + my)
+    cx = (x1 + x2) // 2
 
+    # cap height: past 3.0x width, the extra is arm, not head
+    max_h = int(w * 3.0)
+    if h > max_h:
+        h = max_h
+        y1 = y2 - h
+
+    # cap width: a normal body is about h/2.41 wide
+    body_w = min(w, int(h / 2.41))
+    hw = int(body_w * HEAD_WIDTH / 2)
+
+    return (cx - hw,
+            y1 + 2,
+            cx + hw,
+            y1 + int(h * HEAD_FRACTION))
 
 def union(a, b):
     """Smallest rectangle containing both."""
@@ -151,8 +169,21 @@ def pixelate(frame, rect):
     small_h = max(2, int(MOSAIC_PX * (y2 - y1) / max(1, x2 - x1)))
     small = cv2.resize(patch, (MOSAIC_PX, small_h),
                        interpolation=cv2.INTER_AREA)
-    frame[y1:y2, x1:x2] = cv2.resize(small, (x2 - x1, y2 - y1),
-                                     interpolation=cv2.INTER_NEAREST)
+    soft = cv2.resize(small, (x2 - x1, y2 - y1),
+                      interpolation=cv2.INTER_LINEAR)
+    k = max(3, ((x2 - x1) // 6) * 2 + 1)
+    soft = cv2.GaussianBlur(soft, (k, k), 0)
+
+    # fade: 1 in the middle, 0 at the edges, so there is no hard line
+    mask = np.zeros((y2 - y1, x2 - x1), np.float32)
+    cv2.ellipse(mask,
+                ((x2 - x1) // 2, (y2 - y1) // 2),
+                ((x2 - x1) // 2, (y2 - y1) // 2),
+                0, 0, 360, 1.0, -1)
+    fk = max(3, ((x2 - x1) // 4) * 2 + 1)
+    mask = cv2.GaussianBlur(mask, (fk, fk), 0)[:, :, None]
+
+    frame[y1:y2, x1:x2] = (soft * mask + patch * (1 - mask)).astype("uint8")
 
 
 # -------------------------------------------------------------------- main
