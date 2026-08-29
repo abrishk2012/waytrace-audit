@@ -180,7 +180,7 @@ def hotspot_map(results, hotspots_path, signs_path):
             edgecolor="#0B9FC4", linewidth=1.2, zorder=1))
         ax.annotate(str(s["event_count"]), (sx, sy),
                     ha="center", va="center", fontsize=11,
-                    fontweight="bold", color="#11151A", zorder=4)
+                    fontweight="bold", color="#FFFFFF", zorder=4)
 
     # individual events - shape AND colour, never colour alone
     for kind, marker, colour in (("HESITATION", "o", "#1a7f37"),
@@ -196,7 +196,7 @@ def hotspot_map(results, hotspots_path, signs_path):
     for i, sign in enumerate(sg.get("signs", [])):
         gx, gy = rot(sign["x_m"], sign["y_m"])
         ax.scatter([gx], [gy], marker="s", s=90,
-                   color="#24292f", zorder=5,
+                   color="#FFD400", zorder=5,
                    label="Sign (measured)" if i == 0 else None)
     for i, op in enumerate(sg.get("junction", {}).get("openings", [])):
         ox, oy = rot(op["x_m"], op["y_m"])

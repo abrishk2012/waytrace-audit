@@ -64,6 +64,12 @@ hotspot_map(results,
 timeline_panel(results, os.path.join(ROOT, "data", "trip.csv"))
 privacy_panel()
 st.divider()
+st.subheader("Watch a clip")
+st.caption(
+    "The figures above are the finding across all 25 trips and do not change "
+    "with this selector - a single clip holds two or three events, which "
+    "would prove nothing. This plays the tracked footage for one clip."
+)
 mode = st.radio("Source", ["Recorded clip", "Upload your own"], horizontal=True)
 
 if mode == "Recorded clip":
