@@ -244,7 +244,8 @@ data/output/          trajectories, results.json, hotspots.json
 data/*_day15.txt      validation, per-behaviour and miss analysis
 docs/definitions.md   thresholds, written before the detector existed
 docs/limitations.md   measured constraints
-PROGRESS.md           day-by-day build log, including failed approaches```
+PROGRESS.md           day-by-day build log, including failed approaches
+```
 
 `PROGRESS.md` records what was tried and rejected, not only what worked. Several
 entries are corrections of earlier conclusions.
