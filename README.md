@@ -63,11 +63,11 @@ system depends on this conversion having happened.
 | Homography (pixels → metres) | working, verified to 3 cm |
 | Trajectory storage | working |
 | Smoothing | working, tuned |
-| Hesitation detection | not built |
-| U-turn detection | not built |
-| Hotspot clustering | not built |
-| Dashboard | not built |
-| Signage OCR | not built, first to be cut |
+| Hesitation detection | working, held-out F1 77% |
+| U-turn detection | working, held-out F1 0% — see Validation |
+| Hotspot clustering | working, 4 hotspots, stable 0.40–0.75 m |
+| Dashboard | working, local Streamlit |
+| Signage OCR | cut on Day 12, deliberately |
 
 ### Verification so far
 
