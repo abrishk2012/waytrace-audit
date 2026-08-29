@@ -7,9 +7,10 @@ locate *wayfinding friction* — the places where people hesitate, backtrack, or
 turn around. It reports **where** friction happens. It does not attempt to say
 **why**, and it never identifies anyone.
 
-> Status: in development. Built for VoltHacks 2026.
-> This README documents the system as currently built and measured, including
-> the parts that do not work yet.
+> Status: built and validated. Made for VoltHacks 2026.
+> This README documents the system as measured, including the parts that do not
+> work. The U-turn detector scored **zero** on held-out data; that number is in
+> the status table and in Validation, not buried.
 
 ---
 
@@ -25,9 +26,11 @@ The unit of output is a **location on a floor plan**, not a person.
 ## What it deliberately does not do
 
 - **It does not diagnose signage.** WayTrace reports that people hesitate at a
-  given spot. A human decides why. Where OCR of nearby signs is available, the
-  language used is *"possible signage issue associated with this hotspot"* — an
-  association, never a cause.
+  given spot. A human decides why. The wording used is *"possible signage issue
+  associated with this hotspot"* — an association, never a cause.
+- **It does not read signs.** OCR was cut on Day 12, deliberately, to protect
+  the validation work. The signage audit is hardcoded for this one junction from
+  `data/signs.json`. Automating it is the obvious next step, not a hidden one.
 - **It does not identify or re-identify people.** Track IDs are per-video and
   meaningless across recordings.
 - **It does not store video.** Trajectories are the artefact; footage is input.
@@ -79,7 +82,7 @@ evidence that the pixel-to-metre conversion is correct and that no unit error
 Smoothing is a 5-frame moving average (one third of a second at 15 fps), applied
 after conversion to metres. It was chosen over larger windows deliberately:
 larger windows produce lower peak speeds but blur the *start and end* of events
-in time, and the planned hesitation detector is time-bounded.
+in time, and the hesitation detector is time-bounded.
 
 ### Held-out validation
 
@@ -103,8 +106,15 @@ small to call it working.
 
 **25 trips is a small dataset.** One event moves a percentage by roughly ten
 points, so these are not performance figures. What was controllable was honesty:
-split before coding, thresholds written before the detector existed, scoring
-script committed before it ran, one scoring run, worse number kept.
+split before coding, scoring script committed before it ran, one scoring run,
+worse number kept.
+
+**Not every threshold was written blind, and it would be easy to imply that it
+was.** Three of the five — `MAX_SPEED`, `MIN_SECONDS`, `MIN_ANGLE` — were written
+into `docs/definitions.md` before the detector existed, then swept and found
+unimprovable. The other two, `MAX_GAP` and `MIN_SPEED`, were **tuned on Day 13
+against the odd trips** and have no blind ancestor. Tuning happened on the tuning
+half only, but they are tuned values and are labelled as such.
 
 `data/misses_day15.txt` explains all four held-out misses individually, two of
 them predicted in writing before scoring.
@@ -164,9 +174,10 @@ Standing peaks at 59–77% of walking speed. The two populations overlap, so no
 single speed threshold can separate them: set it low and one real stop fragments
 into several short false ones; set it high and slow walking is called hesitation.
 
-**This is why hesitation is defined as "below X m/s *sustained for Y seconds*"**
-rather than as a bare threshold. Duration does the separating, not the threshold
-value.
+**This is why hesitation is defined as "below 0.30 m/s *sustained for 2.00
+seconds*"** — both written into `docs/definitions.md` before the detector
+existed, both later swept and found unimprovable — rather than as a bare
+threshold. Duration does the separating, not the threshold value.
 
 ### 4. Averages over a whole track are meaningless
 
@@ -193,8 +204,10 @@ detector jitter. Smoothing reduces peak speed from 3.70 to 1.40 m/s but does not
 eliminate it, and **1.40 m/s should not be quoted as a walking speed** — it is a
 less-wrong maximum, not a believable one.
 
-No position-weighted correction is applied yet. Doing so requires labelled data
-to validate against.
+No position-weighted correction is applied. Labelled data now exists — 25 trips
+— so the original blocker is gone; the reason it remains unbuilt is time, and
+building it after seeing the held-out result would mean tuning against the test
+set. It stays out.
 
 ### 6. Hesitation uses an absolute speed threshold, not a per-person baseline
 
@@ -254,7 +267,7 @@ entries are corrections of earlier conclusions.
 
 ## Notes on method
 
-Two practices are used throughout and are worth stating:
+Three practices are used throughout and are worth stating:
 
 **Every parameter is swept, never guessed.** Smoothing window and edge-trim
 duration were both chosen by testing a range and looking for a plateau — a value
@@ -265,3 +278,8 @@ the wrong tool rather than tuned harder.
 **Every sweep includes a null row.** `window = 1` and `trim = 0.0` must reproduce
 the unprocessed numbers exactly. If they do not, the function is broken and every
 other row is meaningless.
+
+**The tuning half and the test half were separated before any detector code was
+written.** Odd trips tuned, even trips held out. Every threshold sweep, every
+hotspot cell-size check and every parameter decision on this project was made
+against odd trips only. The even trips were scored once, on Day 15.
