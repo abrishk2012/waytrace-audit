@@ -2112,14 +2112,135 @@ first time. Q2 (why all eight thresholds are passed explicitly) needed three
 explanations before it landed. Recorded as 2/3, not 3/3.
 
 ## Day 17 — Sat 29 Aug — Dashboard part 2
-- [ ] Event counts, hotspot map, event timeline
-- [ ] Precision/recall shown in the UI, not hidden in the README
-- [ ] Privacy-by-design statement visible on screen
-- [ ] **"Not SaaS" stated explicitly** — a dashboard makes people assume cloud.
+- [x] Event counts, hotspot map, event timeline
+- [x] Precision/recall shown in the UI, not hidden in the README
+- [x] Privacy-by-design statement visible on screen
+- [x] **"Not SaaS" stated explicitly** — a dashboard makes people assume cloud.
       On-premises, self-hosted, footage never leaves the building.
 
-**Status:**
+**Status:** COMPLETE. All four boxes, six deliverables, verified on BOTH source
+paths. The verification caught a real break in the upload path that would
+otherwise have shipped. 8 commits, `8fac9b0` through the import fix.
+
 **Notes:**
+
+DAY 17 RAN OVERNIGHT from the end of Day 16, starting ~01:00 Sat 29 Aug.
+
+THE PIPELINE UI (`dashboard/pipeline_ui.py`, new file, `8fac9b0`)
+The five text stages became circular nodes on a segmented rail. Stage data is a
+list of dicts, so stages can be added or reordered without touching the drawing
+code. Hover and keyboard tooltips, `aria-label` on every node, state carried by
+glyph as well as colour. Wired into `app.py` as `ece67e9`.
+
+Three failures on the way, each MEASURED rather than reasoned about:
+- **The nodes were ovals.** Two CSS guesses failed. DevTools gave the real
+  number: `22.667 x 18.667` - genuinely wider than tall, not the pulse halo as
+  theorised. Fixed by pinning `min-` and `max-` on both axes from one `--d`
+  variable, so nothing - not flex, not the glyph, not `line-height` - can
+  stretch it.
+- **Dark mode filled the hollow nodes white.** `prefers-color-scheme` reads the
+  OPERATING SYSTEM, not Streamlit; Streamlit was dark while Windows was light.
+  Second attempt used `var(--background-color)`, which Streamlit does not
+  publish here - confirmed by test, not assumed. Third attempt removed the need
+  for a background entirely: upcoming nodes are transparent rings.
+- **The rail showed through the transparent nodes.** Predicted before the change
+  and confirmed on screen. One bar behind everything became one segment per gap.
+
+TWO STAGE-STATE BUGS THE OLD TEXT RENDERER HID
+`draw_stages(steps, 1, 2)` drew Undistort as NOT STARTED while Track ran, and
+Convert never showed as running at all. Both invisible as text; both obvious as
+circles. **A cosmetic upgrade exposed two logic errors that had shipped.**
+
+ONE BAR, NOT TWO
+The rail and Streamlit's `st.progress` sat stacked showing the same run. Two
+bars disagreeing reads as a bug. The `st.progress` bar was deleted and the rail
+now creeps within a stage from the tracker's `Frame N` prints, so one bar does
+both jobs: which stage, and how far through it.
+
+THE PANELS (`dashboard/panels.py`, new file)
+Five functions, all read-only. **Every number on screen is parsed from a
+committed file. Nothing is typed in.** The handoff note's copy of the
+per-behaviour figures had to be treated as a weaker witness than
+`per_behaviour_day15.txt` itself - Rule 39 - and the parser was checked against
+all nine triples before it rendered anything.
+
+SCOPE IS STATED ON EVERY PANEL
+21 events comes from all 25 trips. 62/56 comes from the 12 EVEN trips only. Side
+by side and unlabelled, a judge reads the second as describing the first. Each
+panel now names its own scope on screen. The U-turn zero gets its own red box
+rather than hiding inside the combined 59% - Rule 22.
+
+`st.metric` DREW AN UP ARROW ON THE 0% U-TURN FIGURE
+`delta_color="off"` greys the colour but keeps the arrow. On the one number that
+most needs reading as bad, the UI drew an upward arrow. Removed; P and R moved
+into a caption underneath.
+
+THE HOTSPOT MAP - DRAWN AS WHAT IT IS
+Hotspot coordinates are grid cell centres at `cell_m = 0.5`, not event positions.
+Drawn as **squares at their true size**, not dots: a dot would claim a precision
+the method does not have. The 21 individual events are plotted underneath, so the
+cluster is visibly made of real detections. Event type carried by SHAPE as well
+as colour, because colour alone fails on a compressed demo video. Sign and the
+three junction openings plotted from `signs.json` - tape measure, not detector.
+Rotated 90 degrees AT THE DRAWING LAYER ONLY so the plot matches the camera view;
+no stored coordinate is altered. Orientation confirmed against the footage by eye,
+because the data alone could not settle it.
+
+HOTSPOT 5 VERIFIED AGAINST THE EVENTS
+Counting dots on a screenshot suggested 4 events in a cell claiming 5. Querying
+`results.json` returned five - 2 hesitations, 3 U-turns, matching the JSON's own
+breakdown. **The map was right and the eyeball was wrong.** Rule 43 again.
+
+clip4 IS ABSENT FROM `results.json` - AND THAT IS CORRECT
+`results.json` covers 12 clips, not 13. All three clip4 rows are `EXCLUDE`,
+"logged wasted on shoot night", with no trip numbers. `build_events.py` skipped
+them correctly. **But clip4's notes record four events including TWO U-TURNS** -
+exactly the behaviour the detector is weakest on. The exclusion was logged at
+shoot time, before any labelling, and un-excluding it now would be choosing data
+after seeing the result. Say it before a judge asks it.
+
+A CAPTION THAT DID NOT MATCH ITS OWN PICTURE
+The timeline's first caption claimed "events bunch in the middle of a walk".
+The plot showed events at 15-20% and at 85%. **Withdrawn.** Replaced with a
+measured claim: every event falls between **12.9% and 83.3%** of its walk, zero
+in the first or last tenth. That is stronger AND true - a tracker losing people
+at the frame edge would produce fake events exactly there, and none appear. Both
+bounds are computed at render time.
+
+THE TIMELINE IS PER-TRIP, NOT A SHARED CLOCK
+`start_sec` is a time within its own clip and twelve clips overlap in range. One
+axis would put clip1's 60 s beside clip8's 60 s as though they were the same
+moment. Each trip is normalised to its own start and end from `trip.csv`.
+
+THE PRIVACY CLAIMS WERE CHECKED BEFORE THEY WERE WRITTEN
+- Searching `src/*.py` and `dashboard/*.py` for `requests`, `urllib`, `http`,
+  `socket` returns **only** the local file picker and a folder on this disk.
+- `build_events.py` and `hotspots.py` contain no `cv2`, no `VideoCapture`, no
+  `.mp4`. They read JSON and write JSON.
+- A trajectory file holds tracks keyed `"1"`, `"2"`, `"4"` - integers - each a
+  list of five-number rows. No faces, no crops, no names.
+
+First draft said "no faces, no crops, no names" directly above a video player
+showing a recognisable person. Both statements true; together they read as a
+contradiction. Rewritten to separate input from what is stored, which is the
+stronger claim anyway: **delete every clip and every figure on the page still
+reproduces.**
+
+THE CHECK THAT CAUGHT THE FALSE COMPLETION
+Before claiming the day done, the UPLOAD path was run end to end. It threw
+`NameError: draw_stages is not defined` - the `from pipeline_ui` import had been
+dropped from `app.py` while the panels import line was rewritten. The recorded
+path never calls it, so the dashboard looked perfect. **The same class of miss as
+Day 16.** Fixed, then both paths re-verified: all five sections render and the
+video plays.
+
+STILL OPEN AFTER TODAY
+- `signs.json` `text` still says `GATE A-C`; the sheet says `GATES A-C`.
+- "4 of the 4 hotspots" reads awkwardly in the map's finding line.
+- `heatmap.py` dead `if False:` block; `to_json_safe` duplication;
+  `odd_trips()` fieldname stripping; `odd_only.py` main block mid-file.
+- README still says `Hotspot clustering | not built`. **Badly stale.**
+
 **Quiz score:      /3**
 
 ## Day 18 — ~~Mon 31 Aug~~ — Signage MVP — **CUT on Day 12, 26 Aug**
@@ -2568,3 +2689,42 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     bar was correct; `trajectories.py` only spoke every 100 frames and the clip
     was 352 frames long. Three updates in three minutes looks identical to
     broken. Count the updates before rewriting the display.
+
+57. **A browser refresh reruns the script, not its imports.** Editing
+    `panels.py` and pressing refresh changed nothing three separate times on
+    Day 17: Streamlit keeps an imported module in memory. The fix that "did not
+    work" had worked. **Restart the server after editing an imported file.**
+
+58. **Auto-indent puts a pasted function inside the one above it.** Twice on
+    Day 17 a new top-level `def` landed with 4 or 8 leading spaces, nesting it
+    inside `hotspot_map` and throwing `IndentationError` on its own docstring.
+    Verify with `("[" + ($_ -replace ' ', '·') + "]")` - the eye cannot count
+    leading spaces, and "press Backspace once" was wrong when the answer was
+    eight.
+
+59. **A caption is a claim; check it against its own picture.** "Events bunch in
+    the middle of a walk" was written above a plot showing events at 15% and at
+    85%. A judge checks the sentence against the image in front of them, and a
+    caption that fails makes every other number suspect.
+
+60. **The path you did not open is the path that is broken.** A missing import
+    threw only on the upload branch, because the recorded branch never calls
+    that function. The dashboard looked complete. **Exercise every path before
+    claiming a day done** - this is the second day running that this check
+    caught a false completion.
+
+61. **A truncated paste is a syntax error, not a missing file.** 155 lines
+    arrived where 178 were sent, ending mid-expression. Python reported an
+    unclosed bracket, which sends you hunting one character instead of counting
+    lines. **Check the line count after any long paste.**
+
+62. **The editor's copy and the disk's copy can disagree, and the editor wins on
+    save.** After fixing indentation from PowerShell, VS Code refused to save
+    with "the content of the file is newer" and offered Overwrite - which would
+    have restored the broken version. Close the tab rather than overwrite.
+
+63. **Delete-and-append is not replace.** "Add this at the end of the file" was
+    read as select-all-and-paste and wiped four working functions out of
+    `panels.py`. They came back from `git checkout HEAD -- <path>` because they
+    had been committed twenty minutes earlier. **This is what committing after
+    every working chunk is for.**
