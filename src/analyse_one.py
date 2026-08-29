@@ -25,6 +25,10 @@ speeds.H = np.load("homography_camC.npz")["H"]
 
 
 def to_json_safe(v):
+    """numpy float32 -> python float, at the ONE point data leaves the maths
+    and enters the file. Duplicated from build_events.py on purpose, not by
+    accident: build_events.py produced the validated results.json on Day 15
+    and is deliberately frozen, so nothing imports from it."""
     return float(v)
 
 
