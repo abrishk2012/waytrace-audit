@@ -2,7 +2,9 @@
 
 **Hackathon:** VoltHacks 2026 (Devpost)
 **Hard deadline:** Sat 5 Sep 2026, 17:00 EDT = **22:00 Lisbon time**
-**Target finish:** Day 22 (Tue 1 Sep) — SUBMIT. Days 2–5 Sep are four buffer days.
+**Target finish:** Day 22 (Tue 1 Sep) — SUBMIT. **Re-set Sat 29 Aug to Thu 3 Sep
+by my decision. Buffer is now two days, not four.**
+**TERMINALS SWAPPED Sat 29 Aug: Terminal 1 = git. Terminal 2 = Streamlit.**
 **Re-planned again:** Wed 26 Aug (Day 12), resolving the 12-blocks-into-11-days
 collision. Signage OCR cut; live sensor mode cut to a post-submission addition.
 **Re-planned:** Wed 19 Aug, after lens calibration overran by two days.
@@ -2212,9 +2214,13 @@ THE TIMELINE IS PER-TRIP, NOT A SHARED CLOCK
 axis would put clip1's 60 s beside clip8's 60 s as though they were the same
 moment. Each trip is normalised to its own start and end from `trip.csv`.
 
-THE PRIVACY CLAIMS WERE CHECKED BEFORE THEY WERE WRITTEN
+THE PRIVACY CLAIMS WERE CHECKED BEFORE THEY WERE WRITTEN — **BUT THE CHECK WAS
+INCOMPLETE. CORRECTED 30 AUG. SEE DAY 20 (PART 3).**
 - Searching `src/*.py` and `dashboard/*.py` for `requests`, `urllib`, `http`,
   `socket` returns **only** the local file picker and a folder on this disk.
+  **This was FALSE when written.** `dashboard/theme.py` line 27 pulled a stylesheet
+  from `fonts.googleapis.com` on every page load. The search that missed it looked
+  for Python import names; the leak was CSS. True as of `ea0f098`.
 - `build_events.py` and `hotspots.py` contain no `cv2`, no `VideoCapture`, no
   `.mp4`. They read JSON and write JSON.
 - A trajectory file holds tracks keyed `"1"`, `"2"`, `"4"` - integers - each a
@@ -2283,23 +2289,24 @@ Valuable — but not worth a broken detector. Cut it before cutting metrics.
 **Quiz score:      /3**
 
 ## Day 20 — ~~Sun 30 Aug~~ **worked Sat 29 Aug, a day early** — Polish + GitHub + README
-- [ ] `.gitignore` verified (no `.venv`, no videos, no `*.pt`) — `git status` first
+- [x] `.gitignore` verified (no `.venv`, no videos, no `*.pt`) — **113 `.mp4`/`.pt`
+      on disk, 0 tracked, 0 unignored.** Counted first, so the pass was not vacuous
 - [x] README: pitch, architecture, definitions, privacy, metrics, limitations
 - [x] **Homography limitation paragraph** (Day 5) — in `docs/limitations.md` §4 and
       the new §4b. `floor_points.jpg` NOT added as evidence.
-- [ ] Architecture diagram
-- [ ] **SDG 11 framing** — accessible transport; wayfinding difficulty falls hardest
-      on elderly, disabled and non-native speakers
-- [ ] **Responsible-AI section:** what is collected, what is discarded, who consented,
+- [x] Architecture diagram — `docs/architecture.svg`, linked from README
+- [x] **SDG 11 framing** — accessible transport; wayfinding difficulty falls hardest
+      on elderly, disabled and non-native speakers. In README, placed high up after
+      "What it is", not buried at the bottom
+- [x] **Responsible-AI section:** what is collected, what is discarded, who consented,
       and where the system is biased (YOLO detection varies with body size, clothing
-      and lighting; a wheelchair user's silhouette is not what it was trained on)
+      and lighting; a wheelchair user's silhouette is not what it was trained on).
+      In README after limitation §8
 - [x] The commit history is the evidence of original work. Do not squash it.
 
-**Status: PARTIAL — 3.5 of 7 boxes. 12 commits, `ff5a7c4` → `f231e2d`, all pushed.**
-Four boxes remain: `.gitignore` verification, architecture diagram, SDG 11 framing,
-Responsible-AI section. **Do not mark this day complete until they are done.**
-**A second session ran late the same night — see "Day 20 (part 2)" below. It did NOT
-close any of the four boxes.**
+**Status: COMPLETE — 7 of 7 boxes.** Partial on 29 Aug at 3.5 of 7; the remaining
+four were closed in the small hours of Sun 30 Aug. See "Day 20 (part 3)" below for
+how each was closed and what was found on the way.
 
 **A DAY-NUMBERING ERROR HAPPENED AND IS RECORDED SO IT DOES NOT RECUR.** This work
 was called "Day 18" for most of the session, by me and by Claude, until PROGRESS.md
@@ -2527,11 +2534,104 @@ form: the interesting task ate the boring one, and the boring one is the scored 
 
 **Quiz score:      /3**
 
+## Day 20 (part 3) — Sun 30 Aug, 00:15–02:00 — The four boxes, closed
+
+**HEAD `2a64a80`, pushed. 5 commits: `6a33409`, `ea0f098`, `47c3153`, `94d5366`,
+`2a64a80`.** Day 20 is COMPLETE. Two false claims were found and fixed on the way,
+neither of which was on any checklist.
+
+### THE HANDOFF NOTE WAS WRONG ABOUT ITSELF
+
+The note from part 2 said in bold: *"PROGRESS.md was NOT updated this session."*
+**False.** The full Day 20 (part 2) entry and rules 68–72 were written and saved.
+They were simply never committed — 118 lines sitting uncommitted in the working tree.
+Committed as `6a33409`.
+
+Had I trusted the note, I would have rewritten an entry that already existed, from
+memory, a day later, worse. **Rule 39 applies to the note that quotes Rule 39.**
+
+**Also: the file uploaded at the start of the session was named `PROGRESS.md` and was
+the handoff note.** It had been downloaded and saved under that name. It opened with
+"WayTrace — Session Handoff", which a tracker never says about itself. Caught by
+reading line one. **New Rule 73.**
+
+### THE `.gitignore` BOX — AND WHY THE FIRST PASS WAS MEANINGLESS
+
+`git ls-files` for videos and weights: empty. `git status -uall`: empty. Both passed.
+**Neither proved anything.** An empty result also happens when there is nothing to
+catch. Counted first: **113 `.mp4`/`.pt` files on disk.** Then checked each against
+`git check-ignore`: **0 unignored.** That is a real pass. **Rule 65, applied before
+the box was ticked rather than after.**
+
+### THE GOOGLE FONTS LEAK — THE BIGGEST FIND OF THE NIGHT
+
+`dashboard/theme.py` line 27:
+`@import url('https://fonts.googleapis.com/css2?family=Archivo...')`
+
+Every time the dashboard opened, the browser fetched a stylesheet from Google,
+carrying this machine's IP address. Meanwhile **three separate places asserted the
+opposite**: the README Responsible-AI section, the dashboard's own deployment panel
+on screen, and rehearsed answer 9. All three were false, and all three were false
+*because they were one claim copied three times*. **New Rule 74.**
+
+**How it was found.** A search for `import requests|import urllib` returned nothing —
+it was looking for Python. A search for `https?://` found it immediately, because
+that string appears no matter which language makes the call. **New Rule 75.**
+
+**The fix, ~20 minutes.** Archivo downloaded to `dashboard/fonts/Archivo.woff2`
+(34,928 bytes, magic bytes `wOF2` verified — a 404 page saves happily under a
+`.woff2` name), embedded into the CSS as base64 (46,572 chars), `@import` deleted.
+**Archivo is a variable font**: all four weights 400/500/600/700 pointed at the same
+file, so `font-weight: 400 700` from one download covers the range. A file path would
+not have worked — Streamlit injects CSS as text and does not serve the project folder,
+so `url('fonts/...')` would 404 silently and fall back with no error anywhere.
+
+`Select-String` for `https?://` across `src/`, `dashboard/` and `.streamlit/` now
+returns **nothing**. The claim is true for the first time.
+
+### THE CONSENT LINE WAS WRONG
+
+The README, written earlier the same night, said *"All three participants consented to
+public release"* and *"my cast was three adults"*. **Line 283 of this file says: Cast:
+me, mum, sister (10).** The Day 21 checklist had already flagged it — *"and my sister
+is 10"* — written days earlier, with the reason attached.
+
+A ten-year-old cannot consent to public release. Her parent can consent on her behalf,
+and did. **That is a different sentence, and it is the one now in the repo.** One wrong
+fact had produced two wrong sentences in the same section; finding the first meant
+searching for everywhere it had been copied. `2a64a80`.
+
+**The decision itself did not change.** Blur stays built, verified, and unapplied.
+Only the wording changed, from a claim that was not true to one that is.
+**New Rule 76.**
+
+### THE OTHER THREE BOXES
+
+- **SDG 11** — README, placed directly after "What it is". Impact is scored early or
+  not at all; eight limitations deep is not where a judge finds it. `47c3153`.
+- **Responsible AI** — README, after limitation §8. Collected / discarded / where it
+  runs / faces / bias / what this must never be. `ea0f098`, corrected in `2a64a80`.
+- **Architecture diagram** — `docs/architecture.svg`, dashboard palette, linked from
+  the README pipeline section. `94d5366`. **The signature element is a yellow dashed
+  line across the middle: above it, video is required; below it, nothing opens a
+  video.** The privacy claim drawn instead of written. Intended to be held on screen
+  during the demo narration.
+
+### PROCESS NOTE — WHAT WORKED
+
+Every claim was tested before it was written down, and two of them failed. The pattern
+that caught both: **ask what would make this false, then run the command that would
+show it.** Not "does it look right".
+
+**Quiz score:      /3**
+
 ## Day 21 — Mon 31 Aug — Demo video
 - [ ] Storyboard the first 10 seconds FIRST
 - [ ] Real system output only — zero fake numbers
-- [ ] **Blur faces in every frame shown.** Proves the privacy claim instead of
-      asserting it, and my sister is 10
+- [x] **Face blur — BUILT AND VERIFIED, DELIBERATELY NOT APPLIED.** Zero uncovered
+      frames measured. Not applied because consent exists: everyone in the footage
+      agreed, and the child's parent agreed on her behalf. The tool stays in the repo
+      as the deployment answer. **This box is closed by work done, not cut.**
 - [ ] Edit, export, upload, **watch it back once end to end**
 
 Structure (2 min, landscape):
@@ -2543,6 +2643,95 @@ Structure (2 min, landscape):
 
 **Status:**
 **Notes:**
+
+## Day 21 (part 1) — Sun 30 Aug — Both carried dashboard items closed
+
+**HEAD `ac2273e`, pushed. 2 commits: `e1c2870`, `ac2273e`.**
+**Neither video box was touched. The storyboard is still the next job.**
+
+### The two commits
+
+| Hash | What | Diff |
+|---|---|---|
+| `e1c2870` | Hotspot panel leads with the U-turn-free hotspot | +28 −6 |
+| `ac2273e` | Page states that no detection runs on load | +13 −0 |
+
+**Hotspot 2 now leads — `e1c2870`.** Carried since Day 20 (see line ~2436, which
+said *"NOT YET CHANGED — carried to Day 21"*). `panels.py` chose the headline with
+`max(spots, key=event_count)`, which is hotspot 1 — five events, three of them
+U-turns. **The map's headline rested on the detector that scored zero.**
+
+The new code filters to hotspots with `uturns == 0` and takes the most hesitations,
+which is hotspot 2. **It is not hard-coded to a hotspot number** — it reads `uturns`
+from `hotspots.json`, so if the data changed the sentence would follow it. On screen:
+*"The strongest holds 4 events - 4 stops and no turn-arounds - sitting 1.15 m from
+the sign and 1.04 m from the junction."*
+
+Hotspot 1 is **not hidden**. A second box names it: *"The largest cluster is not the
+one to trust... the U-turn detector scored zero on the held-out set."* Volunteering
+the weak cluster is stronger than quietly demoting it.
+
+**No percentage was typed into `hotspot_map`.** The module docstring promises every
+number is read from a file, and `hotspot_map` never receives the accuracy figures.
+Writing "77%" there would have bought one sentence and broken that promise.
+
+### THE THIRD FALSE CLAIM — the handoff note was wrong about the Analyse button
+
+**The note and the carried to-do both said: "the Analyse button loads pre-computed
+results, label it honestly." Reading `app.py` showed the opposite. The button is
+genuinely live.** Lines 100–160 run ffmpeg → `undistort_video.py` →
+`trajectories.py` → `analyse_one.py` → ffmpeg, on the uploaded file. That is why it
+warns "roughly N minutes" before you press it — it is about to do the work.
+
+**Had that to-do been executed as written, the dashboard would have carried a false
+statement about its own behaviour into the judged video.** Third false claim in two
+days, after the Google Fonts line and the consent line. Rule 64, again, with the
+twist that this time the stale claim was in the *to-do list*, not in the code.
+
+**What was actually pre-computed was the six panels at the top** — and the page never
+said so. A judge watching a screen recording cannot tell a number read from a file
+from a number just computed. `ac2273e` adds a box at the top stating it, and naming
+the upload section as the only live path.
+
+**The first draft of that box said "Nothing on this page is computed when it loads."
+That was itself false** and was caught before commit: `counts_panel` sums hesitations
+out of `results.json` on every rerun, and the charts redraw. Corrected to **"No
+detection runs when this page loads."** Rule 51's sibling — the sentence that is
+*nearly* true is the dangerous one, because it survives casual checking.
+
+### A STALE PLAN WAS UPLOADED AS `architecture.svg`
+
+A text file of remedial advice was uploaded under the name `architecture.svg`.
+**Rule 73's second and third occurrences on the same day** — the first was the
+handoff note uploaded as `PROGRESS.md` at the start of this session.
+
+The plan proposed 3 h 15 m of "four real fixes". Checked against this tracker, all
+four were already dead:
+
+| Its "fix" | Reality |
+|---|---|
+| Blur faces, 1.5 h | Built and verified on Day 20; deliberately not applied. Rule 72. |
+| Analyse button, 30 m | **False premise.** The button is live. |
+| Mark strong hotspots, 15 m | Done in `db4f935`, improved today in `e1c2870`. |
+| Check no durations, 15 m | Done. Zero matches in `dashboard/`. |
+
+**Executing it would have cost 3 h 15 m and changed nothing, and one item would have
+introduced a lie.** Rule 64 applies to advice as much as to to-do lists.
+
+### CARRIED — rehearsed answer 9 is now incomplete
+
+Answer 9 says *"There is now no HTTP call anywhere"*, which is still true, and says
+nothing about the upload path. **If a judge asks whether anything runs live and the
+answer is "no", `app.py` contradicts it.** One sentence to add: the upload path runs
+the real pipeline, and that is why it quotes a wait in minutes.
+
+**Also unverified, in the new top box:** the phrase *"the detectors were run once"*.
+Whether `results.json` was regenerated after Day 15 was not checked. If it was,
+the phrase should become *"the detectors were run and the results written to disk"*.
+**Check before recording.**
+
+**Status:** Two carried dashboard items closed. Video not started.
+**Quiz score:      /3**
 
 ## Day 22 — Tue 1 Sep — ★ SUBMIT ★
 - [ ] Description, screenshots, tech list, GitHub link, video link
@@ -3025,3 +3214,49 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     something to understand the problem and then declining to use it is a defensible
     engineering outcome, not wasted work. Sibling of the `to_json_safe` non-refactor
     and the `signs.json` non-fix.
+
+73. **A filename is a claim, not evidence.** A handoff note downloaded and saved as
+    `PROGRESS.md` is indistinguishable from the tracker until you open it and read
+    line one. Two files can share a name; only one is the thing you meant.
+
+74. **A claim copied into three places is still one claim, and it decays in all three
+    at once.** "No HTTP call anywhere" was false in the README, in the dashboard's own
+    on-screen panel, and in rehearsed answer 9 — simultaneously, because it was
+    written once and pasted. When a claim is found false, search for every copy.
+    Sibling of Rule 64.
+
+75. **Search for the thing itself, not for the ways you expect it to appear.**
+    `import requests` and `import urllib` found nothing. `https?://` found the leak
+    in one line, because that string is language-independent. Searching for the
+    mechanism you have in mind only finds the mechanism you have in mind.
+
+76. **A decision made from a summary can be undone by a detail the summary dropped.**
+    "All three participants consented" was true-sounding, defensible, and hid that one
+    of the three is ten years old. The detail was in this file, at line 283, the whole
+    time. Rule 39 with consequences attached.
+
+77. **A to-do item can be false about your own code.** The carried task "make the
+    Analyse button say results are pre-computed" was wrong: the button runs the full
+    pipeline live. Executing the to-do as written would have printed a false claim
+    about the system's own behaviour onto the judged screen. **Rule 64 said claims
+    decay; this says the to-do list is made of claims too.** Open the file the item
+    is about before doing the item.
+
+78. **The nearly-true sentence is more dangerous than the false one.** "Nothing on
+    this page is computed when it loads" survives a casual read and fails a careful
+    one — the counts panel sums events on every rerun. "No detection runs when this
+    page loads" is the true version and is no longer to say. A claim that is 90%
+    right gets waved through by the person writing it, which is why it reaches the
+    judge intact.
+
+79. **Do not put a number in a place that cannot read it from a file.** The hotspot
+    panel never receives the accuracy figures, so writing "77%" into it would have
+    been a hand-typed number in a module whose docstring promises there are none.
+    The sentence was written without the digit instead. **A cross-reference costs
+    one clause; a hard-coded number costs the guarantee.**
+
+80. **Volunteer the weak result on the same screen as the strong one.** The map now
+    leads with the hotspot that rests on the detector that works, AND names the
+    largest cluster as the one not to trust. Demoting the weak finding silently
+    would have looked like a choice made for the judge's benefit. Saying it first
+    makes it evidence of method.
