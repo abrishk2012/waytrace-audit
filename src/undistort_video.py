@@ -12,6 +12,14 @@ dist = data["dist"]
 cap = cv2.VideoCapture(IN)
 w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+calib_w, calib_h = (int(v) for v in data["size"])
+if (w, h) != (calib_w, calib_h):
+    sys.exit(
+        "REFUSING: video is %dx%d but calibration_ezviz.npz was made at %dx%d.\n"
+        "A camera matrix is resolution-specific. Undistorting anyway would "
+        "produce a plausible video with wrong metre coordinates."
+        % (w, h, calib_w, calib_h)
+    )
 
 writer = cv2.VideoWriter(OUT, cv2.VideoWriter_fourcc(*"mp4v"), 15.0, (w, h))
 
