@@ -232,19 +232,41 @@ def hotspot_map(results, hotspots_path, signs_path):
     # will not decode it unaided - every number on screen must be explained
     # before they can wonder about it.
     if spots:
-        big = max(spots, key=lambda s: s["event_count"])
         approach = sum(1 for s in spots if s.get("side") == "approach")
         side_txt = (f"All {len(spots)}" if approach == len(spots)
                     else f"{approach} of {len(spots)}")
         strong = [s for s in spots if s["event_count"] >= 4]
+
+        # Lead with the hotspot that rests only on the detector that was
+        # measured to work. The LARGEST cluster is mostly U-turns, and the
+        # U-turn detector scored zero on the held-out set, so leading with
+        # it would hang the map's headline on the one thing that failed.
+        # Chosen from the file, not hard-coded to a hotspot number: if the
+        # data changed, this sentence would follow it.
+        clean = [s for s in spots if s["uturns"] == 0]
+        lead = (max(clean, key=lambda s: s["hesitations"]) if clean
+                else max(spots, key=lambda s: s["event_count"]))
+        biggest = max(spots, key=lambda s: s["event_count"])
+
         st.info(
             f"**People got confused BEFORE they reached the sign.** "
-            f"{side_txt} hotspots are on the approach "
-            f"side. The biggest holds {big['event_count']} events "
-            f"({big['hesitations']} stops, {big['uturns']} turn-arounds) and "
-            f"sits {big['distance_to_sign_m']} m from the sign and "
-            f"{big['distance_to_junction_m']} m from the junction."
+            f"{side_txt} hotspots are on the approach side. The strongest "
+            f"holds {lead['event_count']} events - {lead['hesitations']} "
+            f"stops and no turn-arounds - sitting "
+            f"{lead['distance_to_sign_m']} m from the sign and "
+            f"{lead['distance_to_junction_m']} m from the junction. It rests "
+            f"entirely on the hesitation detector, the one measured on "
+            f"trips it had never seen."
         )
+        if biggest is not lead:
+            st.warning(
+                f"**The largest cluster is not the one to trust.** It holds "
+                f"{biggest['event_count']} events, but {biggest['uturns']} "
+                f"of them are turn-arounds, and the U-turn detector scored "
+                f"zero on the held-out set - see the accuracy panel above. "
+                f"It is drawn because it is in the data. It is not the "
+                f"finding."
+            )
         st.caption(
             f"Not all hotspots are equally solid. {len(strong)} of "
             f"{len(spots)} hold 4 or more events and stayed put when the "
