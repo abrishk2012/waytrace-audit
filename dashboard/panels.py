@@ -16,6 +16,30 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 
 matplotlib.use("Agg")   # no display in a Streamlit process
+# Plot styling, matched to the signage palette in .streamlit/config.toml.
+# Figures are drawn TRANSPARENT so they sit on the page instead of on a
+# white slab - matplotlib defaults to white and CSS cannot reach an image.
+INK = "#F2F4F6"          # type
+DIM = "#8C949E"          # secondary type, axis labels
+GRID = "#2A313A"         # gridlines
+YELLOW = "#FFD400"       # the finding, used sparingly
+
+matplotlib.rcParams.update({
+    "figure.facecolor": "none",
+    "axes.facecolor": "none",
+    "savefig.facecolor": "none",
+    "savefig.transparent": True,
+    "text.color": INK,
+    "axes.labelcolor": DIM,
+    "axes.edgecolor": GRID,
+    "xtick.color": DIM,
+    "ytick.color": DIM,
+    "grid.color": GRID,
+    "legend.facecolor": "#1A1F26",
+    "legend.edgecolor": GRID,
+    "legend.labelcolor": INK,
+    "font.size": 10,
+})
 
 _NUM = re.compile(r"P=(\d+)%\s+R=(\d+)%\s+F1=(\d+)%")
 
@@ -144,7 +168,7 @@ def hotspot_map(results, hotspots_path, signs_path):
         f"measured with a tape measure, not produced by the code."
     )
 
-    fig, ax = plt.subplots(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=(5.2, 3.7), dpi=110)
 
     # hotspot cells, shaded by how many events fell in them
     top = max((s["event_count"] for s in spots), default=1)
@@ -156,7 +180,7 @@ def hotspot_map(results, hotspots_path, signs_path):
             edgecolor="#0B9FC4", linewidth=1.2, zorder=1))
         ax.annotate(str(s["event_count"]), (sx, sy),
                     ha="center", va="center", fontsize=11,
-                    fontweight="bold", color="#05576b", zorder=4)
+                    fontweight="bold", color="#11151A", zorder=4)
 
     # individual events - shape AND colour, never colour alone
     for kind, marker, colour in (("HESITATION", "o", "#1a7f37"),
@@ -191,7 +215,7 @@ def hotspot_map(results, hotspots_path, signs_path):
     ax.legend(loc="upper left", fontsize=8, framealpha=0.9,
               bbox_to_anchor=(1.02, 1.0), borderaxespad=0)
     fig.tight_layout()
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=False)
     plt.close(fig)
 
     st.markdown(
@@ -265,12 +289,12 @@ def timeline_panel(results, trips_csv):
         f"shared clock - each clip has its own timeline."
     )
 
-    fig, ax = plt.subplots(figsize=(7, 0.42 * len(trips) + 1.2))
+    fig, ax = plt.subplots(figsize=(5.2, 0.30 * len(trips) + 1.0), dpi=110)
     for row, trip in enumerate(trips):
         t0, t1 = bounds[trip]
         span = max(t1 - t0, 1e-6)
         ax.add_patch(Rectangle((0, row - 0.22), 1.0, 0.44,
-                               facecolor="#e6e8eb", edgecolor="none",
+                               facecolor="#232A33", edgecolor="none",
                                zorder=1))
         for e in (x for x in events if x["trip"] == trip):
             frac = min(max((e["start_sec"] - t0) / span, 0.0), 1.0)
@@ -289,7 +313,7 @@ def timeline_panel(results, trips_csv):
     for side in ("top", "right", "left"):
         ax.spines[side].set_visible(False)
     fig.tight_layout()
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=False)
     plt.close(fig)
 
     fracs = [(e["start_sec"] - bounds[e["trip"]][0])

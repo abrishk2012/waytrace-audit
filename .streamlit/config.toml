@@ -1,0 +1,28 @@
+# WayTrace dashboard theme.
+#
+# The palette is taken from airport wayfinding signage, because that is what
+# this system audits: dark charcoal panels, white type, and a single yellow
+# reserved for the thing you are being directed towards. Yellow is never used
+# for decoration here - only for the finding.
+#
+# High contrast is not a style choice. Judging is by video, and video
+# compression destroys pale colours on white.
+
+[theme]
+base = "dark"
+
+# Signage yellow. Primary destinations only.
+primaryColor = "#FFD400"
+
+# Panel charcoal - the colour of an overhead sign.
+backgroundColor = "#11151A"
+
+# Raised surface: metric tiles, expanders, the sidebar.
+secondaryBackgroundColor = "#1A1F26"
+
+textColor = "#F2F4F6"
+
+font = "sans serif"
+
+[server]
+headless = true

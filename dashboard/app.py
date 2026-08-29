@@ -7,7 +7,8 @@ import cv2
 import streamlit as st
 from pipeline_ui import STAGES, draw_stages
 from panels import counts_panel, accuracy_panel, parse_per_behaviour, hotspot_map, timeline_panel, privacy_panel
-st.set_page_config(page_title="WayTrace", layout="wide")
+import theme
+theme.inject()
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEB_DIR = os.path.join(ROOT, "data", "web")
