@@ -23,6 +23,43 @@ anonymous `(x, y, time)` paths in real-world metres, and hotspots derived from t
 
 The unit of output is a **location on a floor plan**, not a person.
 
+## Why this matters — SDG 11
+
+**UN Sustainable Development Goal 11.2** asks for *"access to safe, affordable,
+accessible and sustainable transport systems for all, with special attention to the
+needs of those in vulnerable situations — women, children, persons with disabilities
+and older persons."*
+
+Wayfinding is part of accessibility. A station or terminal can be step-free,
+ramped and compliant, and still be unusable if a person cannot work out which way
+to go. Getting lost is not distributed evenly. It falls hardest on:
+
+- **older people**, who are navigating under time pressure with less confidence in
+  backtracking,
+- **disabled people**, for whom a wrong turn is not a minor cost but a long
+  detour, a missed connection, or physical pain,
+- **non-native speakers and non-readers**, who cannot fall back on text when the
+  symbols are ambiguous,
+- **first-time and infrequent travellers**, who have no memory of the building to
+  fall back on.
+
+Everyone else absorbs bad signage invisibly. These groups pay for it.
+
+**The measurement problem this addresses.** Signage is normally audited by asking
+people, or by an expert walking the space and giving an opinion. Both are
+after-the-fact and both are subjective. Neither tells an operator *which* sign, at
+*which* junction, is failing. WayTrace measures the behaviour instead: it reports
+that people slowed, stopped or turned around at a specific point on a floor plan,
+in metres, from footage the building already records.
+
+That turns an opinion into a location an operator can act on — and it does it
+without identifying anybody, which is what makes it deployable in a public space
+at all.
+
+**Scope, stated honestly.** This is validated on 25 walks through one corridor
+junction. It is evidence that the measurement works, not evidence about airports.
+The claim is about the method, not the scale.
+
 ## What it deliberately does not do
 
 - **It does not diagnose signage.** WayTrace reports that people hesitate at a
