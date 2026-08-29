@@ -2282,20 +2282,167 @@ Valuable — but not worth a broken detector. Cut it before cutting metrics.
 **Notes:**
 **Quiz score:      /3**
 
-## Day 20 — Sun 30 Aug — Polish + GitHub + README
+## Day 20 — ~~Sun 30 Aug~~ **worked Sat 29 Aug, a day early** — Polish + GitHub + README
 - [ ] `.gitignore` verified (no `.venv`, no videos, no `*.pt`) — `git status` first
-- [ ] README: pitch, architecture, definitions, privacy, metrics, limitations
-- [ ] **Homography limitation paragraph** (Day 5) + `floor_points.jpg` as evidence
+- [x] README: pitch, architecture, definitions, privacy, metrics, limitations
+- [x] **Homography limitation paragraph** (Day 5) — in `docs/limitations.md` §4 and
+      the new §4b. `floor_points.jpg` NOT added as evidence.
 - [ ] Architecture diagram
 - [ ] **SDG 11 framing** — accessible transport; wayfinding difficulty falls hardest
       on elderly, disabled and non-native speakers
 - [ ] **Responsible-AI section:** what is collected, what is discarded, who consented,
       and where the system is biased (YOLO detection varies with body size, clothing
       and lighting; a wheelchair user's silhouette is not what it was trained on)
-- [ ] The commit history is the evidence of original work. Do not squash it.
+- [x] The commit history is the evidence of original work. Do not squash it.
 
-**Status:**
+**Status: PARTIAL — 3.5 of 7 boxes. 12 commits, `ff5a7c4` → `f231e2d`, all pushed.**
+Four boxes remain: `.gitignore` verification, architecture diagram, SDG 11 framing,
+Responsible-AI section. **Do not mark this day complete until they are done.**
+
+**A DAY-NUMBERING ERROR HAPPENED AND IS RECORDED SO IT DOES NOT RECUR.** This work
+was called "Day 18" for most of the session, by me and by Claude, until PROGRESS.md
+was opened. **Day 18 is the CUT signage MVP. Day 19 is CUT live sensor mode.** The
+polish/README day is Day 20. Claude accepted the label without checking the file —
+the exact failure the rest of the day was spent catching in other files. Rule 64.
+
 **Notes:**
+
+**The day's shape.** Day 20's list was estimated at 3.5–4.5 h and the documentation
+half took about 50 minutes, because most of the work turned out to be already done
+or unnecessary. The hours saved went into an unplanned dashboard theme.
+
+**README — 5 commits.** Was badly stale: five rows reading `not built` for stages
+that were built, no held-out numbers anywhere, and a Repository section listing 2
+source files out of 33.
+- `d0edca8` status table — the four built stages, and **the U-turn 0% stated in the
+  summary row** rather than only in the detail. A number in the summary cannot be
+  called hidden.
+- `c2d5053` new held-out validation section — the full odd/even/all table, the
+  U-turn zero explained, the 25-trip caveat.
+- `78955ed` Repository section — grouped, real, points at `docs/`.
+- `9466aed` a closing code fence that had been swallowed onto the end of a line.
+  Caught because the diff showed **5 deletions where 4 were expected.**
+- `462755d` corrections: threshold provenance, OCR status, two stale limitation
+  claims.
+
+**I WROTE A FALSE CLAIM INTO THE README AND CAUGHT IT ONE COMMIT LATER.** The
+validation section as first committed said *"thresholds written before the detector
+existed"*. That is true of three thresholds and **false of `MAX_GAP` and
+`MIN_SPEED`**, which were tuned on Day 13. It went into the one section whose whole
+job is honesty. Fixed in `462755d`, which now names the 3-blind / 2-tuned split
+explicitly. **The correction is stronger than the original claim would have been.**
+
+**`limitations.md` — 1 commit, `ee7de3b`, +50 lines.**
+- **New §1c, clip 4.** `results.json` covers 12 clips, not 13. Clip 4's three rows
+  are EXCLUDE, logged wasted on shoot night before labelling existed. Its notes
+  record two U-turns — the detector's weakest behaviour. Un-excluding after seeing
+  0% would be choosing data by result. Stated in the file so it is not discovered.
+- **New §4b, lens calibration.** Read from `calibration_ezviz.npz`, not from notes:
+  **RMS 2.17 px, 40 views, 1024×576, fx 651.2 / fy 653.9, principal point
+  (537.7, 278.4), k1 −0.410.** The principal point is **+25.7 px off centre in x**,
+  2.5% of frame width. Through the README's per-row scale, 2.17 px is ~0.9 cm near
+  the camera and ~3.2–3.6 cm far. **No combined error figure is quoted** — the two
+  errors are measured differently and do not add, and inventing a total would be a
+  made-up number.
+- **Summary corrected.** It still said *"the only sign, which lists three
+  destinations"* — the pre-Day-16 wording. `signs.json` says THREE SEPARATE A5
+  SHEETS. The corrected version is also the stronger claim: *three chances to be
+  signposted, three misses.*
+
+**`signs.json` — 1 commit, `da99752`.** `GATE A-C` → `GATES A-C`, matching the sheet
+and every note in the same file. `git grep` confirmed no code reads the string.
+
+**THE HANDOFF'S TO-DO LIST WAS WRONG THREE TIMES OUT OF FOUR.**
+1. *"`signs.json` needs a second entry for the GATE A-C sign."* **WRONG, and acting
+   on it would have broken the output.** The file's own `text_note` explains why one
+   entry is correct: three identical coordinates would make `nearest_sign` arbitrary,
+   and `hotspots.py` uses a strict `dist < best_d`, so sheets two and three could
+   never win and would vanish from the output.
+2. *"`heatmap.py` has a dead `if False:` block."* **Does not exist.** The only
+   `False` matches are `box=False` keyword arguments in live drawing calls.
+3. *"`odd_trips()` doesn't strip CSV fieldnames the way `all_trips()` does."* True
+   but **inert** — proved by asserting `odd_trips() == the odd half of all_trips()`.
+   Both return 13 trips, IDENTICAL. Nothing to fix, and no risk taken to find out.
+4. *"`to_json_safe` lives in `build_events.py`; other scripts convert ad hoc."*
+   True. **Deliberately not refactored** — see below.
+
+**`to_json_safe` was documented, not deduplicated — `a421cf5`.** Both copies are
+`return float(v)`. The obvious tidy is to import one from the other. **Refused:**
+`build_events.py` produced the validated `results.json` on Day 15 and is frozen. A
+duplicated 8-line helper costs nothing; a modified `build_events.py` costs the
+credibility of the only uncontaminated result in the project. A comment in
+`analyse_one.py` now says so, which reads better to a judge than a clean import.
+
+**A RESOLUTION GUARD, FOUND BY CHECKING SOMETHING THAT TURNED OUT FINE — `f966b81`.**
+`calibration_ezviz.npz` is calibrated at **1024×576**. `frame_720.png` exists and
+the raw camera is 1280×720, so the question was whether `undistort_video.py` ever
+applies a 1024-wide K to a 1280-wide frame. **All 13 CFR clips are 1024×576,
+checked with ffprobe. No mismatch. Results are fine.**
+
+But the script had no size check at all. `cv2.undistort` does not validate, so a
+1280×720 file would have produced a plausible video with **every metre coordinate
+wrong by 25%**, printed "Done", and never raised anything. Rule 5 in its purest
+form. The script now refuses, and **the refusal was tested, not just the success**:
+a 1280×720 file was generated with ffmpeg, fed in, refused, and `Get-ChildItem`
+confirmed **no output file was created before the refusal.** Rule 65.
+
+**DASHBOARD THEME — UNPLANNED, 3 commits, ~90 min.** Not on any checklist. Taken on
+because the dashboard is recorded for the video, and re-theming after filming means
+filming twice.
+
+Direction: **the dashboard is built from the visual language of airport signage,
+because signage is what the system audits.** Charcoal `#11151A`, signage yellow
+`#FFD400`, one typeface at strict weights (Archivo — sign systems use one family and
+a hierarchy, not a decorative pairing). High contrast is not taste: judging is by
+video, and compression destroys pale colours on white.
+- `a3887ad` `.streamlit/config.toml` + `dashboard/theme.py` + transparent matplotlib.
+  **Three places share one palette and must stay in step.** Metric tiles became sign
+  panels: soft corners, hairline edge, a yellow rule along the top the way a
+  destination band sits above the text on an overhead sign.
+- `f231e2d` **the sign marker was `#24292f` — invisible on charcoal.** The legend
+  swatch was blank. The sign is the most important object on the map, since the whole
+  finding is *people got confused before reaching the sign*. Now yellow, which is
+  also semantically right: yellow is the destination colour, so the map now says
+  *here is the sign, and here is where people failed to find it* in the palette.
+- `f231e2d` also: the clip selector sits BELOW the charts and changes only which
+  video plays. A judge who changes it and sees the map not move would read that as
+  broken. One caption now says the figures are the finding across all 25 trips.
+  Rule 54 applies to interface behaviour, not just to data.
+
+**Hotspot confidence — `db4f935`.** The map treated all four hotspots alike.
+Real counts, read from `hotspots.json`:
+
+| hotspot | events | hesitations | U-turns | from sign |
+|---|---|---|---|---|
+| 1 | 5 | 2 | **3** | 0.65 m |
+| 2 | 4 | **4** | 0 | 1.15 m |
+| 3 | 3 | 3 | 0 | 1.21 m |
+| 4 | 2 | 0 | **2** | 1.65 m |
+
+**THE BIGGEST HOTSPOT IS MOSTLY U-TURNS, AND THE U-TURN DETECTOR SCORED ZERO.**
+The panel currently leads with hotspot 1 — five events, three of them U-turns. A
+judge who reads the accuracy panel and then the map can connect those two facts, and
+nothing on the page connects them first. **Hotspot 2 is four hesitations and zero
+U-turns: it rests entirely on the detector that scored 77% on trips it had never
+seen.** That is the sentence to lead with. **NOT YET CHANGED — carried to Day 21.**
+
+The confidence threshold was first written as "3 or more events", which would have
+called three hotspots confident while `docs/limitations.md` says *report hotspots 1
+and 2 with confidence; report 3 and 4 as secondary.* **The dashboard would have
+contradicted the limitations file.** Set to 4, and the caption now gives the real
+reason — they grew rather than moved when the second half of the trips was added —
+instead of an arbitrary count.
+
+**No durations are displayed anywhere.** Checked, because `limitations.md` §7 says
+durations must not be quoted. Zero matches in `dashboard/`. A check that finds
+nothing is still worth running: it converts hoping into knowing.
+
+**A FILE WAS CORRUPTED AND RECOVERED.** A message containing two versions of the
+same edit — one retracted mid-message — was pasted as one block, colliding two
+f-strings onto one line and deleting the line between them. `git checkout HEAD --
+dashboard/panels.py` restored it because it had been committed. **Same lesson as
+Rule 63, second occurrence, different cause.** New Rule 67.
+
 **Quiz score:      /3**
 
 ## Day 21 — Mon 31 Aug — Demo video
@@ -2728,3 +2875,35 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     `panels.py`. They came back from `git checkout HEAD -- <path>` because they
     had been committed twenty minutes earlier. **This is what committing after
     every working chunk is for.**
+
+64. **A to-do item is a claim about a file, and claims decay. Open the file
+    before doing the work.** Three of Day 20's four tidy jobs were wrong: the
+    `heatmap.py` dead block did not exist, the `odd_trips()` fieldname difference
+    was provably inert, and **the `signs.json` "missing second sign entry" would
+    have broken `nearest_sign` if acted on** — the file itself explains why one
+    entry is correct. The same failure hit the day number: this was called
+    "Day 18" for hours because nobody opened PROGRESS.md, where Day 18 is the cut
+    signage MVP. **A note about a file is weaker evidence than the file.**
+
+65. **A guard proven not to fire is not proven.** The new resolution check in
+    `undistort_video.py` passed a 1024×576 clip and ran to 2691 frames — which
+    demonstrates nothing about the rejection path. Only feeding it a deliberately
+    wrong 1280×720 file proved it refuses, and only `Get-ChildItem` proved it
+    refuses **before** writing an output file. Test the rejection, not just the
+    acceptance. Rule 49's sibling, and Rule 60's.
+
+66. **`Measure-Object -Line` skips blank lines. It is not `wc -l`.** A predicted
+    diff size was wrong by a factor of two because one count came from PowerShell
+    and the other from `wc`. Comparing two different counters produces a fake
+    discrepancy, and a fake discrepancy wastes the attention a real one needs.
+    Related: **`git grep` and `git show` read the COMMITTED file, not the disk.**
+    Searching for an uncommitted edit with `git grep` returns nothing and looks
+    like the edit failed. Use `Select-String` for the working copy.
+
+67. **Two versions of one edit in a single message become one corrupted paste.**
+    A message that gave an edit, retracted it mid-message, then gave a simpler
+    one was pasted as a single block. Two f-strings collided on one line and the
+    line between them was deleted. **One instruction per message, and never a
+    retraction in the same message as the thing it retracts.** Recovered by
+    `git checkout HEAD -- <path>`. Rule 63's cause was ambiguous wording; this
+    one's cause was ambiguous quantity.
