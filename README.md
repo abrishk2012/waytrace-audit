@@ -223,11 +223,28 @@ and requires rebuilding it from new reference points.
 ## Repository
 
 ```
-src/trajectories.py   detection, tracking, trajectory export
-src/speeds.py         homography application, speed, smoothing, diagnostics
-data/output/          generated trajectories and annotated video
-PROGRESS.md           day-by-day build log, including failed approaches
-```
+src/                  33 scripts. The pipeline proper:
+  undistort_video.py    lens correction
+  track_people.py       YOLO + ByteTrack
+  build_homography.py   pixels -> metres
+  speeds.py             speed, smoothing, diagnostics
+  build_events.py       hesitation + U-turn detection
+  hotspots.py           spatial clustering
+  validate.py           held-out scoring (committed before first run)
+  analyse_one.py        single-video path used by the dashboard
+                      The rest are calibration helpers, one-off
+                      diagnostics and sweep tools, kept because
+                      PROGRESS.md refers to them.
+
+dashboard/app.py      local Streamlit server
+dashboard/panels.py   result panels, all numbers parsed from files
+dashboard/pipeline_ui.py  pipeline stage display
+
+data/output/          trajectories, results.json, hotspots.json
+data/*_day15.txt      validation, per-behaviour and miss analysis
+docs/definitions.md   thresholds, written before the detector existed
+docs/limitations.md   measured constraints
+PROGRESS.md           day-by-day build log, including failed approaches```
 
 `PROGRESS.md` records what was tried and rejected, not only what worked. Several
 entries are corrections of earlier conclusions.
