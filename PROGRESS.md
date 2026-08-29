@@ -2298,6 +2298,8 @@ Valuable — but not worth a broken detector. Cut it before cutting metrics.
 **Status: PARTIAL — 3.5 of 7 boxes. 12 commits, `ff5a7c4` → `f231e2d`, all pushed.**
 Four boxes remain: `.gitignore` verification, architecture diagram, SDG 11 framing,
 Responsible-AI section. **Do not mark this day complete until they are done.**
+**A second session ran late the same night — see "Day 20 (part 2)" below. It did NOT
+close any of the four boxes.**
 
 **A DAY-NUMBERING ERROR HAPPENED AND IS RECORDED SO IT DOES NOT RECUR.** This work
 was called "Day 18" for most of the session, by me and by Claude, until PROGRESS.md
@@ -2442,6 +2444,86 @@ same edit — one retracted mid-message — was pasted as one block, colliding t
 f-strings onto one line and deleting the line between them. `git checkout HEAD --
 dashboard/panels.py` restored it because it had been committed. **Same lesson as
 Rule 63, second occurrence, different cause.** New Rule 67.
+
+**Quiz score:      /3**
+
+## Day 20 (part 2) — Sat 29 Aug, late — Face blur: built, verified, NOT applied
+
+**HEAD `2f5bbd2`, pushed. 3 commits: `073a94c`, `50025db`, `2f5bbd2`.**
+**None of the four outstanding Day 20 boxes were touched. They are all still open.**
+
+**The outcome, and the sentence that goes in the Responsible-AI section:**
+
+> *I built face blurring from the saved track boxes and verified zero uncovered
+> frames. I don't apply it to the demo footage because all three participants
+> consented to public release — but the tool is in the repo, because a real
+> deployment wouldn't have consent from anyone walking through an airport.*
+
+**That is a stronger answer than a blurred video.** It says the deployment case was
+thought about, not just the footage that happened to be to hand. It becomes rehearsed
+answer 12.
+
+**`src/blur_heads.py` — `50025db`, tightened in `2f5bbd2`.** Reads
+`data/output/*_traj.json`, blurs the head slice of each person box, writes
+`data/web/<clip>_traj_blur.mp4`. Two modes: `--check <frame>` writes a PNG with yellow
+rectangles drawn so alignment can be eyeballed before any video is made; `--run`
+processes the clip. **The verification number is `UNCOVERED FRAMES INSIDE A TRACK: 0`**
+— every frame inside any track's lifetime has a rectangle. That is a claim that can be
+said out loud, unlike "I looked at it and it seemed fine".
+
+**THE FIX THAT COST NOTHING BECAUSE OF A DECISION MADE ON DAY 3.**
+`trajectories.py` line 68 saves `(foot_x, foot_y, frame_number, box_w, box_h)` —
+pixels in the undistorted frame, `foot_x` the box CENTRE, `foot_y` the BOTTOM.
+`box_w` and `box_h` had never been used by anything, for two weeks. **Because they
+were saved, blurring was arithmetic on a file. Without them it would have meant
+re-running YOLO over 13 clips at 0.549 s/frame — hours of compute.** Data saved
+cheaply is data you can use later; data thrown away is gone.
+
+**Measured facts, all from the data rather than from estimates:**
+- Detection gaps are mostly **empty corridor**, not missed people. Clip 10: 9 gaps,
+  5 of them longer than 20 frames, and only **5 frames** lost to short gaps. Clip 1: 9.
+- Box shape across all **6626** boxes: median height/width **2.41**, 25th 1.97,
+  75th 2.73, 95th 3.38, max **12.11** (a broken box, not a person).
+- Holes inside a track are filled: **≤8 frames by interpolation**, longer ones by the
+  **union of both endpoint boxes**, because guessing a path across 24 frames is not
+  something that can be verified.
+- JSON `frame_number` starts at **1**; video frame index starts at **0**.
+- **`data/undist/` holds 13 clean undistorted videos with no overlay** — the escape
+  route if the trajectory overlay ever needs redrawing from the JSON.
+
+**KNOWN UNFIXED COSMETIC ISSUE.** When a person raises an arm, the YOLO box grows
+taller **and wider**, so the blur moves up and sideways off the face. Capping the
+height alone did not fix it, because the width grew too. **Not fixed, and it does not
+matter, because the blur is not applied to the demo footage.** If it is ever needed
+for a real deployment, the fix is to stop deriving head position from the box at all.
+
+**FOUR MISTAKES CLAUDE MADE, RECORDED SO THEY DO NOT RECUR:**
+1. **A number was used as evidence without being broken down.** "930 unblurred
+   frames" was computed from one subtraction and used to argue the whole task should
+   be abandoned. One follow-up question collapsed it to ~5 frames of real exposure
+   plus an empty corridor. **Rule 39 pointed at Claude.** New Rule 69.
+2. **A bug was "fixed" using the same measurement that caused it.** The raised-arm
+   problem is caused by box height changing; the proposed fix derived head position
+   from box height. The rectangle came out with its bottom above its top, so
+   `pixelate` skipped it and **the blur vanished entirely**. New Rule 70.
+3. **A placeholder was put inside a command block** and PowerShell tried to run
+   `<PASTE_ONE_FILENAME_HERE>`. Same family as Rule 67.
+4. **Stale output was judged as if it were new.** `--check` writes a PNG; it does not
+   rewrite the video. Two edits were assessed against a video from before them. New
+   Rule 68.
+
+**`git add -A` STAGED ~70 FILES FROM `data/output_BACKUP_day16/`**, a folder that is
+deliberately untracked — all 13 traj JSONs, the whole `calib_check/` directory, every
+diagnostic JPG. Caught by reading `git status` before committing, and unwound with
+`git reset`. **Rule 15, and the reason the workflow says `git status` FIRST.** New
+Rule 71.
+
+**TIME COST, STATED HONESTLY.** The blur was *correct* — zero uncovered frames — on
+its first run. Seven further rounds went on how it looked: pixel size, softness, edge
+fade, width, the ID box being covered, the raised arm. **Over an hour, on a cosmetic
+property of a tool that was then deliberately not used.** Meanwhile the four scored
+Day 20 boxes stayed at zero and the demo video is Monday. **Rule 19 in its purest
+form: the interesting task ate the boring one, and the boring one is the scored one.**
 
 **Quiz score:      /3**
 
@@ -2907,3 +2989,39 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     retraction in the same message as the thing it retracts.** Recovered by
     `git checkout HEAD -- <path>`. Rule 63's cause was ambiguous wording; this
     one's cause was ambiguous quantity.
+
+68. **A "check" mode does not rewrite the output.** `blur_heads.py --check` writes a
+    PNG; only `--run` remakes the video. Two edits in a row were judged against a
+    video made before either of them, and both were reported as "nothing changed".
+    **After editing, re-run the thing that produces the artefact, then look.**
+    Rule 43's sibling: measure, but measure the current thing.
+
+69. **A number is not evidence until it is broken down.** 930 frames "with no
+    detection" in clip 10 looked catastrophic and was used to argue for abandoning
+    face blur entirely. Grouping the gaps by length took one command and showed 5 of
+    9 gaps were longer than 20 frames — an empty corridor between walks — and only
+    **5 frames** were real short-gap exposure. **A single aggregate can be as
+    misleading as an average.** Rule 22's sibling, and the reason to ask "made of
+    what?" before acting on any total.
+
+70. **Do not fix a bug using the same measurement that caused it.** The blur jumped to
+    a raised hand because the YOLO box grows taller when an arm goes up. The proposed
+    fix computed head position as `y2 - box_height * 0.95` — still box height. The
+    rectangle came out inverted, `pixelate` skipped it, and **the blur disappeared
+    from the whole video**. Identify which quantity is unreliable, then use a
+    different one.
+
+71. **`git add -A` is not `git add <file>`.** One `-A` staged ~70 files from
+    `data/output_BACKUP_day16/`, a folder kept untracked on purpose. Nothing was lost
+    because `git status` was read before committing and `git reset` unwound it.
+    **Stage named files; if `-A` is used, read the full status output before the
+    commit, not after.** Reinforces Rule 15.
+
+72. **A tool that is built and not used can still be the point.** Face blur was built,
+    verified at zero uncovered frames, and then deliberately not applied, because all
+    three participants consented to public release. **The honest statement — "the tool
+    is in the repo because a real deployment wouldn't have consent from anyone walking
+    through an airport" — is worth more than the filter would have been.** Building
+    something to understand the problem and then declining to use it is a defensible
+    engineering outcome, not wasted work. Sibling of the `to_json_safe` non-refactor
+    and the `signs.json` non-fix.
