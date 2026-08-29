@@ -127,11 +127,13 @@ def hotspot_map(results, hotspots_path, signs_path):
         sg = json.load(f)
 
     cell = hs.get("cell_m", 0.5)
-        # Rotate 90 degrees clockwise so the plot matches the camera view.
+
+    # Rotate 90 degrees clockwise so the plot matches the camera view.
     # x_m and y_m are swapped at the DRAWING layer only - no stored
     # coordinate is altered, so nothing downstream is affected.
     def rot(x, y):
         return y, x
+
     spots = hs["hotspots"]
     events = results["events"]
 
@@ -208,14 +210,24 @@ def hotspot_map(results, hotspots_path, signs_path):
     if spots:
         big = max(spots, key=lambda s: s["event_count"])
         approach = sum(1 for s in spots if s.get("side") == "approach")
+        side_txt = (f"All {len(spots)}" if approach == len(spots)
+                    else f"{approach} of {len(spots)}")
+        strong = [s for s in spots if s["event_count"] >= 4]
         st.info(
             f"**People got confused BEFORE they reached the sign.** "
-            f"{approach} of the {len(spots)} hotspots are on the approach "
+            f"{side_txt} hotspots are on the approach "
             f"side. The biggest holds {big['event_count']} events "
             f"({big['hesitations']} stops, {big['uturns']} turn-arounds) and "
             f"sits {big['distance_to_sign_m']} m from the sign and "
             f"{big['distance_to_junction_m']} m from the junction."
         )
+        st.caption(
+            f"Not all hotspots are equally solid. {len(strong)} of "
+            f"{len(spots)} hold 4 or more events and stayed put when the "
+            f"other half of the trips was added - they grew rather than "
+            f"moved. The remaining {len(spots) - len(strong)} are secondary."
+        )
+
 
 def timeline_panel(results, trips_csv):
     """One strip per trip that had an event, showing when in that trip.
@@ -293,6 +305,7 @@ def timeline_panel(results, trips_csv):
         f"tracker that lost people at the frame edge would produce fake "
         f"events exactly there, and none appear."
     )
+
 
 def privacy_panel():
     """Privacy and deployment claims. Every sentence is checkable in the repo."""
