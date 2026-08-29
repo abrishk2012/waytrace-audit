@@ -2241,7 +2241,7 @@ STILL OPEN AFTER TODAY
   `odd_trips()` fieldname stripping; `odd_only.py` main block mid-file.
 - README still says `Hotspot clustering | not built`. **Badly stale.**
 
-**Quiz score:      /3**
+**Quiz score: 3/3 (multiple choice - easier than cold recall, Rule 13).**
 
 ## Day 18 — ~~Mon 31 Aug~~ — Signage MVP — **CUT on Day 12, 26 Aug**
 - [ ] User draws a box around a sign; OCR reads the text
