@@ -5,8 +5,7 @@ import subprocess
 import sys
 import cv2
 import streamlit as st
-from panels import counts_panel, accuracy_panel, parse_per_behaviour, hotspot_map, timeline_panel
-
+from panels import counts_panel, accuracy_panel, parse_per_behaviour, hotspot_map, timeline_panel, privacy_panel
 
 st.set_page_config(page_title="WayTrace", layout="wide")
 
@@ -62,6 +61,7 @@ hotspot_map(results,
             os.path.join(ROOT, "data", "output", "hotspots.json"),
             os.path.join(ROOT, "data", "signs.json"))
 timeline_panel(results, os.path.join(ROOT, "data", "trip.csv"))
+privacy_panel()
 st.divider()
 mode = st.radio("Source", ["Recorded clip", "Upload your own"], horizontal=True)
 

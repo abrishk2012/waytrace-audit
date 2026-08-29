@@ -293,3 +293,37 @@ def timeline_panel(results, trips_csv):
         f"tracker that lost people at the frame edge would produce fake "
         f"events exactly there, and none appear."
     )
+
+def privacy_panel():
+    """Privacy and deployment claims. Every sentence is checkable in the repo."""
+    st.subheader("How this is deployed")
+    left, right = st.columns(2)
+
+    with left:
+        st.markdown(
+            "**This is not a cloud service.**\n\n"
+            "What you are looking at is a local server running on the same "
+            "machine that holds the footage. There is no account, no tenant, "
+            "no upload endpoint. Searching the source for `requests`, "
+            "`urllib` or any `http` call returns nothing - the only matches "
+            "for the word *upload* are the local file picker and a folder on "
+            "this disk. Video is read from the drive, processed on this CPU, "
+            "and written back to the drive."
+        )
+
+    with right:
+        st.markdown(
+            "**The video is the input. It is not what gets kept.**\n\n"
+            "There is a person on screen below, and that footage is the raw "
+            "material. What the system stores from it is a file of numbered "
+            "tracks and floor coordinates - no faces, no crops, no names. A "
+            "person becomes an integer and a list of positions. The event "
+            "detector and the hotspot clustering never open a video file at "
+            "all: they read those numbers. **Delete every clip and every "
+            "figure on this page still reproduces.**"
+        )
+
+    st.caption(
+        "Stated plainly because a dashboard makes people assume cloud. This "
+        "is an edge sensor: it runs where the camera is."
+    )
