@@ -2733,6 +2733,107 @@ the phrase should become *"the detectors were run and the results written to dis
 **Status:** Two carried dashboard items closed. Video not started.
 **Quiz score:      /3**
 
+## Day 21 (part 2) — Sun 30 Aug — Dashboard polish; five commits recorded late
+
+**HEAD `b109fab`, pushed. Working tree clean.**
+**No video box was touched. Filming is still the next job.**
+
+### THIS ENTRY HAS A KNOWN GAP — read the provenance column
+
+Five commits went unrecorded until now. **Three were made in the session that
+wrote this entry and are described from their diffs. Two were made in a different
+session and are recorded from their commit messages only** — the reasoning behind
+them was not captured and is not reconstructed here, because inventing it from a
+one-line message is the exact failure this tracker exists to prevent. Rule 39.
+
+| Hash | What | Provenance |
+|---|---|---|
+| `ca2666b` | Demo video storyboard — first 10 s is clip9 trip 14, a held-out trip with two stops nine seconds apart in hotspot 2 | **message only** |
+| `9650752` | Yellow heading rules matching `architecture.svg`, gradient wash, shorter paragraphs, hotspot finding and caveat side by side; **the legend said the sign was a black square when it has been yellow since `f231e2d`** | **message only** |
+| `a4ba95f` | `theme.py` +240 −5 | diff read |
+| `742d9a2` | `panels.py` +121 −70 | diff read |
+| `b109fab` | `app.py` +13 −15 | diff read |
+
+**`ca2666b` and `9650752` should be opened with `git show <hash>` before their
+content is relied on in the video script.**
+
+### `a4ba95f` — alert padding, measured not theorised
+
+`[data-testid="stAlert"]` carried the padding and was clipping its own content.
+Devtools identified `[data-testid="stAlertContainer"]` as the box actually doing
+the clipping. Padding moved to the inner container; the outer one keeps the corner
+and the colour. **One box owns the inset, one owns the shape.** Rule 43.
+
+Also: bordered containers matched to the metric tiles, and a hairline drawn on the
+left edge of every column except the first, so a rule appears *between* columns and
+not at the outer edges — and only inside a bordered container, so plain columns
+elsewhere keep no rule.
+
+### `742d9a2` — `claim()` and `help_hover()`, and the line between them
+
+Two helpers, and the distinction between them is the point:
+
+**`claim(head, lead, more)`** — heading and lead line always visible, detail on
+hover. **`help_hover(title, paragraphs)`** — trigger visible, all content on hover.
+
+**A recording cannot hover. Anything behind hover does not exist as far as a judge
+is concerned.** So the split is not cosmetic: `help_hover` carries *navigational*
+text only — legends, key-to-the-symbols, how-to-read notes — which can afford to
+vanish because the narration says the same thing aloud. **Evidence never goes
+through it.** The U-turn zero, the hotspot caveat and the privacy claims stay on
+the page at rest, permanently. Both docstrings say so, so a later session cannot
+route a finding through the wrong helper by accident.
+
+### `b109fab` — the no-detection notice moved down, AND THIS IS A JUDGEMENT CALL
+
+The "No detection runs when this page loads" box moved from the top of the page to
+sit beside the two sources it describes. The claim is unchanged; only the position
+moved, and the wording adjusted from *"the figures below"* to *"the figures above"*.
+
+**The reasoning is sound — a box should sit beside what it is about. The risk is
+real and should not be filed away as settled.** This is the single highest-risk
+claim on the page: if a judge believes the dashboard computed those numbers live
+and later discovers it did not, that reads as faking a demo, which is worse than
+any weak number. At the top it was unmissable. Five sections down, a judge may
+have formed the impression before reaching it.
+
+**The narration must now carry that point early, because the page no longer does.**
+If the video cannot fit it early, move the box back.
+
+### A FOURTH FALSE CLAIM — this one written by Claude, in this session
+
+Claude produced a `fix_plan.md` earlier in the session listing *"the Analyse button
+loads pre-computed results — label it honestly"* as **the highest-risk item in the
+whole project**, and estimated 30 minutes for it.
+
+**It is false, and Day 21 (part 1) had already established that it was false.**
+The button is genuinely live. Claude carried the claim forward from the handoff
+note without opening `app.py`, in a session where three other handoff claims had
+already been disproved by opening files.
+
+**Executing it would have put a false disclaimer on working code** — the same
+class of damage as the `signs.json` "second entry" item. Rule 64, fourth
+occurrence, and the first where Claude generated the false claim rather than
+inheriting it.
+
+**`fix_plan.md` and `HANDOFF_day20.md` from this session are both VOID.** The
+handoff states HEAD as `f231e2d` and lists face blur, SDG 11, the Responsible-AI
+section and the architecture diagram as not started, when all four were complete.
+It was written from a picture of the repository that was thirteen commits old.
+**Use `HANDOFF_day21.md`.**
+
+### Carried into Day 21 proper
+
+- **Rehearsed answer 9 is still incomplete** — it says nothing about the upload
+  path running live. One sentence to add.
+- **"The detectors were run once" is still unverified.** Whether `results.json`
+  was regenerated after Day 15 was not checked. **Check before recording.**
+- **`ca2666b` and `9650752` need their diffs read** before the video script leans
+  on them.
+
+**Status:** Dashboard polish committed and recorded. Video not started.
+**Quiz score:      /3**
+
 ## Day 22 — Tue 1 Sep — ★ SUBMIT ★
 - [ ] Description, screenshots, tech list, GitHub link, video link
 - [ ] **Click every link yourself, logged out**
