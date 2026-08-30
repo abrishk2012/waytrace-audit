@@ -2939,6 +2939,148 @@ and see where it lands.**
 remains.** Video not started.
 **Quiz score:      /3**
 
+## Day 21 (part 4) — Sun 30 Aug — Filming started; a false positive found under the opening shot
+
+**HEAD `b349dfa`, committed. 1 commit. Working tree clean apart from
+`data/output_BACKUP_day16/`, which stays untracked.**
+**Filming began. Three opening shots exist. The storyboard's opening line does
+not survive contact with `misses_day15.txt`.**
+
+### Carried item 2 — CLOSED
+
+`data/output/results.json` is dated **28 Aug 23:43**, after Day 15 (27 Aug), and
+opens `"scope": "ALL_TRIPS"`. `app.py` line 15 points at exactly that path. The
+on-screen sentence **"the detectors were run"** is therefore true. Verified by
+reading the file, not by reading a summary of it.
+
+The check took four wrong turns first: two invented filenames (`data/results.json`,
+`data/events.json` — neither exists), one `git show HEAD -- <path>` that could only
+ever have printed nothing, and one grep for `data/` that the code does not contain
+because it builds paths with `os.path.join`. **Every one of those returned an empty
+result that looked like an answer.**
+
+### The commit
+
+| Hash | What | Diff |
+|---|---|---|
+| `b349dfa` | `annotate_events.py` accepts a results file as `argv[2]` | +3 −2 |
+
+`annotate_events.py` hard-coded `data/output/results_odd.json` at line 14, and its
+docstring claimed it read that file **"only"**. Clip9's trip 14 is **even**, so the
+script would have run without error and written a video with **zero events on it**.
+
+Both the code line and the docstring were changed — Rule 74, the claim that lives
+in two places. The default is unchanged, and **the old call path was tested first**:
+`python src\annotate_events.py clip1` still prints `6 events in clip1`, 2691 frames.
+Then `clip9 data/output/results.json` printed `3 events in clip9`, 832 frames,
+matching the source video's frame count exactly.
+
+### ★ THE OPENING SHOT RESTS ON A FALSE POSITIVE ★
+
+`results.json` holds **three** events for clip9 trip 14, not the two the storyboard
+describes:
+
+| Time | Type | Duration | Scored as |
+|---|---|---|---|
+| 15.6 s | HESITATION | 2.1 s | **FALSE POSITIVE** |
+| 21.1 s | UTURN 173.1° | 1.0 s | **FALSE POSITIVE** |
+| 24.7 s | HESITATION | 10.6 s | **hit** — labelled 24.0 s |
+
+`docs/storyboard.md` opens on **15.6 s and 24.7 s** and says *"Twice, nine seconds
+apart, in the same square metre."* **One of those two stops is scored against me
+in my own held-out validation.** `data/misses_day15.txt` line 13 says so in plain
+text, and the repo is public.
+
+The two hesitations are at `x` 0.738/0.711 and `y` 0.516/0.534 — **3 cm apart**,
+not a square metre. The spatial claim was far too weak; the evidential claim was
+too strong. Both were wrong in opposite directions.
+
+### There is no clean held-out trip
+
+| Clip | Trip | Hits | Misses | FPs |
+|---|---|---|---|---|
+| clip1 | 4 | 0 | 1 | 0 |
+| clip8 | 12 | 2 | 1 | 1 |
+| clip9 | 14 | 1 | 0 | 2 |
+| clip11 | 18 | 1 | 1 | 0 |
+| clip12 | 20 | 1 | 1 | 0 |
+| **EVEN totals** | | **5** | **4** | **3** |
+
+**Not one held-out trip is free of a miss or a false positive.** Switching clips to
+find a clean one is not an available move. That is not bad luck — **that is what an
+F1 of 59% looks like from the inside.** The number was known since Day 15; this is
+the first time it had a face.
+
+### LABEL NOISE — a real finding, and the reason the score does not move
+
+Watching `clip9_undist.mp4` frame by frame, **the stop at 15.6 s is visibly there,
+and so is the turn at 21.1 s.** The detector was right. The Day 11 label sheet has
+nothing at either time.
+
+**The labels were not changed, and must never be.** Adding a label at 15.6 s would
+raise held-out precision from 62% to roughly 71% — by editing the answer sheet
+after reading the answers. `misses_day15.txt` is committed; the edit would appear
+in `git log` dated 30 Aug, three days after scoring, visible to anyone.
+
+**This was proposed during the session, argued for, and refused three times,
+including once as "we won't tell anyone".** It is written down here because the
+value of a pre-registered rule is only ever proven at the moment someone wants to
+break it, and the Day 21 handoff had that rule ready in capitals. It held.
+
+What the finding actually licenses: **62% precision is a floor, not a ceiling.**
+Some of the three held-out false positives may be human misses rather than machine
+errors. That is a statement about measurement, not an excuse — and it can be said
+out loud without naming anyone's mistake:
+
+> "The scoring counted this one as a false positive. There is no label at
+> 15.6 seconds. I found it afterwards, and by then I had already seen the
+> detector's answer — so I left the score alone."
+
+**The narration line is not yet written into `docs/storyboard.md`. Carried.**
+
+### Three opening shots cut — no screen recorder used
+
+Two screen recordings were made first (Windows Game Bar, `Win+Alt+R`). Both are
+**obsolete**: the first carried ~9 s of paused player chrome, the second showed the
+window's minimise/close buttons and came out 2256 px wide instead of 2160.
+
+The better method was to cut the source files directly:
+
+```
+ffmpeg -i <src>.mp4 -ss 11 -to 32 -c:v libx264 -crf 18 -pix_fmt yuv420p <shot>.mp4
+```
+
+| File | Content | Frames |
+|---|---|---|
+| `data/web/shot1_opening.mp4` | undistorted, no overlay | 315 |
+| `data/web/shot2_tracking.mp4` | boxes, ID `#1`, orange trail | 315 |
+| `data/web/shot3_events.mp4` | event markers, labelled by type | 315 |
+
+All three are **h264, 1024×576, exactly 21.000 s**, same window, so they cut
+together frame for frame. `data/web/` is gitignored, so none of them is committed.
+
+**`data/undist/` and `data/output/` are `mpeg4` and render as a black box in Edge.**
+`data/web/` is the h264 folder. `clip9_undist.mp4` was created this session because
+no undistorted h264 existed — the storyboard's opening needs undistorted footage,
+and opening on a lens-warped frame would undercut the calibration the whole system
+rests on.
+
+### CARRIED FORWARD
+
+- **The 15.6 s narration line** — agreed in principle, not yet written into
+  `docs/storyboard.md`.
+- **Rehearsed answer 9** needs the sentence that the upload path really is live.
+- **`ca2666b` and `9650752` still need their diffs read** before the video script
+  leans on them.
+- **Day 21 checklist box "Storyboard the first 10 seconds FIRST" is still
+  unticked** although `docs/storyboard.md` is committed — confirmed with
+  `git ls-tree HEAD docs/`. A tracker error, not a work error.
+- Delete the two obsolete Game Bar recordings from Videos → Captures.
+
+**Status:** Three opening shots cut and verified. Opening narration invalidated and
+diagnosed. Held-out score untouched at 59%.
+**Quiz score:      /3**
+
 ## Day 22 — Tue 1 Sep — ★ SUBMIT ★
 - [ ] Description, screenshots, tech list, GitHub link, video link
 - [ ] **Click every link yourself, logged out**
@@ -3495,3 +3637,29 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     green dot means can go there — the narration says it aloud anyway. **A measured
     result cannot.** The rule is written into `help_hover`'s docstring so a future
     session cannot route a number through it by accident.
+
+86. **A ground truth label is only worth something if it was written before you saw
+    the prediction.** Watching the footage showed a real stop at 15.6 s that the
+    Day 11 sheet does not contain. Adding it now would lift held-out precision from
+    62% to about 71% — by marking my own homework with the answers in front of me.
+    **Once you have seen the output, your labelling is contaminated and the number
+    it produces is worthless, including to you.** The rule was written into the
+    Day 21 handoff in capitals before it was needed. That is the only reason it held.
+
+87. **A script can run perfectly, print a happy line, and read the wrong file.**
+    `annotate_events.py` hard-coded `results_odd.json`. Run on clip9 — an EVEN clip
+    — it would have exited 0 and written a video with no events on it. **Nothing
+    would have looked broken.** Check what a script reads before trusting what it
+    writes.
+
+88. **Do not screen-record a file you can cut.** Two Game Bar takes were spent
+    fighting player controls that wake on every keypress. One `ffmpeg -ss/-to` gave
+    a perfect 1024×576 clip with no chrome, no controls and no lost quality.
+    **When the source is already a file, the recorder is the wrong tool.**
+
+89. **An empty result only means something if the command could have caught the
+    thing.** Four checks in a row returned nothing this session — two invented
+    filenames, a `git show HEAD -- <path>` against a commit that never touched the
+    path, and a grep for a literal `data/` in code that uses `os.path.join`. **Each
+    silence looked like an answer.** Before believing an empty result, say out loud
+    what a non-empty one would have looked like.
