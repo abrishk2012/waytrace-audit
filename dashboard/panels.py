@@ -44,6 +44,54 @@ matplotlib.rcParams.update({
 _NUM = re.compile(r"P=(\d+)%\s+R=(\d+)%\s+F1=(\d+)%")
 
 
+def claim(head, lead, more):
+    """A finding: heading and one lead line visible, detail on hover.
+
+    The heading and the lead are NEVER hidden. Judging is by video and a
+    recording cannot hover, so whatever is in `more` does not exist as far
+    as the judges are concerned. `lead` carries the part that has to
+    survive that - the measured result, or the admission of failure.
+    `more` carries the supporting detail.
+    """
+    extra = "".join(f"<p>{p}</p>" for p in more)
+    st.markdown(
+        "<div class='wt-claim' tabindex='0'>"
+        f"<span class='wt-claim-head'>{head}</span>"
+        f"<span class='wt-claim-lead'>{lead}</span>"
+        f"<span class='wt-claim-more'>{extra}</span>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def help_hover(title, paragraphs):
+    """A 'How to read this?' trigger that reveals an explanation on hover.
+
+    ONLY for navigational text - legends, key-to-the-symbols, how-to-read
+    notes. NEVER for evidence.
+
+    Judging is by video and a recording cannot hover, so anything put in
+    here is invisible to the judges. A legend can afford that, because the
+    narration says the same thing out loud. A measured result cannot: the
+    U-turn zero, the hotspot caveat and the privacy claims stay on the page
+    at rest, permanently, and are not routed through this function.
+    """
+    body = "".join(f"<p>{p}</p>" for p in paragraphs)
+    st.markdown(
+        "<span class='wt-help' tabindex='0'>"
+        "<span class='wt-help-trigger'>"
+        "<svg viewBox='0 0 24 24' width='13' height='13' fill='none' "
+        "stroke='currentColor' stroke-width='2' stroke-linecap='round'>"
+        "<circle cx='12' cy='12' r='9'/>"
+        "<path d='M9.6 9.2a2.5 2.5 0 1 1 3.2 2.5c-.6.2-.8.7-.8 1.3v.4'/>"
+        "<path d='M12 17h.01'/></svg>"
+        "How to read this?</span>"
+        f"<span class='wt-help-panel'><strong>{title}</strong>{body}</span>"
+        "</span>",
+        unsafe_allow_html=True,
+    )
+
+
 def load_results(path):
     with open(path) as f:
         return json.load(f)
@@ -220,16 +268,16 @@ def hotspot_map(results, hotspots_path, signs_path):
     st.pyplot(fig, use_container_width=False)
     plt.close(fig)
 
-    st.markdown(
-        f"**How to read this.** You are looking down at the corridor floor "
-        f"from above.\n\n"
-        f"**Yellow square** — the sign. **Grey crosses** — the three "
-        f"doorways. Both measured with a tape measure.\n\n"
-        f"**Green dot** — one place someone stopped. **Orange triangle** — "
-        f"one place someone turned around.\n\n"
-        f"**Blue squares** — where those events bunched together. The number "
-        f"inside is how many landed there; darker means more."
-    )
+    help_hover("The map", [
+        "You are looking down at the corridor floor from above.",
+        "<b>Yellow square</b> — the sign. <b>Grey crosses</b> — the three "
+        "doorways. Both measured with a tape measure, not produced by the "
+        "code.",
+        "<b>Green dot</b> — one place someone stopped. "
+        "<b>Orange triangle</b> — one place someone turned around.",
+        "<b>Blue squares</b> — where those events bunched together. The "
+        "number inside is how many landed there; darker means more.",
+    ])
 
     # Say the finding in words. A judge has a few seconds with this plot and
     # will not decode it unaided - every number on screen must be explained
@@ -251,34 +299,27 @@ def hotspot_map(results, hotspots_path, signs_path):
                 else max(spots, key=lambda s: s["event_count"]))
         biggest = max(spots, key=lambda s: s["event_count"])
 
-        # Side by side, so the strong finding and the weak cluster are read
-        # together. Stacked, a judge can scroll past the second one; beside
-        # each other, the caveat is part of the finding.
-        fcol, wcol = st.columns(2)
+        claim(
+            "People got confused BEFORE they reached the sign.",
+            f"The strongest hotspot holds {lead['event_count']} events — "
+            f"{lead['hesitations']} stops, no turn-arounds.",
+            [f"{side_txt} hotspots are on the approach side.",
+             f"It sits {lead['distance_to_sign_m']} m from the sign and "
+             f"{lead['distance_to_junction_m']} m from the junction.",
+             "It rests entirely on the hesitation detector — the one "
+             "measured on trips it had never seen."],
+        )
 
-        with fcol:
-            st.info(
-                f"**People got confused BEFORE they reached the sign.**\n\n"
-                f"{side_txt} hotspots are on the approach side.\n\n"
-                f"The strongest holds {lead['event_count']} events — "
-                f"{lead['hesitations']} stops, no turn-arounds. It sits "
-                f"{lead['distance_to_sign_m']} m from the sign and "
-                f"{lead['distance_to_junction_m']} m from the junction.\n\n"
-                f"It rests entirely on the hesitation detector — the one "
-                f"measured on trips it had never seen."
+        if biggest is not lead:
+            claim(
+                "The largest cluster is not the one to trust.",
+                f"{biggest['uturns']} of its {biggest['event_count']} events "
+                f"are turn-arounds, and the U-turn detector scored zero on "
+                f"the held-out set.",
+                ["See the accuracy panel above for the measured figures.",
+                 "It is drawn because it is in the data. It is not the "
+                 "finding."],
             )
-
-        with wcol:
-            if biggest is not lead:
-                st.warning(
-                    f"**The largest cluster is not the one to trust.**\n\n"
-                    f"It holds {biggest['event_count']} events, but "
-                    f"{biggest['uturns']} of them are turn-arounds — and "
-                    f"the U-turn detector scored zero on the held-out set. "
-                    f"See the accuracy panel above.\n\n"
-                    f"It is drawn because it is in the data. It is not the "
-                    f"finding."
-                )
 
         st.caption(
             f"Not all hotspots are equally solid. {len(strong)} of "
@@ -355,49 +396,59 @@ def timeline_panel(results, trips_csv):
              / max(bounds[e["trip"]][1] - bounds[e["trip"]][0], 1e-6)
              for e in events]
     lo, hi = min(fracs), max(fracs)
+    help_hover("The timeline", [
+        "Each grey bar is one person's walk down the corridor — start on "
+        "the left, end on the right.",
+        "<b>Green dot</b> — a stop. <b>Orange triangle</b> — a turn-around.",
+    ])
+
+    # NOT hidden. This is a result, not a legend: it is the evidence that
+    # the tracker is not inventing events at the frame edge.
     st.markdown(
-        f"**How to read this.** Each grey bar is one person's walk down the "
-        f"corridor — start on the left, end on the right.\n\n"
-        f"**Green dot** — a stop. **Orange triangle** — a turn-around.\n\n"
         f"**Nothing fires in the first or last tenth of any walk.** The "
         f"earliest event is at {lo:.0%} of its walk, the latest at "
-        f"{hi:.0%}.\n\n"
-        f"That matters: a tracker that lost people at the frame edge would "
+        f"{hi:.0%}. A tracker that lost people at the frame edge would "
         f"produce fake events exactly there. None appear."
     )
 
 
 def privacy_panel():
-    """Privacy and deployment claims. Every sentence is checkable in the repo."""
+    """Privacy and deployment claims. Every sentence is checkable in the repo.
+
+    Nothing here is behind a hover. These are the claims a judge is most
+    likely to doubt, and a claim that only appears on hover does not appear
+    in a video at all.
+    """
     st.subheader("How this is deployed")
-    left, right = st.columns(2)
 
-    with left:
-        st.markdown(
-            "**This is not a cloud service.**\n\n"
-            "What you are looking at is a local server, running on the same "
-            "machine that holds the footage.\n\n"
-            "No account. No tenant. No upload endpoint.\n\n"
-            "Searching the source for `requests`, `urllib` or any `http` "
-            "call returns nothing. The only matches for the word *upload* "
-            "are the local file picker and a folder on this disk.\n\n"
-            "Video is read from the drive, processed on this CPU, and "
-            "written back to the drive."
-        )
+    # ONE bordered container with the columns inside it, not two boxes side
+    # by side. Two separate boxes each size to their own text and end at
+    # different lines, and no amount of flex stretching on Streamlit's
+    # generated wrapper divs reliably fixes that. One box cannot mismatch
+    # itself.
+    with st.container(border=True):
+        left, right = st.columns(2, gap="large")
 
-    with right:
-        st.markdown(
-            "**The video is the input. It is not what gets kept.**\n\n"
-            "There is a person on screen below, and that footage is the raw "
-            "material.\n\n"
-            "What the system stores from it is a file of numbered tracks and "
-            "floor coordinates. No faces, no crops, no names. A person "
-            "becomes an integer and a list of positions.\n\n"
-            "The event detector and the hotspot clustering never open a "
-            "video file at all — they read those numbers.\n\n"
-            "**Delete every clip and every figure on this page still "
-            "reproduces.**"
-        )
+        with left:
+            st.markdown(
+                "**This is not a cloud service.**\n\n"
+                "A local server, running on the same machine that holds the "
+                "footage. No account. No tenant. No upload endpoint.\n\n"
+                "Searching the source for `requests`, `urllib` or any `http` "
+                "call returns nothing. The only matches for the word "
+                "*upload* are the local file picker and a folder on this "
+                "disk."
+            )
+
+        with right:
+            st.markdown(
+                "**The video is the input. It is not what gets kept.**\n\n"
+                "What the system stores is a file of numbered tracks and "
+                "floor coordinates. No faces, no crops, no names. A person "
+                "becomes an integer and a list of positions.\n\n"
+                "**Delete every clip and every figure on this page still "
+                "reproduces.**"
+            )
 
     st.caption(
         "Stated plainly because a dashboard makes people assume cloud. This "
