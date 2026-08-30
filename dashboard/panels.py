@@ -124,12 +124,14 @@ def accuracy_panel(per_behaviour):
 
     if even.get("UTURN", (None,))[0] == 0:
         st.error(
-            "**The U-turn detector scored zero on the held-out set.** Two "
-            "U-turns were in it and both were missed, for the same reason "
+            "**The U-turn detector scored zero on the held-out set.**\n\n"
+            "Two U-turns were in it. Both were missed, for the same reason "
             "each time: the speed gate ignores a turn made by someone who "
-            "has already stopped. Both failures were predicted in writing on "
-            "Day 14, before the held-out trips were opened. The combined 59% "
-            "hides this completely, which is why the split is shown."
+            "has already stopped.\n\n"
+            "Both failures were predicted in writing on Day 14, before the "
+            "held-out trips were opened.\n\n"
+            "The combined 59% hides this completely. That is why the split "
+            "is shown."
         )
 
 
@@ -219,13 +221,14 @@ def hotspot_map(results, hotspots_path, signs_path):
     plt.close(fig)
 
     st.markdown(
-        f"**How to read this:** you are looking down at the corridor floor "
-        f"from above. The **black square** is the sign. The **grey crosses** "
-        f"are the three doorways. Each **green dot** is one place someone "
-        f"stopped; each **orange triangle** is one place someone turned "
-        f"around. The **blue squares** are the spots where those events "
-        f"bunched together — the number inside is how many events landed "
-        f"there, and darker means more."
+        f"**How to read this.** You are looking down at the corridor floor "
+        f"from above.\n\n"
+        f"**Yellow square** — the sign. **Grey crosses** — the three "
+        f"doorways. Both measured with a tape measure.\n\n"
+        f"**Green dot** — one place someone stopped. **Orange triangle** — "
+        f"one place someone turned around.\n\n"
+        f"**Blue squares** — where those events bunched together. The number "
+        f"inside is how many landed there; darker means more."
     )
 
     # Say the finding in words. A judge has a few seconds with this plot and
@@ -248,29 +251,39 @@ def hotspot_map(results, hotspots_path, signs_path):
                 else max(spots, key=lambda s: s["event_count"]))
         biggest = max(spots, key=lambda s: s["event_count"])
 
-        st.info(
-            f"**People got confused BEFORE they reached the sign.** "
-            f"{side_txt} hotspots are on the approach side. The strongest "
-            f"holds {lead['event_count']} events - {lead['hesitations']} "
-            f"stops and no turn-arounds - sitting "
-            f"{lead['distance_to_sign_m']} m from the sign and "
-            f"{lead['distance_to_junction_m']} m from the junction. It rests "
-            f"entirely on the hesitation detector, the one measured on "
-            f"trips it had never seen."
-        )
-        if biggest is not lead:
-            st.warning(
-                f"**The largest cluster is not the one to trust.** It holds "
-                f"{biggest['event_count']} events, but {biggest['uturns']} "
-                f"of them are turn-arounds, and the U-turn detector scored "
-                f"zero on the held-out set - see the accuracy panel above. "
-                f"It is drawn because it is in the data. It is not the "
-                f"finding."
+        # Side by side, so the strong finding and the weak cluster are read
+        # together. Stacked, a judge can scroll past the second one; beside
+        # each other, the caveat is part of the finding.
+        fcol, wcol = st.columns(2)
+
+        with fcol:
+            st.info(
+                f"**People got confused BEFORE they reached the sign.**\n\n"
+                f"{side_txt} hotspots are on the approach side.\n\n"
+                f"The strongest holds {lead['event_count']} events — "
+                f"{lead['hesitations']} stops, no turn-arounds. It sits "
+                f"{lead['distance_to_sign_m']} m from the sign and "
+                f"{lead['distance_to_junction_m']} m from the junction.\n\n"
+                f"It rests entirely on the hesitation detector — the one "
+                f"measured on trips it had never seen."
             )
+
+        with wcol:
+            if biggest is not lead:
+                st.warning(
+                    f"**The largest cluster is not the one to trust.**\n\n"
+                    f"It holds {biggest['event_count']} events, but "
+                    f"{biggest['uturns']} of them are turn-arounds — and "
+                    f"the U-turn detector scored zero on the held-out set. "
+                    f"See the accuracy panel above.\n\n"
+                    f"It is drawn because it is in the data. It is not the "
+                    f"finding."
+                )
+
         st.caption(
             f"Not all hotspots are equally solid. {len(strong)} of "
             f"{len(spots)} hold 4 or more events and stayed put when the "
-            f"other half of the trips was added - they grew rather than "
+            f"other half of the trips was added — they grew rather than "
             f"moved. The remaining {len(spots) - len(strong)} are secondary."
         )
 
@@ -343,13 +356,14 @@ def timeline_panel(results, trips_csv):
              for e in events]
     lo, hi = min(fracs), max(fracs)
     st.markdown(
-        f"**How to read this:** each grey bar is one person's walk down the "
-        f"corridor, start on the left, end on the right. A **green dot** is a "
-        f"stop; an **orange triangle** is a turn-around. Nothing fires in the "
-        f"first or last tenth of any walk - the earliest event is at "
-        f"{lo:.0%} of its walk and the latest at {hi:.0%}. That matters: a "
-        f"tracker that lost people at the frame edge would produce fake "
-        f"events exactly there, and none appear."
+        f"**How to read this.** Each grey bar is one person's walk down the "
+        f"corridor — start on the left, end on the right.\n\n"
+        f"**Green dot** — a stop. **Orange triangle** — a turn-around.\n\n"
+        f"**Nothing fires in the first or last tenth of any walk.** The "
+        f"earliest event is at {lo:.0%} of its walk, the latest at "
+        f"{hi:.0%}.\n\n"
+        f"That matters: a tracker that lost people at the frame edge would "
+        f"produce fake events exactly there. None appear."
     )
 
 
@@ -361,25 +375,28 @@ def privacy_panel():
     with left:
         st.markdown(
             "**This is not a cloud service.**\n\n"
-            "What you are looking at is a local server running on the same "
-            "machine that holds the footage. There is no account, no tenant, "
-            "no upload endpoint. Searching the source for `requests`, "
-            "`urllib` or any `http` call returns nothing - the only matches "
-            "for the word *upload* are the local file picker and a folder on "
-            "this disk. Video is read from the drive, processed on this CPU, "
-            "and written back to the drive."
+            "What you are looking at is a local server, running on the same "
+            "machine that holds the footage.\n\n"
+            "No account. No tenant. No upload endpoint.\n\n"
+            "Searching the source for `requests`, `urllib` or any `http` "
+            "call returns nothing. The only matches for the word *upload* "
+            "are the local file picker and a folder on this disk.\n\n"
+            "Video is read from the drive, processed on this CPU, and "
+            "written back to the drive."
         )
 
     with right:
         st.markdown(
             "**The video is the input. It is not what gets kept.**\n\n"
             "There is a person on screen below, and that footage is the raw "
-            "material. What the system stores from it is a file of numbered "
-            "tracks and floor coordinates - no faces, no crops, no names. A "
-            "person becomes an integer and a list of positions. The event "
-            "detector and the hotspot clustering never open a video file at "
-            "all: they read those numbers. **Delete every clip and every "
-            "figure on this page still reproduces.**"
+            "material.\n\n"
+            "What the system stores from it is a file of numbered tracks and "
+            "floor coordinates. No faces, no crops, no names. A person "
+            "becomes an integer and a list of positions.\n\n"
+            "The event detector and the hotspot clustering never open a "
+            "video file at all — they read those numbers.\n\n"
+            "**Delete every clip and every figure on this page still "
+            "reproduces.**"
         )
 
     st.caption(

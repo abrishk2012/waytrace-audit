@@ -25,13 +25,15 @@ st.caption("Wayfinding friction detection from ceiling-mounted CCTV")
 # from a file from a number that was just computed. Neither can a judge
 # sitting in front of the page. So the page says which it is.
 st.info(
-    "**No detection runs when this page loads.** Every figure below "
-    "is read from a file committed to the repository - the detectors were "
-    "run once, the results were written to disk, and this page displays "
-    "them. Reloading cannot change a number here, and no video is opened to "
-    "produce one. The **Upload your own** section at the bottom is the only "
-    "live path: it runs the real pipeline on the file you give it, which is "
-    "why it warns you how many minutes that will take before you start."
+    "**No detection runs when this page loads.**\n\n"
+    "Every figure below is read from a file committed to the repository. "
+    "The detectors were run, the results were written to disk, and this "
+    "page displays them.\n\n"
+    "Reloading cannot change a number here. No video is opened to produce "
+    "one.\n\n"
+    "**The Upload your own section at the bottom is the only live path.** "
+    "It runs the real pipeline on the file you give it - which is why it "
+    "warns you how many minutes that will take before you start."
 )
 
 with open(RESULTS) as f:
