@@ -421,34 +421,34 @@ def privacy_panel():
     """
     st.subheader("How this is deployed")
 
-    # ONE bordered container with the columns inside it, not two boxes side
-    # by side. Two separate boxes each size to their own text and end at
-    # different lines, and no amount of flex stretching on Streamlit's
-    # generated wrapper divs reliably fixes that. One box cannot mismatch
-    # itself.
-    with st.container(border=True):
-        left, right = st.columns(2, gap="large")
-
-        with left:
-            st.markdown(
-                "**This is not a cloud service.**\n\n"
-                "A local server, running on the same machine that holds the "
-                "footage. No account. No tenant. No upload endpoint.\n\n"
-                "Searching the source for `requests`, `urllib` or any `http` "
-                "call returns nothing. The only matches for the word "
-                "*upload* are the local file picker and a folder on this "
-                "disk."
-            )
-
-        with right:
-            st.markdown(
-                "**The video is the input. It is not what gets kept.**\n\n"
-                "What the system stores is a file of numbered tracks and "
-                "floor coordinates. No faces, no crops, no names. A person "
-                "becomes an integer and a list of positions.\n\n"
-                "**Delete every clip and every figure on this page still "
-                "reproduces.**"
-            )
+    # Rendered as one HTML block rather than st.columns inside a bordered
+    # container. Streamlit's column markup gives no hook unique to THIS
+    # pair - a rule broad enough to reach them also lands on the metric
+    # tiles and the accuracy columns, drawing stray lines beside "U-turn
+    # F1". Owning the markup means owning the divider, and one element
+    # cannot end at two different heights.
+    st.markdown(
+        "<div class='wt-split'>"
+        "<div class='wt-split-col'>"
+        "<p><b>This is not a cloud service.</b></p>"
+        "<p>A local server, running on the same machine that holds the "
+        "footage. No account. No tenant. No upload endpoint.</p>"
+        "<p>Searching the source for <code>requests</code>, "
+        "<code>urllib</code> or any <code>http</code> call returns nothing. "
+        "The only matches for the word <i>upload</i> are the local file "
+        "picker and a folder on this disk.</p>"
+        "</div>"
+        "<div class='wt-split-col'>"
+        "<p><b>The video is the input. It is not what gets kept.</b></p>"
+        "<p>What the system stores is a file of numbered tracks and floor "
+        "coordinates. No faces, no crops, no names. A person becomes an "
+        "integer and a list of positions.</p>"
+        "<p><b>Delete every clip and every figure on this page still "
+        "reproduces.</b></p>"
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
     st.caption(
         "Stated plainly because a dashboard makes people assume cloud. This "

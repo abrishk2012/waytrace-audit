@@ -72,6 +72,7 @@ h2, h3 {{
     letter-spacing: -0.01em;
     position: relative;
     padding-left: 20px !important;
+    margin-bottom: 0.85rem !important;
 }}
 
 h2::before, h3::before {{
@@ -156,19 +157,63 @@ h2::before, h3::before {{
     padding: 18px 20px !important;
 }}
 
-/* A hairline between columns that share one box. Drawn on the left edge
-   of every column except the first, so it appears between them and not
-   at the outer edges. Only inside a bordered container - plain columns
-   elsewhere on the page keep no rule. */
-[data-testid="stVerticalBlockBorderWrapper"]
-[data-testid="stColumn"]:not(:first-child) {{
-    border-left: 1px solid {EDGE};
-    padding-left: 26px;
+/* ---- Split panel -----------------------------------------------------
+   Two columns of prose inside one box, with a rule between them. One
+   element, so the two halves cannot end at different heights, and the
+   divider is a border I own rather than a guess at Streamlit's markup. */
+.wt-split {{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: {RAISED};
+    border: 1px solid {EDGE};
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 6px;
 }}
 
-/* Space between a section heading and whatever it introduces. */
-h2, h3 {{
-    margin-bottom: 0.85rem !important;
+.wt-split-col {{
+    padding: 0 26px;
+}}
+
+.wt-split-col:first-child {{
+    padding-left: 0;
+}}
+
+/* The rule: same 1px and same colour as the box border, so it reads as
+   part of the same frame. On the left edge of every column after the
+   first, so it never lands on an outer edge. */
+.wt-split-col:not(:first-child) {{
+    border-left: 1px solid {EDGE};
+}}
+
+.wt-split-col p {{
+    font-size: 0.93rem;
+    line-height: 1.65;
+    color: {INK};
+    margin: 0 0 12px 0;
+    max-width: none;
+}}
+
+.wt-split-col p:last-child {{
+    margin-bottom: 0;
+}}
+
+.wt-split-col code {{
+    background: rgba(255, 255, 255, 0.07);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.86em;
+}}
+
+@media (max-width: 820px) {{
+    .wt-split {{ grid-template-columns: 1fr; }}
+    .wt-split-col {{ padding: 0; }}
+    .wt-split-col:not(:first-child) {{
+        border-left: none;
+        border-top: 1px solid {EDGE};
+        margin-top: 16px;
+        padding-top: 16px;
+    }}
 }}
 
 /* ---- Scroll reveal ---------------------------------------------------
@@ -272,10 +317,6 @@ h2, h3 {{
     margin-bottom: 0;
 }}
 
-@media (prefers-reduced-motion: reduce) {{
-    .wt-claim, .wt-claim-more {{ transition: none; }}
-}}
-
 /* ---- Hover explanation ----------------------------------------------
    A "How to read this?" trigger for LEGENDS ONLY. Anything in here is
    invisible in a screen recording, so no measured result is ever put
@@ -369,6 +410,8 @@ h2, h3 {{
 }}
 
 @media (prefers-reduced-motion: reduce) {{
+    .wt-claim,
+    .wt-claim-more,
     .wt-help-panel {{ transition: none; }}
 }}
 
