@@ -4,11 +4,13 @@
 
 | Time | On screen | Sound |
 |---|---|---|
-| 0-4 s | clip9 from 14 s. Person walks in, then STOPS. Nothing else. | silence |
+| 0-4 s | clip9 from 11 s. Person walks in, then STOPS. Nothing else. | silence |
 | 4-7 s | They move on. Cut to 24 s - they STOP AGAIN, same place. | silence |
 | 7-10 s | Freeze on the second stop. One line of text. | narration starts |
 
-Line at 7 s: **"Twice, nine seconds apart, in the same square metre."**
+Line at 7 s: **"Twice, nine seconds apart, three centimetres apart."**
+Line at 10 s: **"My own scoring counted the first one as a false positive."**
+Line at 14 s: **"There is no label at 15.6 seconds. I found the stop afterwards, and by then I had already seen the detector's answer — so I left the score alone."**
 
 No logo. No title card. No music. The silence is the point.
 
