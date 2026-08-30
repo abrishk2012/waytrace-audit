@@ -21,21 +21,6 @@ os.makedirs(SCRATCH, exist_ok=True)
 st.title("WayTrace")
 st.caption("Wayfinding friction detection from ceiling-mounted CCTV")
 
-# A judge watching a screen recording cannot tell a number that was read
-# from a file from a number that was just computed. Neither can a judge
-# sitting in front of the page. So the page says which it is.
-st.info(
-    "**No detection runs when this page loads.**\n\n"
-    "Every figure below is read from a file committed to the repository. "
-    "The detectors were run, the results were written to disk, and this "
-    "page displays them.\n\n"
-    "Reloading cannot change a number here. No video is opened to produce "
-    "one.\n\n"
-    "**The Upload your own section at the bottom is the only live path.** "
-    "It runs the real pipeline on the file you give it - which is why it "
-    "warns you how many minutes that will take before you start."
-)
-
 with open(RESULTS) as f:
     results = json.load(f)
 
@@ -80,6 +65,19 @@ timeline_panel(results, os.path.join(ROOT, "data", "trip.csv"))
 privacy_panel()
 st.divider()
 st.subheader("Watch a clip")
+
+# Moved down from the top of the page: this box describes the two sources
+# below it, so it sits beside what it is about. The claim is unchanged.
+st.info(
+    "**No detection ran to produce the figures above.**\n\n"
+    "Every one of them is read from a file committed to the repository. "
+    "The detectors were run, the results were written to disk, and the page "
+    "displays them. Reloading cannot change a number up there.\n\n"
+    "**Upload your own, below, is the only live path on this page.** It "
+    "runs the real pipeline on the file you give it - which is why it warns "
+    "you how many minutes that will take before you start."
+)
+
 st.caption(
     "The figures above are the finding across all 25 trips and do not change "
     "with this selector - a single clip holds two or three events, which "
