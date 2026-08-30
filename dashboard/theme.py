@@ -119,22 +119,257 @@ h2::before, h3::before {{
    one panel that says the detector failed should not look like the rest. */
 [data-testid="stAlert"] {{
     border-radius: 10px;
-    padding: 18px 22px 24px 22px;
+    padding: 0;
 }}
 
-/* No width cap inside an alert. The alert's own container decides the
-   width - when two sit side by side in columns, that is half the page. */
+/* The inset lives on the INNER container, measured in devtools as the one
+   that was clipping its own content. One box owns the padding; the outer
+   one owns the corner and the colour. */
+[data-testid="stAlertContainer"] {{
+    height: auto !important;
+    align-items: flex-start !important;
+    padding: 20px 22px !important;
+}}
+
 [data-testid="stAlert"] [data-testid="stMarkdownContainer"] p {{
     max-width: none;
 }}
 
 [data-testid="stAlert"] p {{
     line-height: 1.65;
-    margin-bottom: 0.55rem;
+    margin-bottom: 0.6rem;
 }}
 
-[data-testid="stAlert"] p:last-child {{
+[data-testid="stAlert"] [data-testid="stMarkdownContainer"] > *:first-child {{
+    margin-top: 0 !important;
+}}
+
+[data-testid="stAlert"] [data-testid="stMarkdownContainer"] > *:last-child {{
+    margin-bottom: 0 !important;
+}}
+
+/* Bordered containers, matched to the metric tiles. */
+[data-testid="stVerticalBlockBorderWrapper"] {{
+    background: {RAISED};
+    border: 1px solid {EDGE};
+    border-radius: 12px;
+    padding: 18px 20px !important;
+}}
+
+/* A hairline between columns that share one box. Drawn on the left edge
+   of every column except the first, so it appears between them and not
+   at the outer edges. Only inside a bordered container - plain columns
+   elsewhere on the page keep no rule. */
+[data-testid="stVerticalBlockBorderWrapper"]
+[data-testid="stColumn"]:not(:first-child) {{
+    border-left: 1px solid {EDGE};
+    padding-left: 26px;
+}}
+
+/* Space between a section heading and whatever it introduces. */
+h2, h3 {{
+    margin-bottom: 0.85rem !important;
+}}
+
+/* ---- Scroll reveal ---------------------------------------------------
+   Streamlit strips <script>, so there is no IntersectionObserver here.
+   This is CSS scroll-driven animation instead - the browser ties the
+   animation to the element's position in the viewport with no JS at all.
+
+   Wrapped in @supports on purpose. Where it is not supported the rules
+   never apply, so nothing starts at opacity 0 and nothing can end up
+   permanently invisible. A decoration must not be able to hide content. */
+@supports (animation-timeline: view()) {{
+    @media (prefers-reduced-motion: no-preference) {{
+        [data-testid="stMetric"],
+        [data-testid="stVerticalBlockBorderWrapper"],
+        .wt-claim,
+        [data-testid="stAlert"] {{
+            animation: wt-reveal linear both;
+            animation-timeline: view();
+            animation-range: entry 5% cover 22%;
+        }}
+    }}
+}}
+
+@keyframes wt-reveal {{
+    from {{ opacity: 0; transform: translateY(14px); }}
+    to   {{ opacity: 1; transform: translateY(0); }}
+}}
+
+/* ---- Claim block -----------------------------------------------------
+   A finding. The heading is set at 60% of the section-heading size, with
+   a thin yellow rule - the same device as the h2, one step quieter, so
+   the hierarchy reads as section > claim > detail.
+   The heading and the lead line are always visible. Only the supporting
+   detail is behind the hover. */
+.wt-claim {{
+    position: relative;
+    display: block;
+    padding: 14px 18px 15px 18px;
+    margin: 0 0 12px 0;
+    background: {RAISED};
+    border: 1px solid {EDGE};
+    border-left: 2px solid {YELLOW};
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 150ms ease, background 150ms ease;
+}}
+
+.wt-claim:hover,
+.wt-claim:focus-visible {{
+    border-color: {EDGE};
+    border-left-color: {YELLOW};
+    background: #1E242C;
+}}
+
+.wt-claim-head {{
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: {INK};
+    margin-bottom: 6px;
+}}
+
+.wt-claim-lead {{
+    display: block;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: {INK};
+}}
+
+.wt-claim-more {{
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 200ms ease, opacity 160ms ease,
+                margin-top 200ms ease;
+    margin-top: 0;
+}}
+
+.wt-claim:hover .wt-claim-more,
+.wt-claim:focus-visible .wt-claim-more {{
+    grid-template-rows: 1fr;
+    opacity: 1;
+    margin-top: 10px;
+}}
+
+.wt-claim-more > * {{
+    overflow: hidden;
+    min-height: 0;
+}}
+
+.wt-claim-more p {{
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: {DIM};
+    margin: 0 0 6px 0;
+    max-width: none;
+}}
+
+.wt-claim-more p:last-child {{
     margin-bottom: 0;
+}}
+
+@media (prefers-reduced-motion: reduce) {{
+    .wt-claim, .wt-claim-more {{ transition: none; }}
+}}
+
+/* ---- Hover explanation ----------------------------------------------
+   A "How to read this?" trigger for LEGENDS ONLY. Anything in here is
+   invisible in a screen recording, so no measured result is ever put
+   behind it. Opens on hover and on keyboard focus, so it is reachable
+   without a mouse. */
+.wt-help {{
+    position: relative;
+    display: inline-block;
+    outline: none;
+    z-index: 30;
+}}
+
+.wt-help-trigger {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: {DIM};
+    border: 1px solid {EDGE};
+    border-radius: 999px;
+    padding: 5px 12px 5px 10px;
+    cursor: help;
+    transition: color 140ms ease, border-color 140ms ease;
+}}
+
+.wt-help:hover .wt-help-trigger,
+.wt-help:focus-visible .wt-help-trigger {{
+    color: {YELLOW};
+    border-color: {YELLOW};
+}}
+
+.wt-help-panel {{
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 420px;
+    max-width: 78vw;
+    background: {RAISED};
+    border: 1px solid {EDGE};
+    border-left: 3px solid {YELLOW};
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity 130ms ease, transform 130ms ease,
+                visibility 0s linear 130ms;
+    z-index: 40;
+}}
+
+.wt-help:hover .wt-help-panel,
+.wt-help:focus-visible .wt-help-panel {{
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition: opacity 130ms ease, transform 130ms ease,
+                visibility 0s linear 0s;
+}}
+
+.wt-help-panel strong {{
+    display: block;
+    font-size: 0.9rem;
+    color: {INK};
+    margin-bottom: 8px;
+}}
+
+.wt-help-panel p {{
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: {DIM};
+    margin: 0 0 7px 0;
+    max-width: none;
+}}
+
+.wt-help-panel p:last-child {{
+    margin-bottom: 0;
+}}
+
+.wt-help-panel b {{
+    color: {INK};
+}}
+
+/* A floating panel is clipped by any ancestor that hides its overflow.
+   Streamlit wraps every element in several. */
+[data-testid="stVerticalBlock"],
+[data-testid="stElementContainer"] {{
+    overflow: visible !important;
+}}
+
+@media (prefers-reduced-motion: reduce) {{
+    .wt-help-panel {{ transition: none; }}
 }}
 
 /* Captions sit under a figure and explain it. Give them room to breathe
