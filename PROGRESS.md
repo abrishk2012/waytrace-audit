@@ -2834,6 +2834,111 @@ It was written from a picture of the repository that was thirteen commits old.
 **Status:** Dashboard polish committed and recorded. Video not started.
 **Quiz score:      /3**
 
+## Day 21 (part 3) — Sun 30 Aug — Hover system, split panel, seven-check review
+
+**HEAD `ad29dd9`, pushed. Working tree clean apart from
+`data/output_BACKUP_day16/`, which stays untracked.**
+**No video box was touched. Filming is still the next job, and is now the only
+job left that is not Devpost.**
+
+### What was built
+
+A **hover explanation system**, scoped deliberately. The request was to hide the
+long paragraphs behind "How to read this?" triggers throughout the page. That was
+**refused for evidence and accepted for legends**, on one ground: judging is by
+video, and a screen recording cannot hover. Anything behind a hover does not
+exist as far as the judges are concerned.
+
+| Behind a hover | Visible at rest, permanently |
+|---|---|
+| Map legend — what the squares and dots mean | U-turn zero (`st.error`) |
+| Timeline legend — what a bar and a dot mean | Hesitation and combined F1 |
+| Hotspot distances, approach-side count | **"The strongest hotspot holds 4 events — 4 stops, no turn-arounds"** |
+| "It is not the finding" | **"3 of its 5 events are turn-arounds, and the U-turn detector scored zero"** |
+| — | Frame-edge result (13%–83%) |
+| — | Both deployment claims |
+
+**Two new render helpers in `panels.py`:**
+- `help_hover(title, paragraphs)` — a pill trigger; legends only. Its docstring
+  states the rule so a future session cannot route a result through it by accident.
+- `claim(head, lead, more)` — heading and one lead line always visible, supporting
+  detail on hover. **`lead` carries the measured result or the admission of
+  failure.** That split is the whole design.
+
+Claim headings are set at **1.05rem — 60% of the section heading** — with a **2px**
+yellow rule against the h2's 5px. Section > claim > detail, in one device at three
+weights.
+
+### The deployment panel is now hand-written HTML
+
+Four attempts to put a 1px divider between two Streamlit columns failed. The
+selector `[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stColumn"]`
+matched nothing; devtools showed a `stLayoutWrapper` in the chain that was not in
+any assumption. **Dropping the ancestor made it match too much** — it would have
+drawn stray rules beside the metric tiles and beside "U-turn F1".
+
+Replaced with an owned `.wt-split` grid. One element, two columns, a 1px `#2A313A`
+border between them — same weight and colour as the box frame. **Two halves of one
+element cannot end at different heights**, which also closed the equal-height
+problem that six CSS attempts had not.
+
+**[LEARN THIS] When four selector attempts fail against a framework's generated
+markup, the fix is to stop selecting and start owning the markup.**
+
+### Scroll reveal, and why it is wrapped in `@supports`
+
+Elements fade and rise as they enter the viewport, using CSS
+`animation-timeline: view()`. **Streamlit strips `<script>`, so there is no
+IntersectionObserver available** — this is the only way to do it without JS.
+
+Wrapped in `@supports (animation-timeline: view())` **on purpose**: where it is
+unsupported the rules never apply, so nothing starts at `opacity: 0` and nothing
+can end up permanently invisible. **A decoration must not be able to hide content.**
+
+**Filming note:** scroll-driven animation is tied to scroll position, so scrolling
+fast on camera catches elements mid-fade. **Scroll slowly and pause after each
+scroll.**
+
+### THE REVIEW FOUND THREE THINGS
+
+A seven-check pass was run over `app.py`, `panels.py` and `theme.py`:
+
+1. `h2, h3` was **declared twice**. Merged.
+2. `@media (prefers-reduced-motion: reduce)` was **declared twice**. Merged.
+3. The divider selector was **dead** — see above.
+
+The remaining checks — brace balance, unrendered `{PLACEHOLDER}` leftovers,
+balanced `<div>`s in emitted HTML, and every CSS class the code emits actually
+having a rule — all passed. **The duplicate-selector check is the one that earned
+its place; nothing else would have caught either duplication.**
+
+### TWO PROCESS FAILURES WORTH MORE THAN THE CSS
+
+**1. A download saved as `theme (1).py` and the app crashed with
+`ModuleNotFoundError: No module named 'theme'`.** The real `theme.py` was gone.
+Recovered with `Move-Item`. **A file that is downloaded is not a file that is
+saved. Verify the name, not the download.** Rule 73, third form.
+
+**2. A file was edited from a version that was not on disk.** Two rounds were spent
+on a divider that "would not appear", because the working copy still held the old
+4px rounded pseudo-element while the fix existed only in the chat. It was found by
+asking to paste the actual block. **A red 6px test border was used as the probe —
+it landed on the claim blocks, proving the wrong rule was being edited.**
+**[LEARN THIS] When a change has no effect, change something impossible to miss
+and see where it lands.**
+
+### CARRIED FORWARD — unchanged from part 2
+
+- **Rehearsed answer 9** needs the sentence that the upload path really is live.
+- **"the detectors were run"** in the on-screen box: whether `results.json` was
+  regenerated after Day 15 is still unverified. **Check before recording.**
+- **`ca2666b` and `9650752` still need their diffs read** before the video script
+  leans on them.
+
+**Status:** Hover system, split panel and scroll reveal committed. **No code work
+remains.** Video not started.
+**Quiz score:      /3**
+
 ## Day 22 — Tue 1 Sep — ★ SUBMIT ★
 - [ ] Description, screenshots, tech list, GitHub link, video link
 - [ ] **Click every link yourself, logged out**
@@ -3361,3 +3466,32 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     largest cluster as the one not to trust. Demoting the weak finding silently
     would have looked like a choice made for the judge's benefit. Saying it first
     makes it evidence of method.
+
+81. **A decoration must not be able to hide content.** The scroll reveal starts
+    elements at `opacity: 0`, so in any browser without `animation-timeline` the
+    whole page would have stayed invisible. Wrapping it in `@supports` means the
+    rule never applies where it cannot finish. **Any effect that begins by hiding
+    something needs a guarantee that it will un-hide it.**
+
+82. **When four selectors fail against generated markup, stop selecting and own
+    the markup.** The column divider could not be targeted: with the ancestor it
+    matched nothing, without it, it hit the metric tiles. Emitting one `.wt-split`
+    grid ended it in a single attempt — and made the equal-height bug impossible,
+    because two halves of one element cannot end at different heights.
+
+83. **When a change has no effect, change something impossible to miss.** Two
+    rounds were lost to a divider that "would not appear". A 6px red border landed
+    on the claim blocks instead, which proved the wrong rule was being edited and
+    that the working copy was not the version the fix was written against.
+    **A loud probe is faster than another careful guess.**
+
+84. **A file that is downloaded is not a file that is saved.** `theme (1).py` sat
+    beside a deleted `theme.py` and the app died with `ModuleNotFoundError`. The
+    edits were all correct. **Verify the filename on disk after every download —
+    Rule 73 applied to your own saves, not just to uploads.**
+
+85. **Hide the legend, never the evidence.** Judging is by video and a recording
+    cannot hover, so anything behind a hover is invisible to the judges. What a
+    green dot means can go there — the narration says it aloud anyway. **A measured
+    result cannot.** The rule is written into `help_hover`'s docstring so a future
+    session cannot route a number through it by accident.
