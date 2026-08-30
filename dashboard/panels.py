@@ -171,7 +171,7 @@ def accuracy_panel(per_behaviour):
             col.caption(f"precision {p}%  ·  recall {r}%")
 
     if even.get("UTURN", (None,))[0] == 0:
-        st.error(
+        st.warning(
             "**The U-turn detector scored zero on the held-out set.**\n\n"
             "Two U-turns were in it. Both were missed, for the same reason "
             "each time: the speed gate ignores a turn made by someone who "
