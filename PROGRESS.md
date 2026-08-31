@@ -3081,6 +3081,205 @@ rests on.
 diagnosed. Held-out score untouched at 59%.
 **Quiz score:      /3**
 
+## Day 22 — Sun 30 Aug night into Mon 31 Aug — Script, voice, and the finding that was in a spreadsheet
+
+**HEAD `71aa595`, pushed. 5 commits this session** (on top of `b349dfa` and
+`31af264`, recorded in Day 21 part 4). Working tree clean apart from
+`data/output_BACKUP_day16/` and `data/audio/`, both untracked.
+
+**All footage is shot. All 13 voice takes are recorded. Nothing is edited yet.**
+
+### Commits
+
+| Hash | What |
+|---|---|
+| `93a1361` | storyboard: open at 11 s not 14 s, three centimetres not a square metre, false positive stated out loud |
+| `1225ba6` | `docs/script.md` created — full narration, timed 1:47 |
+| `028acb2` | `st.error` → `st.warning` on the U-turn box |
+| `33f9b37` | script: dashboard section rewritten, page order corrected, retimed 1:52 |
+| `71aa595` | script: matched to the 13 recorded takes, `vo04`/`vo05` split, optional `vo13` |
+
+### The storyboard was wrong in two places
+
+**"clip9 from 14 s" was wrong.** At 14 s the person is already standing at the
+decision point — there is no walk-in, and a stop only reads as a stop if movement
+comes first. They enter at **12 s**. All three shots are cut from **11 s**, giving
+one second of empty corridor before entry.
+
+**"in the same square metre" was far too weak.** The two hesitations are at
+`x` 0.738 / 0.711 and `y` 0.516 / 0.534 — **3 cm apart**, not a square metre. The
+spatial claim understated the evidence while the evidential claim overstated it.
+
+### Three shots cut — `ffmpeg`, not a screen recorder
+
+```
+ffmpeg -i <src>.mp4 -ss 11 -to 32 -c:v libx264 -crf 18 -pix_fmt yuv420p <shot>.mp4
+```
+
+| File | Content | Frames | Duration |
+|---|---|---|---|
+| `data/web/shot1_opening.mp4` | undistorted, no overlay | 315 | 21.000 s |
+| `data/web/shot2_tracking.mp4` | boxes, ID `#1`, orange trail | 315 | 21.000 s |
+| `data/web/shot3_events.mp4` | event markers, labelled by type | 315 | 21.000 s |
+
+All h264, 1024×576, identical window — they cut together frame for frame.
+`data/web/` is gitignored, so none is committed.
+**Dashboard footage runs 48 s. Architecture footage recorded separately.**
+
+### The dashboard box is amber, not red
+
+`panels.py` line 174 was `st.error`. Red means *broken*; nothing is broken — a
+result was measured. Changed to `st.warning`. **Content unchanged, still visible at
+rest, still not behind a hover.** The five `st.error` calls in `app.py` are genuine
+failures and stay red.
+
+**Moving it behind a hover was proposed and refused.** Rule 85 is written into
+`help_hover`'s docstring for exactly that moment. Judging is video-only; a hover
+does not exist to a judge.
+
+### The narration script — `docs/script.md`
+
+**Thesis, chosen from ten candidates:** *"Buildings get audited for fire safety and
+accessibility. Nobody audits whether people can find their way."* It is the only
+candidate that explains why the project should exist rather than what it does, and
+it earns the name — WayTrace *audits* wayfinding.
+
+**★ THE NARRATION MUST NOT READ THE SCREEN ALOUD. ★**
+The dashboard already prints *"People got confused BEFORE they reached the sign"*
+and *"The largest cluster is not the one to trust."* A draft spoke almost those
+exact words while they were on screen. **The screen states the finding; the voice
+says what the screen cannot** — that the split predates the detector, what a green
+dot means, why a cluster is drawn but not trusted. Narrating the legends aloud also
+solves the hover problem: a recording cannot hover.
+
+**Page order was wrong in the first draft.** The real order is
+counts → **accuracy** → **map** → timeline → deployment → upload. The accuracy
+panel comes BEFORE the map, so the script is one continuous downward scroll.
+
+**`architecture.svg` is ONE image, not two.** It cannot be zoomed into halves — the
+text clips. Show it whole, held still, and let `vo04`/`vo05` walk the yellow line.
+`vo03` was shortened to one line because `vo04` now carries the pipeline and the
+diagram prints the tool names.
+
+**"A metre short of the sign" — NOT "right under the sign."** A draft said the
+strong hotspot sits under the sign. It is **1.15 m** away. The hotspot *closest* to
+the sign (0.65 m) is the weak one, 3 of whose 5 events are U-turns. Caught by
+reading `hotspots.json` against the map image.
+
+### The 13 voice takes
+
+Recorded on phone, transferred by Gmail (**not WhatsApp — it recompresses audio**),
+saved to `data/audio/`. Phone filenames contained the **home street address** and
+were renamed in one command.
+
+| File | s | File | s |
+|---|---|---|---|
+| `vo01_opening` | 4.1 | `vo08_falsepositive` | 12.8 |
+| `vo02_thesis` | 6.8 | `vo09_heldout` | 15.1 |
+| `vo03_camera` | 3.6 | `vo10_uturnzero` | 6.8 |
+| `vo04_stage1` | 8.4 | `vo11_map` | 13.9 |
+| `vo05_stage2` | 11.9 | `vo12_cluster` | 5.6 |
+| `vo06_definition` | 8.5 | `vo13_closing` | 7.0 |
+| `vo07_watch` | 2.1 | **TOTAL** | **106.6** |
+
+**Plus 13 s of scripted silence = 119.6 s against a hard 120 s limit.**
+`vo13_closing` is marked OPTIONAL and is dropped first if the export runs over.
+**Recording in 13 separate takes was Fatima's idea** — a stumble costs one take,
+not the whole read.
+
+**Timings, measured aloud, never estimated:** 1:58 → 1:47 → 1:52 → 106.6 s measured
+by `ffprobe`. **Word-count estimates were wrong twice.** Only a stopwatch settles it.
+
+### Edit order — audio first
+
+**Assemble the voice takes, then lay footage over them.** Cutting video first means
+guessing shot lengths and re-trimming everything once the audio exists. The audio is
+the spine. Editing in **CapCut** (free, Windows, fastest to learn; DaVinci is better
+and would cost two hours of learning five days out).
+
+### ★★ THE FINDING THAT WAS IN A SPREADSHEET ★★
+
+`shoot_log.xlsx` carries a `difficulty` column, assigned **at filming time, months
+before any detector existed**, purely by destination:
+
+| Label | Destinations | On the sign? |
+|---|---|---|
+| EASY | gate A-C | yes |
+| AMBIG | exit, baggage claim | yes, arrows unclear |
+| MISSING | lounge, toilet | **NO** |
+
+Joined against `results.json` event counts:
+
+| | Trips | Events | **Events per trip** | Trips with any event |
+|---|---|---|---|---|
+| **EASY** | 8 | 1 | **0.12** | 1 of 8 |
+| **AMBIG** | 8 | 8 | **1.00** | 3 of 8 |
+| **MISSING** | 9 | 12 | **1.33** | 5 of 9 |
+
+**People whose destination is not on the sign produce roughly eleven times more
+friction events per trip than people whose destination is on it.**
+
+This is the conclusion the video was missing. It is the *cause*, not just the
+location — and it is the thing a facilities manager acts on: **put toilets and
+lounge on the sign.** `data/output/heatmap.png` already prints it:
+`NOT ON SIGN: TOILETS, LOUNGE`.
+
+**Why it is not fishing:** the labels are pre-registered. They were written into the
+shoot log when the clips were filmed, before a detector existed, and were never
+touched afterwards. That is the same discipline as the odd/even split.
+
+**Honest limits, to be stated wherever the number is:**
+- **n = 9 MISSING trips.** A direction, not a p-value.
+- **3 of the 12 MISSING events are scored false positives** by
+  `data/misses_day15.txt`.
+- The gradient EASY → AMBIG → MISSING is monotonic, which is the encouraging part.
+
+**⚠ NOT YET VERIFIED IN CODE. The table above was computed by hand from two files.
+It must be reproduced by a committed script that reads `shoot_log.xlsx` and
+`results.json` before one word of it is spoken on camera.** Dashboard evidence rule:
+every number rendered must be parsed from a committed file, never typed in.
+
+### `shoot_log.csv` was an xlsx wearing a csv name
+
+First bytes were `PK`, and the archive contained `[Content_Types].xml` and
+`xl/workbook.xml`. **The extension is a claim; the first bytes are the evidence** —
+the same lesson as `.mp4` telling you nothing about whether the codec is h264 or
+mpeg4.
+
+### The project-attached PROGRESS.md was 1,418 lines stale
+
+Asked to update the tracker, the copy attached to the Claude Project was **2247
+lines**; the copy in uploads from the previous afternoon was **3497**; the real file
+was **3665**. Building on either would have silently deleted Day 21 part 4 and rules
+86–89. **Project-attached files are a snapshot taken when they were attached, not a
+mirror of the disk.** Rule 37 held because it was checked, not because it was
+remembered.
+
+### Deferred, deliberately
+
+- **The upload/Analyse demo stays cut.** ~3 min on CPU, so it could only ever be
+  shown with a cut, and there are no seconds. **Put it in the Devpost writeup
+  instead** — a screenshot and two sentences, no time limit there.
+- **The wordmark** — "WayTrace" with the descender of the *y* curving into a
+  directional arrow, running under the whole word. A good idea. It is a
+  nice-to-have and the video does not exist yet.
+
+### CARRIED FORWARD
+
+- **★ Verify the EASY/AMBIG/MISSING table in code and commit the script. ★**
+- Decide where the finding goes in the video, and what it costs in seconds.
+- **Rehearsed answer 9** needs the sentence that the upload path really is live.
+- **`ca2666b` and `9650752` still need their diffs read.**
+- Day 21 checklist box "Storyboard the first 10 seconds FIRST" is still unticked
+  although `docs/storyboard.md` is committed.
+- Delete the two obsolete Game Bar recordings from Videos → Captures.
+- `data/audio/` is untracked. Decide whether the takes belong in the repo.
+
+**Status:** Footage shot, voice recorded, script committed, 119.6 s against a 120 s
+limit. **Zero seconds of the video are edited.** The strongest result in the project
+was found in a spreadsheet at the end of the session and is not yet in the script.
+**Quiz score:      /3**
+
 ## Day 22 — Tue 1 Sep — ★ SUBMIT ★
 - [ ] Description, screenshots, tech list, GitHub link, video link
 - [ ] **Click every link yourself, logged out**
@@ -3663,3 +3862,39 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
     path, and a grep for a literal `data/` in code that uses `os.path.join`. **Each
     silence looked like an answer.** Before believing an empty result, say out loud
     what a non-empty one would have looked like.
+
+90. **The extension is a claim; the first bytes are the evidence.**
+    `shoot_log.csv` was an xlsx — `PK`, `[Content_Types].xml`, `xl/workbook.xml`.
+    Same lesson as `.mp4` saying nothing about h264 versus mpeg4. Check the magic
+    bytes, not the name.
+
+91. **A project-attached file is a snapshot, not a mirror.** Asked to update the
+    tracker, the Project copy was 2247 lines, the day-old upload was 3497, the real
+    file was 3665. Either would have silently deleted 168 lines of the previous
+    session. **Attached files freeze at the moment they were attached.** Always
+    build from a file uploaded in the same session. Rule 37, proven again.
+
+92. **The narration must not read the screen aloud.** If a sentence is printed on
+    the dashboard, the voice must say something else — the judge is reading and
+    listening at once. **The screen states the finding; the voice says what the
+    screen cannot.** Corollary: because a recording cannot hover, anything behind a
+    hover has to be spoken.
+
+93. **Measure the finished thing; do not predict it.** Word-count estimates of the
+    script were wrong twice, in both directions. A stopwatch and `ffprobe` settled
+    it in seconds. **Predicting a duration is not measuring one.**
+
+94. **Pre-registered labels are worth more than clever analysis.** The
+    EASY/AMBIG/MISSING column was written into the shoot log at filming time, before
+    a detector existed. That single fact turns "people hesitate near the sign" into
+    "people whose destination is missing from the sign hesitate 11× more" — a causal
+    claim nobody can accuse of being fished for. **Label the world before you
+    measure it, and the measurement means something.**
+
+95. **Finish what must exist before improving what is nice to have.** A wordmark, a
+    logo, a nicer colour — all real improvements, all worth nothing while zero
+    seconds of the video are edited. **The deliverable first, the polish after.**
+
+96. **When a limit is hard, build margin; do not aim for the edge.** 119.6 s against
+    a 120 s cap is not a margin — one long export and the submission is rejected
+    unwatched. The same reasoning set the finish date at 3 Sep rather than the 5th.
