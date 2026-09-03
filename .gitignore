@@ -20,6 +20,7 @@ data/output/*
 # results are small and are the evidence - keep them
 !data/output/results*.json
 !data/output/hotspots*.json
+!data/output/difficulty.json
 !data/output/heatmap*.png
 
 # OS junk

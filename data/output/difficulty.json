@@ -1,0 +1,72 @@
+{
+  "source_sheet": "data/shoot_log.xlsx",
+  "source_results": "data/output/results.json",
+  "groups": {
+    "EASY": {
+      "trips": 8,
+      "trip_ids": [
+        4,
+        9,
+        15,
+        21,
+        22,
+        23,
+        24,
+        25
+      ],
+      "destinations": [
+        "gate A-C"
+      ],
+      "events": 1,
+      "events_per_trip": 0.125,
+      "trips_with_any_event": 1
+    },
+    "AMBIG": {
+      "trips": 8,
+      "trip_ids": [
+        1,
+        3,
+        6,
+        7,
+        10,
+        11,
+        12,
+        17
+      ],
+      "destinations": [
+        "baggage claim",
+        "exit"
+      ],
+      "events": 8,
+      "events_per_trip": 1.0,
+      "trips_with_any_event": 3
+    },
+    "MISSING": {
+      "trips": 9,
+      "trip_ids": [
+        2,
+        5,
+        8,
+        13,
+        14,
+        16,
+        18,
+        19,
+        20
+      ],
+      "destinations": [
+        "lounge",
+        "toilet"
+      ],
+      "events": 12,
+      "events_per_trip": 1.333,
+      "trips_with_any_event": 5
+    }
+  },
+  "missing_vs_easy_ratio": 10.66,
+  "caveats": [
+    "n = 9 MISSING trips. A direction, not a p-value.",
+    "Some events are scored FALSE POSITIVE in data/misses_day15.txt.",
+    "Clips 2, 4, 5 and 6 produced zero events and were never re-checked for missed events (UNRESOLVED item 5). Trip 9 (EASY) is in clip6, so the EASY rate is a floor."
+  ]
+}
