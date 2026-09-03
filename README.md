@@ -12,6 +12,11 @@ turn around. It reports **where** friction happens. It does not attempt to say
 > work. The U-turn detector scored **zero** on held-out data; that number is in
 > the status table and in Validation, not buried.
 
+> **Cloning this repo?** Video files are not committed — see `.gitignore`. Every
+> figure on the dashboard is read from committed JSON and renders on a fresh
+> clone. Only the "Watch a clip" player needs local footage and will report the
+> missing file. That is expected, not a failure.
+
 ---
 
 ## What it is
