@@ -2625,8 +2625,9 @@ show it.** Not "does it look right".
 
 **Quiz score:      /3**
 
-## Day 21 — Mon 31 Aug — Demo video
-- [ ] Storyboard the first 10 seconds FIRST
+## Day 21 — Sun 30 Aug — Demo video
+- [x] **Storyboard the first 10 seconds FIRST** — `docs/storyboard.md`
+      committed, confirmed with `git ls-tree HEAD docs/`. Opens on clip9/trip 14.
 - [ ] Real system output only — zero fake numbers
 - [x] **Face blur — BUILT AND VERIFIED, DELIBERATELY NOT APPLIED.** Zero uncovered
       frames measured. Not applied because consent exists: everyone in the footage
@@ -3194,7 +3195,7 @@ by `ffprobe`. **Word-count estimates were wrong twice.** Only a stopwatch settle
 
 **Assemble the voice takes, then lay footage over them.** Cutting video first means
 guessing shot lengths and re-trimming everything once the audio exists. The audio is
-the spine. Editing in **CapCut** (free, Windows, fastest to learn; DaVinci is better
+the spine. Chosen editor: **CapCut** — installation NOT yet verified (free, Windows, fastest to learn; DaVinci is better
 and would cost two hours of learning five days out).
 
 ### ★★ THE FINDING THAT WAS IN A SPREADSHEET ★★
@@ -3280,7 +3281,410 @@ limit. **Zero seconds of the video are edited.** The strongest result in the pro
 was found in a spreadsheet at the end of the session and is not yet in the script.
 **Quiz score:      /3**
 
-## Day 22 — Tue 1 Sep — ★ SUBMIT ★
+## Day 22 (part 2) — Mon 31 Aug — Tracker audit: five errors found in the tracker itself
+
+**No code changed. This section exists because the tracker was read top to bottom
+and five things in it were wrong or stale.** A tracker that is not audited becomes
+a second source of false claims — the thing it was built to prevent.
+
+### ★ Rule 90 was a duplicate. Rule 30 already said it. ★
+
+Day 22 recorded the `shoot_log.csv`-is-an-xlsx discovery as new, and wrote Rule 90
+about it. **Rule 30 already existed:**
+
+> 30. **A file extension is a promise, not a fact.** `shoot_log.csv` is an .xlsx.
+
+And `UNRESOLVED` item 4 had already proved it by evidence — first two bytes `PK`,
+which is a zip, which is what an Office file is. **It was confirmed weeks ago.**
+
+**Rediscovering your own finding is a symptom, not a story.** The tracker is 3900
+lines; nobody re-reads it before writing a new section, so a known fact gets found
+twice and written up twice. Rule 90 stands, but as a restatement of Rule 30, not as
+a discovery. **Search the tracker before recording something as new.**
+
+### The robot-vacuum note is still in row 1 of the shoot log
+
+`UNRESOLVED` item 4, still open: *"The stray robot-vacuum note is still in row 1,
+so any parser reads that sentence as the column names."*
+
+**This blocks the difficulty script.** Any code reading `shoot_log.xlsx` must skip
+to the real header row rather than trusting row 1. Found before writing the script,
+which is the only reason it did not cost a debugging hour.
+
+### `UNRESOLVED` item 5 was never closed, and it touches the new finding
+
+> **5. Clips 2, 4, 5 and 6 produced zero events**, and clips 7–13 were labelled
+> after 20:00. Zero is a legitimate result, but a missed event is invisible — it
+> looks exactly like a clean trip. Re-check the late clips before Day 15.
+
+**Day 15 passed on 27 Aug. This was never done.**
+
+It matters now. The EASY/AMBIG/MISSING finding rests on EASY trips producing
+almost no events — and **trip 9 is in clip6, one of the four zero-event clips.**
+If clip6 holds a missed event, the EASY rate rises.
+
+**What protects the finding:** the four zero-event clips are spread across all three
+labels — clip2 (AMBIG, trip 6), clip5 (MISSING, trip 8), clip6 (EASY, trip 9).
+A uniform miss rate would not create the gradient. **It weakens the size of the
+effect, not its direction.** Say so wherever the number is stated.
+
+### Day numbering was wrong in three places — corrected
+
+| Was | Now | Why |
+|---|---|---|
+| `Day 21 — Mon 31 Aug — Demo video` | `Day 21 — Sun 30 Aug` | All four Day 21 parts are dated Sun 30 Aug. The heading contradicted its own children. |
+| Two sections both called `Day 22` | plan renamed `SUBMISSION CHECKLIST` | One was the work log for 30–31 Aug, the other the Devpost plan for 1 Sep. Same number, different things. |
+| `Day 23 … BUFFER ONLY (four days)` | `(two days)` | The finish target was reset to **Thu 3 Sep** on 29 Aug. Buffer has been two days since then. |
+
+### Boxes ticked by work already done
+
+- **"Storyboard the first 10 seconds FIRST"** — ticked. `docs/storyboard.md` is
+  committed; confirmed with `git ls-tree HEAD docs/`. It had been sitting unticked
+  since Day 21.
+
+### CapCut was recorded as decided before it was installed
+
+Day 22 says *"Editing in CapCut."* It was recommended, not confirmed installed and
+opened. **Corrected to: CapCut is the chosen editor; installation unverified.**
+Small, but it is the same shape as every false claim caught on Days 20 and 21 —
+a plan written in the past tense.
+
+### CARRIED FORWARD — unchanged from part 1, plus
+
+- **★ Verify the EASY/AMBIG/MISSING table in code.** Must skip the robot-vacuum
+  row. Must state n=9 and the three scored false positives alongside the number.
+- **Close `UNRESOLVED` item 5** — re-check clips 2, 4, 5, 6 for missed events, or
+  state plainly in the video that it was never done.
+- Rehearsed answer 9; `ca2666b` and `9650752` diffs; delete the two Game Bar
+  recordings; decide whether `data/audio/` belongs in the repo.
+
+**Status:** Tracker audited top to bottom. Five errors corrected, one duplicate rule
+identified, one long-open item found to bear directly on the newest finding.
+**Still zero seconds of video edited.**
+**Quiz score:      /3**
+
+## Day 23 — Thu 3 Sep — Video exported and submitted; and what the video does not say
+
+**The video exists. 118.24 s. It ends on the WayTrace card.**
+**No code was written this session. The `difficulty.py` file was created empty and
+is still empty.**
+
+### The video, as measured
+
+| Property | Value | How checked |
+|---|---|---|
+| Duration | **118.24 s** (limit 120) | on-screen timer, and `ffprobe` on the screen recording: 118.4166 s |
+| Ends on | WayTrace wordmark + tagline | screenshot |
+| Audio | mean **−25.7 dB**, max **−3.9 dB** | `ffmpeg volumedetect` |
+| Event marker | `HESITATION` visible, `t = 17.2s` in corner | frame at 60 s |
+| Accuracy panel | 59% / 77% / **0%** all legible, amber box present | frame at 90 s |
+
+**⚠ THE EXPORTED FILE HAS NEVER BEEN INSPECTED DIRECTLY.** Everything above was
+measured from a **portrait iPad screen recording** (818×1446, 60 fps, 136 MB) of the
+video playing, not from the export itself. The real file is on the iPad; the laptop
+was not available. **Its true resolution, aspect ratio, codec and bitrate are
+unknown.** If the export is portrait, a judge sees a tall strip with most of the
+frame black.
+
+### The wordmark and tagline
+
+Built: **WayTrace** with the descender of the *y* curving into a directional arrow.
+Tagline chosen from **fifty** candidates across five rounds:
+
+> **Find where your building loses people.**
+
+No quotes — it is a statement under a name, not a quotation. Runner-up shortlist
+was *"Wayfinding, audited"*, *"Confusion has coordinates"*, *"Your ceiling already
+saw it"*, *"Friction, in metres"*.
+
+**Flaw, recorded not fixed:** the end card appears only in the last ~2 seconds. At
+116 s the video is still on the "When it happened" timeline panel. **A judge who
+looks away in the final seconds never sees the project's name.** If the video is
+ever re-exported, give the card three seconds.
+
+### ★★ WHAT THE VIDEO DOES NOT SAY ★★
+
+`fix_plan.md` (written 29 Aug) lists **eleven weaknesses that were to be SAID, not
+fixed** — on the reasoning that a fact admitted is fine and a fact hidden is fatal,
+and that fixing any of them after the held-out score would destroy the only
+uncontaminated evidence in the project.
+
+**Only one of the eleven made it into the 118-second video.**
+
+| # | Weakness | In the video? |
+|---|---|---|
+| 1 | U-turn detector scored 0% | **YES** — `vo10` |
+| 4 | Only 25 trips; one event moves a percentage ~10 points | no |
+| 5 | Home corridor, not a real airport | no |
+| 6 | Camera must not move; recalibration is a ~20 min step | no |
+| 7 | 8× slower than realtime on CPU (0.549 s/frame) | no |
+| 8 | **Clip 4 excluded** — logged wasted on shoot night, holds 2 U-turns | no |
+| 9 | 2 of 5 thresholds were tuned, not written blind | no |
+| 10 | Even trips were seen on screen, though never used to choose a threshold | no |
+| 11 | Calibration RMS **2.17 px** is mediocre — good is under 1 | **stated as if good** |
+| 12 | Coordinates beyond the calibrated patch have unmeasured error | no |
+| 14 | Participants learned the route; later trips show a floor, not a true rate | no |
+
+**This is not necessarily wrong.** 118 seconds cannot hold eleven caveats, and the
+dashboard states several of them permanently on screen. **But it was never a
+decision — the list was written on 29 Aug and never re-read while the script was
+being written.** Items 8 and 11 are the two that matter most:
+
+- **Clip 4** is a data-exclusion. Thirteen clips were shot, twelve produced usable
+  trips. The exclusion was logged *before any labelling*, and the clip happens to
+  hold two U-turns — the detector's weakest case. Un-excluding it now would be
+  choosing data after seeing the result. **The reasoning is impeccable and it is
+  nowhere in the video or the Devpost story.** A judge who opens the shoot log
+  finds a missing clip and no explanation.
+- **Calibration** is described in the Devpost story as "RMS 2.17 px" with no
+  context. The rehearsed answer says plainly: *"No, it's mediocre. RMS 2.17 pixels
+  where a good one is under 1. About 0.9 cm near the camera and 3.5 cm at the far
+  end."* **Stating the number without the judgement is overclaiming by omission.**
+
+**Action:** both belong in the Devpost writeup, which has no time limit. That is
+where the eleven "say it" items should live now.
+
+### ⚠ MUST VERIFY — the numbers inside the blue squares
+
+The dashboard map draws four blue squares labelled **2, 3, 4, 5**. The dashboard's
+own legend says *"The number inside is how many landed there."* — i.e. event counts.
+
+`hotspots.json` gives, in order: **5** events at (0.5, 1.0); **4** at (0.5, 0.5);
+**3** at (1.0, 0.5); **2** at (0.5, 0.0). On the map the y-axis increases downward,
+so the 5-event hotspot should be the block hanging lowest. **On the image, the
+lowest block is labelled `3`.**
+
+**These cannot both be right, and it has not been resolved.** It bears directly on
+`vo11`/`vo12`, which say *"the one in the middle holds four stops and no
+turn-arounds"* and *"the cluster below has more events."* **If the labels are IDs
+rather than counts, `vo12` is false and it is in the exported video.**
+
+**Earlier in this session the numbers were explained as "just labels, not the
+order." That explanation was given without checking the legend and may be wrong.**
+Verify against `panels.py` before the video is defended anywhere.
+
+### `fix_plan.md` contains a claim known to be false
+
+FIX 2 says: *"the button loads results computed earlier"* and proposes making the
+dashboard say so. **That is false.** The Analyse button is genuinely live — it runs
+ffmpeg → `undistort_video.py` → `trajectories.py` → `analyse_one.py` → ffmpeg on the
+uploaded file. The Day 21 handoff records this claim as having been on the to-do
+list twice and wrong both times.
+
+**`fix_plan.md` is committed and stale. It should carry a correction line at the
+top, or be deleted.** A false claim in the repo is worse than no document.
+
+### Rehearsed answer 9 is still incomplete
+
+Carried since Day 20. It says *"there is now no HTTP call anywhere"* — true — and
+says nothing about the upload path, which runs the real pipeline live on a user's
+file. One sentence to add. **Still not done.**
+
+### Submission
+
+- **YouTube:** unlisted upload — *not Private, which judges cannot open.*
+- **Devpost:** project created, name `WayTrace`, elevator pitch set to the tagline.
+- **Project story written** — inspiration, what it does, the finding, accuracy,
+  privacy, how it was built, challenges, what I learned, what's next.
+- **Built with:** python, opencv, yolo, ultralytics, bytetrack, numpy, streamlit,
+  ffmpeg, pandas, matplotlib, computer-vision, edge-computing.
+- **Try it out:** `github.com/abrishk2012/waytrace-audit`
+
+**⚠ The Devpost story contains the 0.12 / 1.00 / 1.33 table, which is still not
+verified in code.** It was computed by hand from `shoot_log.xlsx` and
+`results.json`. The project's own standing rule is that every number must be parsed
+from a committed file. **This is the single largest unverified claim now in public.**
+
+### Still open, carried
+
+- **★ Write `src/difficulty.py`.** The file was created empty and never filled. It
+  must skip the stray robot-vacuum row in the shoot log (`UNRESOLVED` item 4).
+- **★ Verify the blue-square labels** against `panels.py`.
+- **★ `UNRESOLVED` item 5** — clips 2, 4, 5, 6 produced zero events and were never
+  re-checked. Trip 9 (EASY) is in clip6. Overdue since 27 Aug.
+- Add clip 4's exclusion and the calibration judgement to the Devpost story.
+- Correct or delete `fix_plan.md`.
+- Complete rehearsed answer 9.
+- Read the `ca2666b` and `9650752` diffs.
+- **SDG 11 framing and the Responsible-AI section** — listed on Day 20 as belonging
+  in the Devpost writeup and the narration, *"where Impact gets scored."* In the
+  README; **not in the video, and not in the Devpost story.**
+- Delete the two obsolete Game Bar recordings.
+- Decide whether `data/audio/` belongs in the repo.
+- **CapCut installation was never confirmed** and the edit was completed on iPad,
+  so the CapCut line in Day 22 is moot — recorded here rather than silently fixed.
+- Click every Devpost link **logged out** before the deadline.
+
+**Status:** Video exported at 118.24 s and submitted to Devpost. **Eleven
+pre-identified weaknesses were written down on 29 Aug and ten of them are in
+neither the video nor the writeup.** One narration line may be false pending a
+check that has not been done.
+**Quiz score:      /3**
+
+## Day 24 — Fri 4 Sep — SUBMITTED. The laptop died and the repo was the backup.
+
+**★ WayTrace is submitted to VoltHacks 2026. Status DRAFT → submitted, 5/5 steps.**
+**Deadline Sat 5 Sep 22:00 Lisbon — one day early. Devpost allows edits until then.**
+
+**HEAD `2ceea26`, pushed. 2 commits this session, both from a borrowed MacBook.**
+
+### The Windows laptop is dead
+
+It broke completely and will not open. **Everything on it is gone**: the three cut
+shots, the dashboard footage, the architecture recording, the 13 voice takes, the
+`.venv`, the CapCut project.
+
+**Everything that survived, survived because it was pushed.** The repo cloned onto
+a borrowed Mac and the dashboard ran from it — same figures, full resolution.
+`git clone` → `pip install streamlit matplotlib opencv-python-headless` →
+`streamlit run`. Under ten minutes from nothing to a working dashboard.
+
+**The `!data/output/*_traj.json` exception written into `.gitignore` weeks ago is
+the only reason the hotspot map and timeline still render.** Video files are
+ignored, so `data/web/` came down empty — which is correct, and is now documented.
+
+### Commits
+
+| Hash | What |
+|---|---|
+| `5652956` | README: video files are gitignored; every figure renders from committed JSON on a fresh clone, only the clip player needs local footage |
+| `2ceea26` | `src/difficulty.py` + `data/output/difficulty.json` + `.gitignore` exception |
+
+### ★★ THE FINDING IS NOW VERIFIED IN CODE ★★
+
+`src/difficulty.py` runs and reproduces the table exactly:
+
+```
+header row 1 ['clean', 'clip#', 'destination card', 'dificulty', 'name', 'trip #', 'wasted']
+EASY     trips= 8 events= 1 per_trip=0.12 any=1/8
+AMBIG    trips= 8 events= 8 per_trip=1.00 any=3/8
+MISSING  trips= 9 events=12 per_trip=1.33 any=5/9
+MISSING/EASY ratio: 10.66
+```
+
+**The ratio is 10.66, not "eleven".** It had been stated as "roughly eleven times"
+in the Devpost story for hours before the script existed. A round number sounds
+invented; a measured one does not. **Corrected in the writeup.**
+
+The script does three things that matter:
+- **Searches for the header row** rather than assuming row 0 — row 0 is the stray
+  robot-vacuum note (`UNRESOLVED` item 4), which would otherwise become the column
+  names.
+- **Uses the sheet's real spelling, `dificulty`** (one `f`). A script assuming the
+  correct spelling finds nothing and reports zero groups.
+- **Asserts** that `scope == ALL_TRIPS`, that every trip in the sheet was examined,
+  and that the three groups account for all 25 trips. All three passed.
+- **Writes its own caveats into the output JSON** — n=9, the scored false
+  positives, and that trip 9 (EASY) sits in clip6, one of the never-re-checked
+  zero-event clips, so 0.12 is a floor.
+
+**This closes the largest unverified public claim in the project.** It was in the
+Devpost writeup with no script behind it.
+
+### ⚠ `vo12` IS FALSE AND IT IS IN THE SUBMITTED VIDEO
+
+Day 23 flagged the blue-square labels as unresolved. **Resolved now, from a clean
+screenshot of the map: the numbers are event counts, exactly as the legend says.**
+
+The squares read **2, 4, 5, 3**. The 5-event hotspot is the one on the **right**,
+at x ≈ 1.0. The block hanging **below** is labelled **3**.
+
+The narration says: *"The cluster below has more events."* **It has three. The
+middle one has four.** The line is wrong, and it is in the exported, submitted
+video.
+
+**Earlier in the project the labels were explained as "just labels, not the order."
+That explanation was given without reading the legend and it was wrong.** The
+legend was on the dashboard the whole time.
+
+**Fix if the video is ever re-exported:** cut the clause, or say *"the one on the
+right"*. The rest of `vo12` — *"it's drawn because it's in the data, not because I
+trust it"* — is true and worth keeping.
+
+### The video: 848×480 → 1620×1080
+
+The first export looked bad and the reason was measurable. Two files named
+`BAD_QUALITY.mp4`, both **848 × 480**, and `RAW.mp4` at **864 × 576** — none of
+them 1080p, despite CapCut's export dialogue being set to 1080P, H.264, mp4, 30fps.
+
+**Cause: the CapCut canvas ratio was set to "Original".** Original copies the first
+clip, which is 1024 × 576. Choosing 1080P at export then stretches a small picture
+and invents no detail.
+
+Re-exported: **`09045.mp4`, 1620 × 1080, 118.93 s, 67 MB** — nearly twice the width
+and four times the file size. Uploaded to YouTube, link on Devpost.
+
+**118.93 s against a 120 s limit is 1.07 s of margin.** Legal. Not comfortable.
+Aspect is 3:2 rather than 16:9 because the canvas stayed on Original; YouTube adds
+thin side bars. Cosmetic, not worth another export.
+
+**No `ffprobe` on the borrowed Mac.** `mdls -name kMDItemPixelWidth
+-name kMDItemPixelHeight -name kMDItemDurationSeconds <file>` gives the same three
+answers from macOS's own index.
+
+### Devpost, as submitted
+
+- **Elevator pitch:** *Find where your building loses people.*
+- **Story:** rewritten to lead on the problem rather than the method, with the
+  10.66× finding, the U-turn zero told as a story, **clip 4's exclusion**, and the
+  **calibration stated as mediocre** — the last two were missing from every earlier
+  draft and are exactly the gaps a judge could find and read badly.
+- **Built with:** python, opencv, yolo, ultralytics, bytetrack, numpy, streamlit,
+  ffmpeg, matplotlib, openpyxl, computer-vision, edge-computing.
+- **Try it out:** `github.com/abrishk2012/waytrace-audit`
+- **Images:** heatmap, architecture diagram, accuracy panel, hotspot map, timeline.
+  The first accuracy screenshot was **cropped and lost the 59% combined F1
+  entirely** — retaken full-window.
+- **Sponsor prizes:** the only option was XYZ Domain Awards & Dialogate. WayTrace
+  uses neither. **Left empty deliberately.**
+
+### Getting write access from a borrowed machine
+
+- A **fine-grained personal access token**: 7-day expiry, `waytrace-audit` only,
+  **Contents: Read and write**. Metadata read-only is added automatically.
+- `git config user.name` / `user.email` set **per-repo**, not globally — it is
+  someone else's laptop. The placeholder email was pasted verbatim twice before the
+  real one went in; `git config user.email` was run each time to check.
+- **GitHub shows a token exactly once.** The first was lost by copying the wrong
+  thing; `pbpaste | head -c 12` proved the clipboard held `pbpaste | he` rather
+  than `github_pat_`. **Check the clipboard, do not assume the copy worked.**
+- `git config credential.helper osxkeychain` after the first successful push.
+
+### Things that fought back
+
+- **`qlmanage -t -s 3200` forced the architecture SVG square** and cut content off.
+  `cairosvg` would have done it properly but needs `libcairo`, which needs
+  Homebrew — too long a detour. The square PNG works; crop in the editor.
+- **Heredoc pastes into zsh broke repeatedly.** A stray `</parameter>` on one line
+  left the shell hanging at a `>....` continuation prompt, and a later paste went
+  into the shell instead of into `nano`. **Writing the script to a file and
+  downloading it worked first time.** When a paste has failed twice, stop pasting.
+- **`cat -A` does not exist on macOS**; use `cat -e`.
+- **An anchor string must match the file, not the eye.** A README edit asserted on
+  `"> status table and…"` when the file said `"> the status table and…"`. The
+  assert caught it and refused to write. **The assert is the reason nothing was
+  written to the wrong place.**
+
+### CARRIED FORWARD — the project is submitted; these are edits, not blockers
+
+- **`vo12` is false in the submitted video.** Decide whether to re-export.
+- Image captions on Devpost.
+- **`UNRESOLVED` item 5** — clips 2, 4, 5, 6 never re-checked. Now materially
+  affects the EASY rate in a public claim.
+- Correct or delete `fix_plan.md` — it still claims the Analyse button loads
+  pre-computed results, which is false.
+- Rehearsed answer 9 still incomplete.
+- `ca2666b` and `9650752` diffs still unread.
+- **SDG 11 and Responsible-AI framing** are in the README but in neither the video
+  nor the Devpost story. Day 20 called this "where Impact gets scored."
+- The end card appears only in the final ~2 seconds.
+
+**Status: SUBMITTED, one day early.** The dashboard was rebuilt from the repo on a
+borrowed machine after the build laptop died. The strongest claim in the project is
+now backed by a committed script. One narration line is known false.
+**Quiz score:      /3**
+
+## SUBMISSION CHECKLIST — Devpost, on the day (was "Day 22 — Tue 1 Sep")
 - [ ] Description, screenshots, tech list, GitHub link, video link
 - [ ] **Click every link yourself, logged out**
 - [ ] SUBMIT TODAY. Do not wait for Day 23.
@@ -3288,7 +3692,7 @@ was found in a spreadsheet at the end of the session and is not yet in the scrip
 **Status:**
 **Notes:**
 
-## Day 23 — Wed 2 Sep – Fri 5 Sep — BUFFER ONLY (four days)
+## Day 23 — Thu 3 Sep – Fri 5 Sep — BUFFER ONLY (two days, target reset 29 Aug)
 - [ ] Fix anything broken. **Deadline 22:00 Lisbon.**
 - [ ] If the submission is already in, this day is for sleeping.
 
@@ -3368,7 +3772,7 @@ Fill these in yourself as you learn them. If a box is empty on Day 20, that's a 
 
 ---
 
-## UNRESOLVED — must be closed before Day 15
+## UNRESOLVED — was "must be closed before Day 15". Day 15 passed 27 Aug. Item 5 is still open.
 
 **1. RESOLVED — 25 clean trips, not 24.** The shoot log holds 25 numbered clean
 trips, 1–25, no gaps, plus **8** wasted takes (HANDOFF said 7). The "24" has no
@@ -3898,3 +4302,83 @@ looks exactly like a clean trip. Re-check the late clips before Day 15.
 96. **When a limit is hard, build margin; do not aim for the edge.** 119.6 s against
     a 120 s cap is not a margin — one long export and the submission is rejected
     unwatched. The same reasoning set the finish date at 3 Sep rather than the 5th.
+
+97. **Search the tracker before recording something as new.** Rule 90 restated
+    Rule 30, which had been proven weeks earlier and was sitting in `UNRESOLVED`
+    with the evidence attached. At 3,900 lines nobody re-reads the file before
+    adding to it. **A tracker nobody greps becomes a place findings go to be
+    forgotten and found again.**
+
+98. **An open item does not close by getting old.** `UNRESOLVED` item 5 said
+    "re-check the late clips before Day 15." Day 15 passed on 27 Aug and the check
+    was never done. Four days later it turned out to bear directly on the strongest
+    result in the project. **Overdue is not resolved.**
+
+99. **Audit the tracker, not just the code.** The tracker held a heading whose date
+    contradicted its own four child sections, two different sections numbered
+    Day 22, a buffer described as four days that had been two since 29 Aug, a box
+    left unticked though the work was committed, and a plan written in the past
+    tense. **Every one of those is the same failure the tracker exists to catch,
+    committed by the tracker itself.**
+
+100. **A list of things to say is worthless if it is not re-read while writing.**
+     `fix_plan.md` named eleven weaknesses to state out loud rather than fix. The
+     narration script was written five days later without opening it, and ten of
+     the eleven are in neither the video nor the writeup. **Not a decision — an
+     omission.** Before writing any deliverable, open the document that says what
+     the deliverable must contain.
+
+101. **Stating a number without its judgement is overclaiming by omission.**
+     "RMS 2.17 px" reads as a credential. "RMS 2.17 px, where a good calibration is
+     under 1" is the truth. **A figure a reader cannot calibrate is not disclosure.**
+
+102. **A data exclusion needs its reasoning attached wherever the data is
+     described.** Clip 4 was excluded on the night of the shoot, before labelling,
+     and it holds two U-turns — the detector's weakest case. That sequence is the
+     whole defence, and it appeared in neither the video nor the Devpost story.
+     **An unexplained gap in a public dataset looks exactly like a hidden one.**
+
+103. **Explaining a chart without reading its legend is guessing.** The blue squares
+     were explained mid-session as "just labels, not the order." The dashboard
+     legend says the number is the event count. **The two readings imply different
+     narration, and one of them is already in an exported video.** Read the legend
+     from the code before explaining a picture.
+
+104. **Verify the artefact, not a recording of the artefact.** Everything known
+     about the exported video was measured from a phone screen recording of it
+     playing. Duration and content transfer; **resolution, aspect ratio, codec and
+     bitrate do not.** A copy of a thing is evidence about the copy.
+
+105. **A stale document in the repo is worse than no document.** `fix_plan.md` still
+     claims the Analyse button loads pre-computed results — a claim already caught
+     and corrected twice. It is committed, public, and contradicts the dashboard.
+     **Correct it or delete it; do not leave it to be found.**
+
+106. **The repo is the backup. Nothing else is.** The build laptop died with every
+     video file, every voice take and the whole editing project on it. What
+     survived survived because it had been pushed. **Committing after every chunk
+     stopped being discipline and became the only reason the project still exists.**
+
+107. **A round number sounds invented; a measured one does not.** "Roughly eleven
+     times" sat in a public writeup for hours. The script said **10.66**. Reach for
+     the real figure — it is shorter to defend and it proves something was counted.
+
+108. **Read the legend before explaining the picture.** The blue squares were
+     explained as "just labels, not the order." The dashboard legend said, in its
+     own words, that the number is the event count. **A narration line built on
+     that mistake is now false inside a submitted video.**
+
+109. **Check the clipboard; do not assume the copy worked.** A GitHub token is shown
+     exactly once. The first one was lost because the clipboard held a copied
+     terminal command instead. `pbpaste | head -c 12` takes one second and would
+     have caught it before the page was gone.
+
+110. **When a paste has failed twice, stop pasting.** Two heredocs died in zsh — one
+     on a stray tag, one because the editor had already closed. Writing the file
+     and downloading it worked immediately. **Changing tools beats retrying the
+     tool that is failing.**
+
+111. **An assert on the exact bytes is what stops a wrong edit.** A README anchor
+     read `"> status table"` where the file said `"> the status table"`. The assert
+     failed and nothing was written. **An edit script with no assertion is a script
+     that will one day silently edit the wrong thing.**
